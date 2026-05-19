@@ -1,4 +1,8 @@
-import Anthropic from '@anthropic-ai/sdk'
+import OpenAI from 'openai'
+
+// Default model — change via OPENROUTER_MODEL env var to swap without code changes
+// Good options: anthropic/claude-sonnet-4-6, mistral/mistral-large, google/gemini-2.0-flash
+const DEFAULT_MODEL = 'anthropic/claude-sonnet-4-6'
 
 export interface ParsedInvoiceItem {
   product_name_raw: string
@@ -9,37 +13,22 @@ export interface ParsedInvoiceItem {
 
 export interface ParsedInvoice {
   supplier_name: string
-  invoice_date: string  // ISO date string
+  invoice_date: string  // ISO date string YYYY-MM-DD
   items: ParsedInvoiceItem[]
   raw_total: number | null  // pence
 }
 
-/**
- * Uses Claude's vision capability to extract line items from a market invoice PDF.
- * base64Pdf: the PDF file as a base64-encoded string.
- */
-export async function parseInvoicePdf(base64Pdf: string): Promise<ParsedInvoice> {
-  const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
+const client = new OpenAI({
+  baseURL: 'https://openrouter.ai/api/v1',
+  apiKey: process.env.OPENROUTER_API_KEY!,
+  defaultHeaders: {
+    'HTTP-Referer': 'https://freshandfruity.co.uk',
+    'X-Title': 'Fresh & Fruity POS',
+  },
+})
 
-  const response = await client.messages.create({
-    model: 'claude-sonnet-4-6',
-    max_tokens: 2048,
-    messages: [
-      {
-        role: 'user',
-        content: [
-          {
-            type: 'document',
-            source: {
-              type: 'base64',
-              media_type: 'application/pdf',
-              data: base64Pdf,
-            },
-          },
-          {
-            type: 'text',
-            text: `Extract all line items from this market produce invoice.
-Return ONLY valid JSON in this exact shape — no markdown, no explanation:
+const PROMPT = `Extract all line items from this market produce invoice.
+Return ONLY valid JSON — no markdown fences, no explanation:
 {
   "supplier_name": "string",
   "invoice_date": "YYYY-MM-DD",
@@ -55,17 +44,44 @@ Return ONLY valid JSON in this exact shape — no markdown, no explanation:
 }
 
 Rules:
-- Convert all prices to pence (integers). £1.50 = 150, 45p = 45.
-- If a price is per box or per kg, record it as given — do not convert units.
-- If you cannot read a value, use null for that field.
-- If the date is ambiguous, prefer DD/MM/YYYY interpretation (UK).`,
+- Convert all prices to integer pence. £1.50 = 150, 45p = 45.
+- If a price is missing or unreadable, use 0.
+- If the date is ambiguous, use DD/MM/YYYY interpretation (UK).
+- Do not include VAT rows or subtotal rows as line items.`
+
+/**
+ * Parse a market invoice PDF using OpenRouter.
+ * base64Pdf: the PDF as a base64-encoded string.
+ */
+export async function parseInvoicePdf(base64Pdf: string): Promise<ParsedInvoice> {
+  const model = process.env.OPENROUTER_MODEL ?? DEFAULT_MODEL
+
+  const response = await client.chat.completions.create({
+    model,
+    max_tokens: 2048,
+    messages: [
+      {
+        role: 'user',
+        content: [
+          {
+            type: 'image_url',
+            image_url: {
+              url: `data:application/pdf;base64,${base64Pdf}`,
+            },
+          },
+          {
+            type: 'text',
+            text: PROMPT,
           },
         ],
       },
     ],
   })
 
-  const text = response.content[0].type === 'text' ? response.content[0].text : ''
+  const text = response.choices[0]?.message?.content ?? ''
+
+  // Strip markdown fences if model adds them despite instruction
+  const cleaned = text.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '').trim()
 
   let parsed: {
     supplier_name: string
@@ -80,9 +96,9 @@ Rules:
   }
 
   try {
-    parsed = JSON.parse(text)
+    parsed = JSON.parse(cleaned)
   } catch {
-    throw new Error(`Claude returned unparseable response: ${text.slice(0, 200)}`)
+    throw new Error(`Model returned unparseable response: ${text.slice(0, 300)}`)
   }
 
   return {
@@ -91,7 +107,7 @@ Rules:
     items: (parsed.items ?? []).map(item => ({
       product_name_raw: item.product_name_raw,
       quantity: item.quantity ?? 1,
-      unit_cost: item.unit_cost_pence ?? 0,
+      unit_cost:  item.unit_cost_pence  ?? 0,
       total_cost: item.total_cost_pence ?? 0,
     })),
     raw_total: parsed.raw_total_pence ?? null,
@@ -101,8 +117,6 @@ Rules:
 /**
  * Fuzzy-match a raw product name against the catalogue.
  * Returns the best matching product_id or null.
- * Simple implementation: normalise + substring match.
- * Can be replaced with a proper Levenshtein impl later.
  */
 export function fuzzyMatchProduct(
   rawName: string,
