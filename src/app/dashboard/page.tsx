@@ -92,6 +92,8 @@ export default async function DashboardPage() {
           <QuickAction href="/margins/sim"    icon="🧮" label="Simulator" />
           <QuickAction href="/price-monitor"  icon="🤖" label="AI Monitor" />
           <QuickAction href="/invoices"       icon="📋" label="Invoices" />
+          <QuickAction href="/suppliers"      icon="🏪" label="Suppliers" />
+          <QuickAction href="/wholesale-lookup" icon="👤" label="Wholesale" />
         </div>
       </details>
     </div>

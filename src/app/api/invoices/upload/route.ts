@@ -19,11 +19,13 @@ export async function POST(request: NextRequest) {
   const buffer = await pdf.arrayBuffer()
   const base64 = Buffer.from(buffer).toString('base64')
 
-  // Upload PDF to Supabase Storage
+  // Upload PDF to Supabase Storage (optional — storage may be disabled)
+  let pdf_url: string | null = null
   const storagePath = `invoices/${user.id}/${Date.now()}.pdf`
-  await supabase.storage.from('invoices').upload(storagePath, buffer, {
+  const { error: storageErr } = await supabase.storage.from('invoices').upload(storagePath, buffer, {
     contentType: 'application/pdf',
   })
+  if (!storageErr) pdf_url = storagePath
 
   // Create invoice record (status: processing)
   const { data: invoice, error: invErr } = await supabase
@@ -31,7 +33,7 @@ export async function POST(request: NextRequest) {
     .insert({
       supplier_name,
       invoice_date,
-      pdf_url: storagePath,
+      pdf_url,
       status: 'processing',
       created_by: user.id,
     })
