@@ -1,0 +1,112 @@
+import { createClient } from '@/lib/supabase/server'
+import Link from 'next/link'
+import { NavBar } from '@/components/ui/NavBar'
+import { TrafficDot, marginStatus } from '@/components/ui/TrafficDot'
+import { formatPrice } from '@/lib/pricing-engine'
+import type { Product } from '@/types'
+
+export default async function ProductsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ category?: string; q?: string }>
+}) {
+  const { category, q } = await searchParams
+  const supabase = await createClient()
+
+  let query = supabase
+    .from('products')
+    .select('*')
+    .eq('is_active', true)
+    .order('category')
+    .order('name')
+
+  if (category && category !== 'all') {
+    query = query.eq('category', category)
+  }
+  if (q) {
+    query = query.ilike('name', `%${q}%`)
+  }
+
+  const { data: products } = await query
+
+  return (
+    <div className="page pb-24">
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-xl font-bold">Products</h1>
+        <Link href="/products/new" className="btn-primary px-4 py-2 text-sm min-h-[40px]">
+          + Add
+        </Link>
+      </div>
+
+      {/* Search */}
+      <form className="mb-4">
+        <input
+          name="q"
+          defaultValue={q}
+          placeholder="Search products..."
+          className="w-full rounded-xl border border-white/10 bg-[var(--bg-card)]
+                     px-4 py-3 text-base text-[var(--text)] min-h-[48px]
+                     focus:outline-none focus:ring-2 focus:ring-brand-accent"
+        />
+      </form>
+
+      {/* Category filter */}
+      <div className="flex gap-2 mb-6 overflow-x-auto pb-1">
+        {['all', 'fruit', 'veg', 'other'].map(cat => (
+          <Link
+            key={cat}
+            href={`/products?category=${cat}${q ? `&q=${q}` : ''}`}
+            className={`rounded-full px-4 py-1.5 text-sm font-medium whitespace-nowrap min-h-[36px]
+                        flex items-center
+                        ${(category ?? 'all') === cat
+                          ? 'bg-brand-accent text-white'
+                          : 'bg-[var(--bg-card)] text-[var(--text-muted)]'}`}
+          >
+            {cat.charAt(0).toUpperCase() + cat.slice(1)}
+          </Link>
+        ))}
+      </div>
+
+      {/* Product list */}
+      <div className="space-y-2">
+        {(products ?? []).map((p: Product) => {
+          const margin = p.retail_price > 0
+            ? (p.retail_price - p.purchase_cost) / p.retail_price
+            : 0
+          const dot = marginStatus(margin, p.margin_floor)
+
+          return (
+            <Link
+              key={p.id}
+              href={`/products/${p.id}`}
+              className="card flex items-center justify-between min-h-[56px]
+                         active:scale-[0.99] transition-transform"
+            >
+              <div className="flex items-center gap-3">
+                <TrafficDot status={dot} />
+                <div>
+                  <p className="font-medium">{p.name}</p>
+                  <p className="text-xs text-[var(--text-muted)] capitalize">
+                    {p.category} · {p.unit}
+                  </p>
+                </div>
+              </div>
+              <div className="text-right">
+                <p className="font-semibold">{formatPrice(p.retail_price)}</p>
+                <p className="text-xs text-[var(--text-muted)]">retail</p>
+              </div>
+            </Link>
+          )
+        })}
+
+        {(products ?? []).length === 0 && (
+          <p className="text-center text-[var(--text-muted)] py-12">
+            No products found.
+          </p>
+        )}
+      </div>
+
+      <NavBar />
+    </div>
+  )
+}

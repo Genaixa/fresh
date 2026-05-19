@@ -1,0 +1,92 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+@layer base {
+  :root {
+    --brand-dark:    #2D5F2D;
+    --brand-accent:  #4A8C4A;
+    --brand-light:   #A8D5A8;
+    --bg:            #F5F5F0;
+    --bg-card:       #FFFFFF;
+    --text:          #1A1A1A;
+    --text-muted:    #6B7280;
+  }
+
+  .dark {
+    --bg:         #0F1A0F;
+    --bg-card:    #1E2E1E;
+    --text:       #F0F4F0;
+    --text-muted: #9CA3AF;
+  }
+
+  * { box-sizing: border-box; }
+
+  html {
+    font-family: 'Inter', system-ui, sans-serif;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    background-color: var(--bg);
+    color: var(--text);
+    min-height: 100dvh;
+  }
+
+  /* Ensure all interactive elements meet 48px minimum tap target */
+  button, a, [role="button"] {
+    min-height: 48px;
+    min-width: 48px;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-brand-accent text-white font-semibold rounded-xl px-6 py-3
+           min-h-[48px] flex items-center justify-center gap-2
+           active:scale-95 transition-transform;
+  }
+
+  .btn-secondary {
+    @apply bg-transparent border-2 border-brand-accent text-brand-accent
+           font-semibold rounded-xl px-6 py-3 min-h-[48px]
+           flex items-center justify-center gap-2
+           active:scale-95 transition-transform;
+  }
+
+  .btn-danger {
+    @apply bg-status-red text-white font-semibold rounded-xl px-6 py-3
+           min-h-[48px] flex items-center justify-center gap-2
+           active:scale-95 transition-transform;
+  }
+
+  .card {
+    @apply bg-[var(--bg-card)] rounded-2xl p-4 shadow-sm;
+  }
+
+  .status-green  { @apply text-status-green; }
+  .status-amber  { @apply text-status-amber; }
+  .status-red    { @apply text-status-red; }
+
+  .dot-green     { @apply w-2.5 h-2.5 rounded-full bg-status-green inline-block; }
+  .dot-amber     { @apply w-2.5 h-2.5 rounded-full bg-status-amber inline-block; }
+  .dot-red       { @apply w-2.5 h-2.5 rounded-full bg-status-red inline-block; }
+
+  .input-field {
+    @apply w-full rounded-xl border border-white/10 bg-[var(--bg-card)]
+           px-4 py-3 text-base text-[var(--text)] min-h-[48px]
+           focus:outline-none focus:ring-2 focus:ring-brand-accent;
+  }
+
+  /* Page wrapper — consistent padding for mobile */
+  .page {
+    @apply max-w-lg mx-auto px-4 py-6;
+  }
+
+  /* Section heading */
+  .section-title {
+    @apply text-sm font-semibold uppercase tracking-wide text-[var(--text-muted)] mb-3;
+  }
+}

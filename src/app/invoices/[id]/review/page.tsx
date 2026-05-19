@@ -1,0 +1,127 @@
+import { createClient } from '@/lib/supabase/server'
+import { notFound } from 'next/navigation'
+import Link from 'next/link'
+import { confirmInvoiceAndGeneratePrices } from './actions'
+import type { PurchaseInvoiceItem, Product } from '@/types'
+import { formatPrice } from '@/lib/pricing-engine'
+
+export default async function ReviewInvoicePage({
+  params,
+}: {
+  params: Promise<{ id: string }>
+}) {
+  const { id } = await params
+  const supabase = await createClient()
+
+  const { data: invoice } = await supabase
+    .from('purchase_invoices')
+    .select('*')
+    .eq('id', id)
+    .single()
+
+  if (!invoice) notFound()
+
+  const { data: items } = await supabase
+    .from('purchase_invoice_items')
+    .select('*, product:products(id,name)')
+    .eq('invoice_id', id)
+    .order('product_name_raw')
+
+  const { data: products } = await supabase
+    .from('products')
+    .select('id, name')
+    .eq('is_active', true)
+    .order('name')
+
+  const matched = (items ?? []).filter((i: PurchaseInvoiceItem) => i.is_matched)
+  const unmatched = (items ?? []).filter((i: PurchaseInvoiceItem) => !i.is_matched)
+
+  return (
+    <div className="page pb-24">
+      <div className="flex items-center gap-3 mb-6">
+        <Link href="/invoices" className="text-brand-accent min-h-[48px] min-w-[48px]
+                                           flex items-center justify-center text-xl">
+          ←
+        </Link>
+        <div>
+          <h1 className="text-xl font-bold">Review Invoice</h1>
+          <p className="text-xs text-[var(--text-muted)]">{invoice.supplier_name}</p>
+        </div>
+      </div>
+
+      {/* Summary */}
+      <div className="card mb-6 flex gap-6">
+        <div className="text-center">
+          <p className="text-2xl font-bold text-status-green">{matched.length}</p>
+          <p className="text-xs text-[var(--text-muted)]">Matched</p>
+        </div>
+        <div className="text-center">
+          <p className="text-2xl font-bold text-status-amber">{unmatched.length}</p>
+          <p className="text-xs text-[var(--text-muted)]">Unmatched</p>
+        </div>
+        <div className="text-center">
+          <p className="text-2xl font-bold">{(items ?? []).length}</p>
+          <p className="text-xs text-[var(--text-muted)]">Total</p>
+        </div>
+      </div>
+
+      {/* Unmatched items — need attention first */}
+      {unmatched.length > 0 && (
+        <div className="mb-6">
+          <p className="section-title text-status-amber">⚠ Unmatched items</p>
+          <div className="space-y-2">
+            {unmatched.map((item: PurchaseInvoiceItem & { product: Product | null }) => (
+              <div key={item.id} className="card border border-status-amber/30">
+                <div className="flex items-center justify-between mb-2">
+                  <p className="font-medium text-sm">{item.product_name_raw}</p>
+                  <p className="text-sm">{formatPrice(item.unit_cost)}</p>
+                </div>
+                <form action={`/api/invoices/items/${item.id}/map`} method="POST"
+                      className="flex gap-2">
+                  <select name="product_id" className="input-field text-sm py-2 flex-1">
+                    <option value="">— Skip this item —</option>
+                    {(products ?? []).map((p: { id: string; name: string }) => (
+                      <option key={p.id} value={p.id}>{p.name}</option>
+                    ))}
+                  </select>
+                  <button type="submit"
+                    className="btn-primary px-4 py-2 text-sm min-h-[44px]">
+                    Map
+                  </button>
+                </form>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Matched items */}
+      <div className="mb-6">
+        <p className="section-title">✓ Matched items</p>
+        <div className="space-y-2">
+          {matched.map((item: PurchaseInvoiceItem & { product: Product | null }) => (
+            <div key={item.id} className="card flex items-center justify-between">
+              <div>
+                <p className="font-medium text-sm">{item.product?.name ?? item.product_name_raw}</p>
+                <p className="text-xs text-[var(--text-muted)]">
+                  {item.product_name_raw !== item.product?.name && item.product_name_raw}
+                </p>
+              </div>
+              <div className="text-right">
+                <p className="font-semibold">{formatPrice(item.unit_cost)}</p>
+                <p className="text-xs text-[var(--text-muted)]">× {item.quantity}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Confirm CTA */}
+      <form action={confirmInvoiceAndGeneratePrices.bind(null, id)}>
+        <button className="btn-primary w-full text-base">
+          Confirm & Generate Price Suggestions
+        </button>
+      </form>
+    </div>
+  )
+}
