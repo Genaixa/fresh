@@ -65,7 +65,7 @@ function BulkRow({
       {/* Name + cost */}
       <div className="min-w-0">
         <p className="text-sm font-medium truncate leading-tight">{product.name}</p>
-        <p className="text-xs text-[var(--text-muted)]">{formatPrice(product.purchase_cost)}</p>
+        <p className="text-xs text-[var(--text-muted)]">cost {formatPrice(product.purchase_cost)}</p>
       </div>
 
       {/* Delta */}
@@ -107,7 +107,7 @@ function BulkRow({
           const s = e.target.value.replace(/[^0-9.]/g, '')
           setMarginStr(s)
           const m = parseFloat(s)
-          if (m > 0 && m < 100 && product.purchase_cost > 0) {
+          if (m > 0 && m <= 99 && product.purchase_cost > 0) {
             const p = Math.round(product.purchase_cost / (1 - m / 100))
             const capped = product.market_ceiling ? Math.min(p, product.market_ceiling) : p
             onChange(capped)
@@ -319,12 +319,15 @@ export default function BulkMarginPage() {
 
       {/* Column headers */}
       <div className="grid grid-cols-[1fr_40px_58px_58px_36px] gap-x-1.5 px-2.5 mb-1">
-        <p className="text-xs text-[var(--text-muted)]">Product / cost</p>
+        <p className="text-xs text-[var(--text-muted)]">Product</p>
         <p className="text-xs text-[var(--text-muted)] text-right">Δ</p>
-        <p className="text-xs text-[var(--text-muted)] text-center">Price p</p>
-        <p className="text-xs text-[var(--text-muted)] text-center">Margin</p>
+        <p className="text-xs text-[var(--text-muted)] text-center">Sell p</p>
+        <p className="text-xs text-[var(--text-muted)] text-center">GM%</p>
         <p className="text-xs text-transparent">·</p>
       </div>
+      <p className="text-xs text-[var(--text-muted)] px-2.5 mb-2">
+        GM% = gross margin. 50% GM = sell at double cost. Max 99%.
+      </p>
 
       <div className="space-y-1">
         {pricedRows.map(({ product, newPrice }) => (
