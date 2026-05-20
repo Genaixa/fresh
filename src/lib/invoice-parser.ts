@@ -84,8 +84,11 @@ export async function parseInvoicePdf(base64Pdf: string): Promise<ParsedInvoice>
 
   const text = response.choices[0]?.message?.content ?? ''
 
-  // Strip markdown fences if model adds them despite instruction
-  const cleaned = text.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '').trim()
+  // Extract the outermost JSON object — handles markdown fences, leading text, etc.
+  const jsonMatch = text.match(/\{[\s\S]*\}/)
+  if (!jsonMatch) {
+    throw new Error(`Model returned no JSON object: ${text.slice(0, 300)}`)
+  }
 
   let parsed: {
     supplier_name: string
@@ -100,9 +103,9 @@ export async function parseInvoicePdf(base64Pdf: string): Promise<ParsedInvoice>
   }
 
   try {
-    parsed = JSON.parse(cleaned)
+    parsed = JSON.parse(jsonMatch[0])
   } catch {
-    throw new Error(`Model returned unparseable response: ${text.slice(0, 300)}`)
+    throw new Error(`Model returned unparseable JSON: ${jsonMatch[0].slice(0, 300)}`)
   }
 
   return {
