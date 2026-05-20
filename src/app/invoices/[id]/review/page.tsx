@@ -7,10 +7,13 @@ import { formatPrice } from '@/lib/pricing-engine'
 
 export default async function ReviewInvoicePage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>
+  searchParams: Promise<{ show?: string }>
 }) {
   const { id } = await params
+  const { show } = await searchParams
   const supabase = await createClient()
 
   const { data: invoice } = await supabase
@@ -33,8 +36,14 @@ export default async function ReviewInvoicePage({
     .eq('is_active', true)
     .order('name')
 
-  const matched = (items ?? []).filter((i: PurchaseInvoiceItem) => i.is_matched)
-  const unmatched = (items ?? []).filter((i: PurchaseInvoiceItem) => !i.is_matched)
+  const allMatched   = (items ?? []).filter((i: PurchaseInvoiceItem) => i.is_matched)
+  const allUnmatched = (items ?? []).filter((i: PurchaseInvoiceItem) => !i.is_matched)
+
+  // Filter display based on ?show= param
+  const matched   = show === 'matched'   ? allMatched   : allMatched
+  const unmatched = show === 'unmatched' ? allUnmatched : allUnmatched
+  const showMatched   = !show || show === 'matched'
+  const showUnmatched = !show || show === 'unmatched'
 
   return (
     <div className="page pb-24">
@@ -49,24 +58,30 @@ export default async function ReviewInvoicePage({
         </div>
       </div>
 
-      {/* Summary */}
-      <div className="card mb-6 flex gap-6">
-        <div className="text-center">
-          <p className="text-2xl font-bold text-status-green">{matched.length}</p>
+      {/* Summary — tap to filter */}
+      <div className="card mb-6 flex gap-4">
+        <Link href={show === 'matched' ? `?` : `?show=matched`}
+          className={`flex-1 text-center rounded-xl py-2 transition-colors
+            ${show === 'matched' ? 'bg-status-green/20 ring-1 ring-status-green' : 'active:bg-white/5'}`}>
+          <p className="text-2xl font-bold text-status-green">{allMatched.length}</p>
           <p className="text-xs text-[var(--text-muted)]">Matched</p>
-        </div>
-        <div className="text-center">
-          <p className="text-2xl font-bold text-status-amber">{unmatched.length}</p>
+        </Link>
+        <Link href={show === 'unmatched' ? `?` : `?show=unmatched`}
+          className={`flex-1 text-center rounded-xl py-2 transition-colors
+            ${show === 'unmatched' ? 'bg-status-amber/20 ring-1 ring-status-amber' : 'active:bg-white/5'}`}>
+          <p className="text-2xl font-bold text-status-amber">{allUnmatched.length}</p>
           <p className="text-xs text-[var(--text-muted)]">Unmatched</p>
-        </div>
-        <div className="text-center">
+        </Link>
+        <Link href="?"
+          className={`flex-1 text-center rounded-xl py-2 transition-colors
+            ${!show ? 'bg-white/10 ring-1 ring-white/30' : 'active:bg-white/5'}`}>
           <p className="text-2xl font-bold">{(items ?? []).length}</p>
-          <p className="text-xs text-[var(--text-muted)]">Total</p>
-        </div>
+          <p className="text-xs text-[var(--text-muted)]">All</p>
+        </Link>
       </div>
 
       {/* Unmatched items — need attention first */}
-      {unmatched.length > 0 && (
+      {showUnmatched && allUnmatched.length > 0 && (
         <div className="mb-6">
           <div className="flex items-center justify-between mb-3">
             <p className="section-title text-status-amber mb-0">⚠ Unmatched items</p>
@@ -105,10 +120,10 @@ export default async function ReviewInvoicePage({
       )}
 
       {/* Matched items */}
-      <div className="mb-6">
+      {showMatched && allMatched.length > 0 && <div className="mb-6">
         <p className="section-title">✓ Matched items</p>
         <div className="space-y-2">
-          {matched.map((item: PurchaseInvoiceItem & { product: Product | null }) => (
+          {allMatched.map((item: PurchaseInvoiceItem & { product: Product | null }) => (
             <div key={item.id} className="card flex items-center justify-between">
               <div>
                 <p className="font-medium text-sm">{item.product?.name ?? item.product_name_raw}</p>
@@ -123,7 +138,7 @@ export default async function ReviewInvoicePage({
             </div>
           ))}
         </div>
-      </div>
+      </div>}
 
       {/* Confirm CTA */}
       <form action={confirmInvoiceAndGeneratePrices.bind(null, id)}>
