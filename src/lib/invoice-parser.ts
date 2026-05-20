@@ -62,7 +62,7 @@ export async function parseInvoicePdf(base64Pdf: string): Promise<ParsedInvoice>
 
   const response = await getClient().chat.completions.create({
     model,
-    max_tokens: 2048,
+    max_tokens: 8192,
     messages: [
       {
         role: 'user',
