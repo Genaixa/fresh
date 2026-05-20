@@ -47,7 +47,7 @@ export async function confirmInvoiceAndGeneratePrices(invoiceId: string) {
   // Get all matched items for this invoice
   const { data: items } = await supabase
     .from('purchase_invoice_items')
-    .select('product_id, unit_cost, original_quoted_price, negotiated_price')
+    .select('product_id, unit_cost, units_per_case, original_quoted_price, negotiated_price')
     .eq('invoice_id', invoiceId)
     .eq('is_matched', true)
     .not('product_id', 'is', null)
@@ -56,13 +56,17 @@ export async function confirmInvoiceAndGeneratePrices(invoiceId: string) {
     redirect(`/invoices/${invoiceId}`)
   }
 
-  // Update each product's purchase_cost with the new invoice price
+  // Update each product's purchase_cost and case_size from the invoice
   // Business rule: use negotiated_price if set, otherwise unit_cost
   for (const item of items) {
     const new_cost = item.negotiated_price ?? item.unit_cost
+    const update: Record<string, unknown> = { purchase_cost: new_cost }
+    if (item.units_per_case && item.units_per_case > 1) {
+      update.case_size = item.units_per_case
+    }
     await supabase
       .from('products')
-      .update({ purchase_cost: new_cost })
+      .update(update)
       .eq('id', item.product_id)
   }
 

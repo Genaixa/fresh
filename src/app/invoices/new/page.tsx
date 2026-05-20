@@ -3,6 +3,14 @@
 import { useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 
+interface DuplicateInfo {
+  type: 'identical' | 'different'
+  existing_id: string
+  supplier_name: string
+  invoice_date: string
+  changes?: { added: number; removed: number; repriced: number }
+}
+
 export default function UploadInvoicePage() {
   const router = useRouter()
   const fileRef = useRef<HTMLInputElement>(null)
@@ -10,41 +18,53 @@ export default function UploadInvoicePage() {
   const [uploading, setUploading] = useState(false)
   const [progress, setProgress] = useState(0)
   const [error, setError] = useState<string | null>(null)
+  const [duplicate, setDuplicate] = useState<DuplicateInfo | null>(null)
 
   const today = new Date().toLocaleDateString('en-GB', {
     year: 'numeric', month: '2-digit', day: '2-digit',
-  }).split('/').reverse().join('-') // Convert to YYYY-MM-DD for input
+  }).split('/').reverse().join('-')
 
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault()
+  async function doUpload(extraFields?: Record<string, string>) {
     if (!file) return
 
     setUploading(true)
     setError(null)
+    setDuplicate(null)
     setProgress(10)
 
-    const form = e.currentTarget
-    const formData = new FormData(form)
+    const formData = new FormData()
     formData.set('pdf', file)
+    if (extraFields) {
+      for (const [k, v] of Object.entries(extraFields)) formData.set(k, v)
+    }
 
     try {
       setProgress(30)
-      const res = await fetch('/api/invoices/upload', {
-        method: 'POST',
-        body: formData,
-      })
+      const res = await fetch('/api/invoices/upload', { method: 'POST', body: formData })
       setProgress(80)
       const text = await res.text()
+
+      if (res.status === 409) {
+        const data = JSON.parse(text)
+        setDuplicate({
+          type:          data.duplicate,
+          existing_id:   data.existing_id,
+          supplier_name: data.supplier_name,
+          invoice_date:  data.invoice_date,
+          changes:       data.changes,
+        })
+        setUploading(false)
+        setProgress(0)
+        return
+      }
+
       if (!res.ok) {
-        // Handle non-JSON responses (e.g. auth redirect returning HTML)
         let msg = 'Upload failed'
-        try { msg = JSON.parse(text)?.error ?? msg } catch { /* html response */ }
-        if (res.status === 401 || res.redirected) {
-          window.location.href = '/login'
-          return
-        }
+        try { msg = JSON.parse(text)?.error ?? msg } catch { /* html */ }
+        if (res.status === 401 || res.redirected) { window.location.href = '/login'; return }
         throw new Error(msg)
       }
+
       const data = JSON.parse(text)
       setProgress(100)
       router.push(`/invoices/${data.invoice_id}/review`)
@@ -53,6 +73,11 @@ export default function UploadInvoicePage() {
       setUploading(false)
       setProgress(0)
     }
+  }
+
+  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault()
+    doUpload()
   }
 
   return (
@@ -77,13 +102,59 @@ export default function UploadInvoicePage() {
             />
           </div>
           <p className="text-sm text-[var(--text-muted)]">{progress}%</p>
-          <p className="text-xs text-[var(--text-muted)] mt-4">
-            AI is reading your invoice…
-          </p>
+          <p className="text-xs text-[var(--text-muted)] mt-4">AI is reading your invoice…</p>
+        </div>
+      ) : duplicate ? (
+        <div className="space-y-4">
+          <div className={`card border ${duplicate.type === 'identical'
+            ? 'border-status-amber/40 bg-status-amber/5'
+            : 'border-status-red/40 bg-status-red/5'}`}>
+            <p className="font-semibold text-base mb-1">
+              {duplicate.type === 'identical' ? '⚠ Invoice already uploaded' : '⚠ Similar invoice exists'}
+            </p>
+            <p className="text-sm text-[var(--text-muted)] mb-3">
+              {duplicate.supplier_name} · {new Date(duplicate.invoice_date).toLocaleDateString('en-GB')}
+            </p>
+
+            {duplicate.type === 'identical' ? (
+              <p className="text-sm">
+                This invoice is <strong>100% identical</strong> to one already in the system.
+                You can replace it or go back.
+              </p>
+            ) : (
+              <div className="text-sm space-y-1">
+                <p>An invoice for the same date exists but the contents differ:</p>
+                <ul className="mt-2 space-y-0.5 text-[var(--text-muted)]">
+                  {(duplicate.changes?.added ?? 0) > 0 && (
+                    <li>+ {duplicate.changes!.added} new line{duplicate.changes!.added > 1 ? 's' : ''}</li>
+                  )}
+                  {(duplicate.changes?.removed ?? 0) > 0 && (
+                    <li>− {duplicate.changes!.removed} removed line{duplicate.changes!.removed > 1 ? 's' : ''}</li>
+                  )}
+                  {(duplicate.changes?.repriced ?? 0) > 0 && (
+                    <li>~ {duplicate.changes!.repriced} price change{duplicate.changes!.repriced > 1 ? 's' : ''}</li>
+                  )}
+                </ul>
+                <p className="mt-2">Replace the old invoice with this one?</p>
+              </div>
+            )}
+          </div>
+
+          <button
+            onClick={() => doUpload({ force: duplicate.type, replace_id: duplicate.existing_id })}
+            className="btn-primary w-full"
+          >
+            {duplicate.type === 'identical' ? 'Upload anyway' : 'Yes, replace old invoice'}
+          </button>
+          <button
+            onClick={() => { setDuplicate(null); setFile(null) }}
+            className="w-full py-3 rounded-xl border border-white/20 text-sm"
+          >
+            Cancel — go back
+          </button>
         </div>
       ) : (
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* File drop zone */}
           <div
             onClick={() => fileRef.current?.click()}
             className="card border-2 border-dashed border-brand-accent/40 flex flex-col
@@ -105,31 +176,6 @@ export default function UploadInvoicePage() {
               accept="application/pdf"
               className="hidden"
               onChange={e => setFile(e.target.files?.[0] ?? null)}
-            />
-          </div>
-
-          {/* Date and supplier */}
-          <div>
-            <label className="block text-sm font-medium mb-1.5 text-[var(--text-muted)]">
-              Invoice date
-            </label>
-            <input
-              name="invoice_date"
-              type="date"
-              defaultValue={today}
-              required
-              className="input-field"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium mb-1.5 text-[var(--text-muted)]">
-              Supplier (optional)
-            </label>
-            <input
-              name="supplier_name"
-              className="input-field"
-              placeholder="e.g. Newcastle Fruit Market"
             />
           </div>
 

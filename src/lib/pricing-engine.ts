@@ -9,9 +9,11 @@ import type { Product, PricingResult } from '@/types'
  * All prices in pence (integers).
  */
 export function calculateSuggestedPrice(product: Product): PricingResult {
-  const { id, purchase_cost, price_multiplier, market_ceiling, margin_floor } = product
+  const { id, purchase_cost, case_size, price_multiplier, market_ceiling, margin_floor } = product
 
-  const raw_price = Math.round(purchase_cost * price_multiplier)
+  // Divide box cost by units per case to get per-unit cost before applying markup
+  const unit_cost = case_size > 1 ? purchase_cost / case_size : purchase_cost
+  const raw_price = Math.round(unit_cost * price_multiplier)
 
   let suggested_price = raw_price
   let rule_applied: PricingResult['rule_applied'] = 'multiplier'
@@ -22,7 +24,7 @@ export function calculateSuggestedPrice(product: Product): PricingResult {
   }
 
   const margin_percentage = suggested_price > 0
-    ? (suggested_price - purchase_cost) / suggested_price
+    ? (suggested_price - unit_cost) / suggested_price
     : 0
 
   const margin_warning = margin_percentage < margin_floor

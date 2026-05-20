@@ -7,8 +7,9 @@ const DEFAULT_MODEL = 'google/gemini-2.5-flash'
 export interface ParsedInvoiceItem {
   product_name_raw: string
   quantity: number
-  unit_cost: number   // pence
-  total_cost: number  // pence
+  unit_cost: number       // pence (per box/case as purchased)
+  total_cost: number      // pence
+  units_per_case: number  // retail units inside the box; e.g. "10x500G" → 10
 }
 
 export interface ParsedInvoice {
@@ -41,7 +42,8 @@ Return ONLY valid JSON — no markdown fences, no explanation:
       "product_name_raw": "exact name from invoice",
       "quantity": number,
       "unit_cost_pence": number,
-      "total_cost_pence": number
+      "total_cost_pence": number,
+      "units_per_case": number
     }
   ],
   "raw_total_pence": number or null
@@ -51,7 +53,11 @@ Rules:
 - Convert all prices to integer pence. £1.50 = 150, 45p = 45.
 - If a price is missing or unreadable, use 0.
 - If the date is ambiguous, use DD/MM/YYYY interpretation (UK).
-- Do not include VAT rows or subtotal rows as line items.`
+- Do not include VAT rows or subtotal rows as line items.
+- units_per_case: how many individual retail units are inside each purchased box or case.
+  Look for patterns like "10x500G" (→ 10), "6x1KG" (→ 6), "12KG" with a known pack count,
+  "PRE" (prepacked, look for number before x), "BAG 5KG" (→ 1 bag as one retail unit).
+  If you cannot determine the count, use 1.`
 
 /**
  * Parse a market invoice PDF using OpenRouter.
@@ -98,6 +104,7 @@ export async function parseInvoicePdf(base64Pdf: string): Promise<ParsedInvoice>
       quantity: number
       unit_cost_pence: number
       total_cost_pence: number
+      units_per_case: number
     }>
     raw_total_pence: number | null
   }
@@ -113,9 +120,10 @@ export async function parseInvoicePdf(base64Pdf: string): Promise<ParsedInvoice>
     invoice_date: parsed.invoice_date ?? new Date().toISOString().slice(0, 10),
     items: (parsed.items ?? []).map(item => ({
       product_name_raw: item.product_name_raw,
-      quantity: item.quantity ?? 1,
-      unit_cost:  item.unit_cost_pence  ?? 0,
-      total_cost: item.total_cost_pence ?? 0,
+      quantity:       item.quantity       ?? 1,
+      unit_cost:      item.unit_cost_pence  ?? 0,
+      total_cost:     item.total_cost_pence ?? 0,
+      units_per_case: item.units_per_case   ?? 1,
     })),
     raw_total: parsed.raw_total_pence ?? null,
   }

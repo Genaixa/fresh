@@ -30,7 +30,8 @@ export interface Product {
   unit: ProductUnit
   retail_price: number       // pence
   wholesale_price: number    // pence
-  purchase_cost: number      // pence
+  purchase_cost: number      // pence (per box/case)
+  case_size: number          // retail units per box; default 1
   price_multiplier: number
   market_ceiling: number | null  // pence
   margin_floor: number           // e.g. 0.20
@@ -58,8 +59,9 @@ export interface PurchaseInvoiceItem {
   product_id: string | null
   product_name_raw: string
   quantity: number
-  unit_cost: number             // pence
+  unit_cost: number             // pence (per box/case)
   total_cost: number            // pence
+  units_per_case: number | null // retail units per box, parsed from invoice name
   original_quoted_price: number | null  // pence
   negotiated_price: number | null       // pence
   discount_amount: number               // pence (generated)
