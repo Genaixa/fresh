@@ -18,14 +18,18 @@ export interface ParsedInvoice {
   raw_total: number | null  // pence
 }
 
-const client = new OpenAI({
-  baseURL: 'https://openrouter.ai/api/v1',
-  apiKey: process.env.OPENROUTER_API_KEY!,
-  defaultHeaders: {
-    'HTTP-Referer': 'https://freshandfruity.co.uk',
-    'X-Title': 'Fresh & Fruity POS',
-  },
-})
+function getClient() {
+  const apiKey = process.env.OPENROUTER_API_KEY
+  if (!apiKey) throw new Error('OPENROUTER_API_KEY is not set')
+  return new OpenAI({
+    baseURL: 'https://openrouter.ai/api/v1',
+    apiKey,
+    defaultHeaders: {
+      'HTTP-Referer': 'https://freshandfruity.co.uk',
+      'X-Title': 'Fresh & Fruity POS',
+    },
+  })
+}
 
 const PROMPT = `Extract all line items from this market produce invoice.
 Return ONLY valid JSON — no markdown fences, no explanation:
@@ -56,7 +60,7 @@ Rules:
 export async function parseInvoicePdf(base64Pdf: string): Promise<ParsedInvoice> {
   const model = process.env.OPENROUTER_MODEL ?? DEFAULT_MODEL
 
-  const response = await client.chat.completions.create({
+  const response = await getClient().chat.completions.create({
     model,
     max_tokens: 2048,
     messages: [
