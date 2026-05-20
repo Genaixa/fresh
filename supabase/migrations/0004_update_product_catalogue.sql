@@ -48,6 +48,14 @@ INSERT INTO products (name, category, unit, retail_price, wholesale_price, purch
   ('Potato Washed',   'veg', 'kg',     0, 0, 0, 2.00, 0.20),
   ('Tomato Cherry',   'veg', 'punnet', 0, 0, 0, 2.00, 0.20);
 
--- ── 6. Fix duplicate Grape Crimson/Thompson (already renamed above,
---       so skip insert if they already exist from the rename)
--- No-op: covered by the UPDATE in step 1
+-- ── 6. Add non-produce items (category: other) ──────────────
+INSERT INTO products (name, category, unit, retail_price, wholesale_price, purchase_cost, price_multiplier, margin_floor) VALUES
+  ('Water Still 500ml', 'other', 'each', 0, 0, 0, 2.00, 0.20),
+  ('Plastic Bags',      'other', 'each', 0, 0, 0, 2.00, 0.20);
+
+-- ── 7. Add generic Potato for prepacked lines ────────────────
+INSERT INTO products (name, category, unit, retail_price, wholesale_price, purchase_cost, price_multiplier, margin_floor) VALUES
+  ('Potato', 'veg', 'kg', 0, 0, 0, 2.00, 0.20);
+
+-- ── 8. Note: Grape Crimson & Thompson already exist from step 1 rename
+--       No additional insert needed for those.
