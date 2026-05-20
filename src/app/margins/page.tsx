@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { NavBar } from '@/components/ui/NavBar'
 import { formatMargin, formatPrice } from '@/lib/pricing-engine'
 import { marginStatus, TrafficDot } from '@/components/ui/TrafficDot'
+import { MarginCharts } from '@/components/ui/MarginCharts'
 import type { Product } from '@/types'
 
 export default async function MarginsPage() {
@@ -81,6 +82,17 @@ export default async function MarginsPage() {
           −{formatPrice(totalWastePence)}
         </p>
       </div>
+
+      {/* Charts */}
+      <MarginCharts
+        products={(products ?? []).map((p: Product) => ({
+          name:          p.name,
+          cost:          p.purchase_cost,
+          price:         p.retail_price,
+          originalPrice: p.retail_price,
+          marginFloor:   p.margin_floor,
+        }))}
+      />
 
       {/* Per product */}
       <p className="section-title">By product</p>
