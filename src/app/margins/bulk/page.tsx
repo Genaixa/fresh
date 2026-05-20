@@ -31,31 +31,37 @@ function BulkRow({
   onChange: (price: number) => void
 }) {
   const [priceStr, setPriceStr] = useState(String(newPrice || ''))
-  const [marginStr, setMarginStr] = useState('')
+  const [markupStr, setMarkupStr] = useState('')
   const [priceFocused, setPriceFocused] = useState(false)
-  const [marginFocused, setMarginFocused] = useState(false)
+  const [markupFocused, setMarkupFocused] = useState(false)
 
-  const computedMargin =
+  // Markup % = (price - cost) / cost × 100  — so 100 = double the cost
+  const computedMarkup =
     newPrice > 0 && product.purchase_cost > 0
-      ? ((newPrice - product.purchase_cost) / newPrice) * 100
+      ? ((newPrice - product.purchase_cost) / product.purchase_cost) * 100
+      : null
+
+  // Gross margin (for colour coding against margin_floor stored in DB)
+  const computedGM =
+    newPrice > 0 && product.purchase_cost > 0
+      ? (newPrice - product.purchase_cost) / newPrice
       : null
 
   // Sync from parent (nudge-all / reset) when not editing
   useEffect(() => {
     if (!priceFocused) setPriceStr(newPrice > 0 ? String(newPrice) : '')
-    if (!marginFocused) setMarginStr(computedMargin != null ? computedMargin.toFixed(1) : '')
+    if (!markupFocused) setMarkupStr(computedMarkup != null ? computedMarkup.toFixed(0) : '')
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [newPrice, priceFocused, marginFocused])
+  }, [newPrice, priceFocused, markupFocused])
 
   const changed = newPrice !== product.retail_price && newPrice > 0
   const priceDelta = changed ? newPrice - product.retail_price : 0
 
-  let marginColour = 'text-[var(--text-muted)]'
-  if (computedMargin != null) {
-    const m = computedMargin / 100
-    if (m >= product.margin_floor) marginColour = 'text-status-green'
-    else if (m >= product.margin_floor * 0.8) marginColour = 'text-status-amber'
-    else marginColour = 'text-status-red'
+  let markupColour = 'text-[var(--text-muted)]'
+  if (computedGM != null) {
+    if (computedGM >= product.margin_floor) markupColour = 'text-status-green'
+    else if (computedGM >= product.margin_floor * 0.8) markupColour = 'text-status-amber'
+    else markupColour = 'text-status-red'
   }
 
   return (
@@ -86,10 +92,10 @@ function BulkRow({
           setPriceStr(s)
           const p = parseInt(s) || 0
           onChange(p)
-          if (!marginFocused) {
-            const m = p > 0 && product.purchase_cost > 0
-              ? ((p - product.purchase_cost) / p * 100).toFixed(1) : ''
-            setMarginStr(m)
+          if (!markupFocused) {
+            const mu = p > 0 && product.purchase_cost > 0
+              ? ((p - product.purchase_cost) / product.purchase_cost * 100).toFixed(0) : ''
+            setMarkupStr(mu)
           }
         }}
         onBlur={() => setPriceFocused(false)}
@@ -97,27 +103,27 @@ function BulkRow({
                    text-sm text-center focus:outline-none focus:ring-1 focus:ring-brand-accent"
       />
 
-      {/* Margin input */}
+      {/* Markup input */}
       <input
-        type="text" inputMode="decimal"
-        value={marginStr}
+        type="text" inputMode="numeric"
+        value={markupStr}
         placeholder="%"
-        onFocus={() => setMarginFocused(true)}
+        onFocus={() => setMarkupFocused(true)}
         onChange={e => {
-          const s = e.target.value.replace(/[^0-9.]/g, '')
-          setMarginStr(s)
-          const m = parseFloat(s)
-          if (m > 0 && m <= 99 && product.purchase_cost > 0) {
-            const p = Math.round(product.purchase_cost / (1 - m / 100))
+          const s = e.target.value.replace(/[^0-9]/g, '')
+          setMarkupStr(s)
+          const mu = parseInt(s)
+          if (mu > 0 && product.purchase_cost > 0) {
+            const p = Math.round(product.purchase_cost * (1 + mu / 100))
             const capped = product.market_ceiling ? Math.min(p, product.market_ceiling) : p
             onChange(capped)
             if (!priceFocused) setPriceStr(String(capped))
           }
         }}
-        onBlur={() => setMarginFocused(false)}
+        onBlur={() => setMarkupFocused(false)}
         className={`w-full rounded-lg bg-white/10 border border-white/10 px-1.5 py-1.5
                     text-sm text-center focus:outline-none focus:ring-1 focus:ring-brand-accent
-                    ${marginColour}`}
+                    ${markupColour}`}
       />
     </div>
   )
@@ -159,10 +165,10 @@ export default function BulkMarginPage() {
     setRows(prev => prev.map(r => ({ ...r, newPrice: r.product.retail_price })))
   }
 
-  function setMarginAll(targetMargin: number) {
+  function setMarkupAll(targetMarkup: number) {
     setRows(prev => prev.map(r => {
       if (r.product.purchase_cost <= 0) return r
-      const p = Math.round(r.product.purchase_cost / (1 - targetMargin))
+      const p = Math.round(r.product.purchase_cost * (1 + targetMarkup / 100))
       const capped = r.product.market_ceiling ? Math.min(p, r.product.market_ceiling) : p
       return { ...r, newPrice: capped }
     }))
@@ -306,10 +312,10 @@ export default function BulkMarginPage() {
             Reset
           </button>
         </div>
-        <p className="text-xs text-[var(--text-muted)] mb-2">Set all to target margin</p>
+        <p className="text-xs text-[var(--text-muted)] mb-2">Set all markup to</p>
         <div className="flex gap-2">
-          {[25, 30, 35, 40, 50].map(pct => (
-            <button key={pct} onClick={() => setMarginAll(pct / 100)}
+          {[50, 75, 100, 150, 200].map(pct => (
+            <button key={pct} onClick={() => setMarkupAll(pct)}
               className="flex-1 rounded-xl py-2.5 text-sm font-semibold min-h-[44px] bg-brand-accent/20 text-brand-accent">
               {pct}%
             </button>
@@ -322,11 +328,11 @@ export default function BulkMarginPage() {
         <p className="text-xs text-[var(--text-muted)]">Product</p>
         <p className="text-xs text-[var(--text-muted)] text-right">Δ</p>
         <p className="text-xs text-[var(--text-muted)] text-center">Sell p</p>
-        <p className="text-xs text-[var(--text-muted)] text-center">GM%</p>
+        <p className="text-xs text-[var(--text-muted)] text-center">Markup</p>
         <p className="text-xs text-transparent">·</p>
       </div>
       <p className="text-xs text-[var(--text-muted)] px-2.5 mb-2">
-        GM% = gross margin. 50% GM = sell at double cost. Max 99%.
+        Markup = profit ÷ cost. 100% = sell at double cost.
       </p>
 
       <div className="space-y-1">
