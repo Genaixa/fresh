@@ -9,6 +9,7 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
   const searchParams = useSearchParams()
   const hasError = searchParams.get('error') === 'invalid_credentials'
+  const wasReset = searchParams.get('reset') === '1'
 
   return (
     <div className="min-h-dvh flex flex-col items-center justify-center px-6 bg-[var(--bg)]">
@@ -19,6 +20,12 @@ export default function LoginPage() {
           <h1 className="text-2xl font-bold text-brand-accent">Fresh & Fruity</h1>
           <p className="text-[var(--text-muted)] text-sm mt-1">Bensham, Gateshead</p>
         </div>
+
+        {wasReset && (
+          <div className="mb-4 rounded-xl bg-green-500/15 border border-green-500/30 px-4 py-3 text-sm text-green-400 text-center">
+            Password updated. Sign in with your new password.
+          </div>
+        )}
 
         {hasError && (
           <div className="mb-4 rounded-xl bg-red-500/15 border border-red-500/30 px-4 py-3 text-sm text-red-400 text-center">
