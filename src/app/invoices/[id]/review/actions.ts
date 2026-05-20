@@ -66,12 +66,23 @@ export async function confirmInvoiceAndGeneratePrices(invoiceId: string) {
       .eq('id', item.product_id)
   }
 
+  // Deduplicate product IDs (multiple invoice lines can map to the same product)
+  const productIds = [...new Set(
+    items.map(i => i.product_id).filter((id): id is string => id !== null)
+  )]
+
+  if (productIds.length === 0) redirect('/pricing')
+
   // Re-fetch updated products and generate price suggestions
-  const productIds = items.map(i => i.product_id)
-  const { data: products } = await supabase
+  const { data: products, error: prodErr } = await supabase
     .from('products')
     .select('*')
     .in('id', productIds)
+
+  if (prodErr || !products || products.length === 0) {
+    console.error('Failed to fetch products for suggestions:', prodErr)
+    redirect('/pricing')
+  }
 
   const suggestions = (products as Product[]).map(product => {
     const result = calculateSuggestedPrice(product)
@@ -93,7 +104,10 @@ export async function confirmInvoiceAndGeneratePrices(invoiceId: string) {
   )
 
   if (changingSuggestions.length > 0) {
-    await supabase.from('price_suggestions').insert(changingSuggestions)
+    const { error: insertErr } = await supabase
+      .from('price_suggestions')
+      .insert(changingSuggestions)
+    if (insertErr) console.error('Price suggestions insert error:', insertErr)
   }
 
   redirect('/pricing')
