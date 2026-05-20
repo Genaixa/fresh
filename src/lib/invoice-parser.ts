@@ -1,8 +1,8 @@
 import OpenAI from 'openai'
 
 // Default model — change via OPENROUTER_MODEL env var to swap without code changes
-// Good options: google/gemini-2.0-flash, google/gemini-2.0-flash-lite, anthropic/claude-sonnet-4-6
-const DEFAULT_MODEL = 'google/gemini-2.0-flash'
+// Good options: google/gemini-2.5-flash, google/gemini-2.0-flash-001, anthropic/claude-sonnet-4-6
+const DEFAULT_MODEL = 'google/gemini-2.5-flash'
 
 export interface ParsedInvoiceItem {
   product_name_raw: string
