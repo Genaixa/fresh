@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
-import { confirmInvoiceAndGeneratePrices } from './actions'
+import { confirmInvoiceAndGeneratePrices, rematchInvoiceItems } from './actions'
 import type { PurchaseInvoiceItem, Product } from '@/types'
 import { formatPrice } from '@/lib/pricing-engine'
 
@@ -68,7 +68,16 @@ export default async function ReviewInvoicePage({
       {/* Unmatched items — need attention first */}
       {unmatched.length > 0 && (
         <div className="mb-6">
-          <p className="section-title text-status-amber">⚠ Unmatched items</p>
+          <div className="flex items-center justify-between mb-3">
+            <p className="section-title text-status-amber mb-0">⚠ Unmatched items</p>
+            <form action={rematchInvoiceItems.bind(null, id)}>
+              <button type="submit"
+                className="text-xs text-brand-accent border border-brand-accent/40
+                           rounded-lg px-3 py-1.5 min-h-[36px] active:scale-95 transition-transform">
+                Auto-match
+              </button>
+            </form>
+          </div>
           <div className="space-y-2">
             {unmatched.map((item: PurchaseInvoiceItem & { product: Product | null }) => (
               <div key={item.id} className="card border border-status-amber/30">

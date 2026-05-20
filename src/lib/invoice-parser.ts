@@ -133,17 +133,20 @@ export function fuzzyMatchProduct(
     s.toLowerCase().replace(/[^a-z0-9 ]/g, '').trim()
 
   const needle = normalise(rawName)
-  const tokens = needle.split(/\s+/)
 
   let bestId: string | null = null
   let bestScore = 0
 
   for (const product of catalogue) {
     const haystack = normalise(product.name)
-    const matchedTokens = tokens.filter(t => haystack.includes(t))
-    const score = matchedTokens.length / tokens.length
+    // Score by how many of the SHORT catalogue name tokens appear in the
+    // LONG invoice name — not the other way around. Invoice names carry
+    // extra country/size/packaging tokens that shouldn't dilute the score.
+    const catalogueTokens = haystack.split(/\s+/).filter(t => t.length > 1)
+    const matched = catalogueTokens.filter(t => needle.includes(t))
+    const score = matched.length / catalogueTokens.length
 
-    if (score > bestScore && score >= 0.5) {
+    if (score > bestScore && score >= 0.6) {
       bestScore = score
       bestId = product.id
     }

@@ -1,9 +1,45 @@
 'use server'
 
 import { redirect } from 'next/navigation'
+import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
-import { calculateSuggestedPrice } from '@/lib/pricing-engine'
+import { calculateSuggestedPrice, } from '@/lib/pricing-engine'
+import { fuzzyMatchProduct } from '@/lib/invoice-parser'
 import type { Product } from '@/types'
+
+export async function rematchInvoiceItems(invoiceId: string) {
+  const supabase = await createClient()
+
+  const { data: items } = await supabase
+    .from('purchase_invoice_items')
+    .select('id, product_name_raw')
+    .eq('invoice_id', invoiceId)
+    .eq('is_matched', false)
+
+  if (!items || items.length === 0) {
+    revalidatePath(`/invoices/${invoiceId}/review`)
+    return
+  }
+
+  const { data: catalogue } = await supabase
+    .from('products')
+    .select('id, name')
+    .eq('is_active', true)
+
+  let matchCount = 0
+  for (const item of items) {
+    const product_id = fuzzyMatchProduct(item.product_name_raw, catalogue ?? [])
+    if (product_id) {
+      await supabase
+        .from('purchase_invoice_items')
+        .update({ product_id, is_matched: true })
+        .eq('id', item.id)
+      matchCount++
+    }
+  }
+
+  revalidatePath(`/invoices/${invoiceId}/review`)
+}
 
 export async function confirmInvoiceAndGeneratePrices(invoiceId: string) {
   const supabase = await createClient()
