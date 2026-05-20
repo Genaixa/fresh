@@ -34,8 +34,18 @@ export default function UploadInvoicePage() {
         body: formData,
       })
       setProgress(80)
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error ?? 'Upload failed')
+      const text = await res.text()
+      if (!res.ok) {
+        // Handle non-JSON responses (e.g. auth redirect returning HTML)
+        let msg = 'Upload failed'
+        try { msg = JSON.parse(text)?.error ?? msg } catch { /* html response */ }
+        if (res.status === 401 || res.redirected) {
+          window.location.href = '/login'
+          return
+        }
+        throw new Error(msg)
+      }
+      const data = JSON.parse(text)
       setProgress(100)
       router.push(`/invoices/${data.invoice_id}/review`)
     } catch (err) {
@@ -68,7 +78,7 @@ export default function UploadInvoicePage() {
           </div>
           <p className="text-sm text-[var(--text-muted)]">{progress}%</p>
           <p className="text-xs text-[var(--text-muted)] mt-4">
-            Claude AI is reading your invoice…
+            AI is reading your invoice…
           </p>
         </div>
       ) : (
