@@ -30,7 +30,7 @@ export async function updateSession(request: NextRequest) {
   const pathname = request.nextUrl.pathname
 
   // Public routes that don't need auth
-  const publicRoutes = ['/login']
+  const publicRoutes = ['/login', '/forgot-password', '/reset-password']
   if (publicRoutes.includes(pathname)) {
     return supabaseResponse
   }
