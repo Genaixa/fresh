@@ -45,10 +45,16 @@ export default async function MarginsPage() {
     <div className="page pb-24">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-xl font-bold">Margins</h1>
-        <Link href="/margins/sim"
-          className="text-brand-accent text-sm min-h-[44px] flex items-center">
-          Simulator →
-        </Link>
+        <div className="flex gap-3">
+          <Link href="/margins/bulk"
+            className="text-brand-accent text-sm min-h-[44px] flex items-center">
+            Bulk →
+          </Link>
+          <Link href="/margins/sim"
+            className="text-brand-accent text-sm min-h-[44px] flex items-center">
+            Sim →
+          </Link>
+        </div>
       </div>
 
       {/* Overall card */}

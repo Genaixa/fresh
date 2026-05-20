@@ -74,10 +74,10 @@ export default async function DashboardPage() {
       {/* Quick actions grid */}
       <p className="section-title">Quick Actions</p>
       <div className="grid grid-cols-2 gap-3 mb-8">
-        <QuickAction href="/invoices/new"    icon="📤" label="Upload Invoice" />
         <QuickAction href="/waste"           icon="⚠️" label="Log Waste" />
         <QuickAction href="/margins"         icon="📊" label="Margins" />
         <QuickAction href="/price-history"   icon="🔍" label="Price History" />
+        <QuickAction href="/pricing"         icon="💰" label="Pricing" />
       </div>
 
       {/* More section */}

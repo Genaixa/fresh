@@ -55,17 +55,24 @@ export default function SimulatorPage() {
           <label className="block text-sm font-medium mb-1.5 text-[var(--text-muted)]">
             Price change (pence)
           </label>
-          <input type="number" value={delta} onChange={e => setDelta(parseInt(e.target.value) || 0)}
-                 className="input-field" placeholder="e.g. 5" />
+          <input
+            type="text" inputMode="numeric" pattern="-?[0-9]*"
+            value={delta === 0 ? '' : delta}
+            onChange={e => setDelta(parseInt(e.target.value.replace(/[^0-9-]/g, '')) || 0)}
+            className="input-field" placeholder="e.g. 5"
+          />
         </div>
 
         <div>
           <label className="block text-sm font-medium mb-1.5 text-[var(--text-muted)]">
             Avg weekly sales (units)
           </label>
-          <input type="number" value={weeklySales}
-                 onChange={e => setWeeklySales(parseInt(e.target.value) || 0)}
-                 className="input-field" placeholder="e.g. 50" />
+          <input
+            type="text" inputMode="numeric" pattern="[0-9]*"
+            value={weeklySales === 0 ? '' : weeklySales}
+            onChange={e => setWeeklySales(parseInt(e.target.value.replace(/[^0-9]/g, '')) || 0)}
+            className="input-field" placeholder="e.g. 50"
+          />
         </div>
       </div>
 

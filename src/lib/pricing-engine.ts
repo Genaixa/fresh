@@ -76,6 +76,7 @@ export function simulatePriceChange(
 
 /** Format pence to £ display string */
 export function formatPrice(pence: number): string {
+  if (pence < 0) return `-${formatPrice(-pence)}`
   if (pence < 100) return `${pence}p`
   return `£${(pence / 100).toFixed(2)}`
 }
