@@ -1,10 +1,11 @@
 'use client'
 
+import { Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { resetPassword } from './actions'
 
-export default function ForgotPasswordPage() {
+function ForgotPasswordContent() {
   const searchParams = useSearchParams()
   const sent = searchParams.get('sent') === '1'
   const hasError = searchParams.get('error') === '1'
@@ -74,4 +75,8 @@ export default function ForgotPasswordPage() {
       </div>
     </div>
   )
+}
+
+export default function ForgotPasswordPage() {
+  return <Suspense><ForgotPasswordContent /></Suspense>
 }

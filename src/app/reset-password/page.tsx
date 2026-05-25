@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { Suspense, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { updatePassword } from './actions'
 
@@ -26,7 +26,7 @@ function EyeIcon({ open }: { open: boolean }) {
   )
 }
 
-export default function ResetPasswordPage() {
+function ResetPasswordContent() {
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirm, setShowConfirm] = useState(false)
   const [mismatch, setMismatch] = useState(false)
@@ -132,4 +132,8 @@ export default function ResetPasswordPage() {
       </div>
     </div>
   )
+}
+
+export default function ResetPasswordPage() {
+  return <Suspense><ResetPasswordContent /></Suspense>
 }
