@@ -58,10 +58,13 @@ export interface PurchaseInvoiceItem {
   invoice_id: string
   product_id: string | null
   product_name_raw: string
+  brand_raw: string | null
   quantity: number
   unit_cost: number             // pence (per box/case)
   total_cost: number            // pence
-  units_per_case: number | null // retail units per box, parsed from invoice name
+  unit_type: 'count' | 'weight' | null
+  units_per_case: number | null // retail units per box (count-based)
+  box_weight_kg: number | null  // kg per box (weight-based)
   original_quoted_price: number | null  // pence
   negotiated_price: number | null       // pence
   discount_amount: number               // pence (generated)
@@ -131,6 +134,110 @@ export interface PricingResult {
   rule_applied: PricingRule
   margin_percentage: number
   margin_warning: boolean    // true if ceiling prevents margin_floor
+}
+
+// ────────────────────────────────────────────────────────────
+// STAGE 2 — WHOLESALE INVOICING
+// ────────────────────────────────────────────────────────────
+
+export type OrderStatus          = 'draft' | 'confirmed' | 'dispatched' | 'cancelled'
+export type InvoicePaymentStatus = 'unpaid' | 'partial' | 'paid' | 'overdue'
+export type PaymentMethod        = 'bank_transfer' | 'cash' | 'card' | 'other'
+
+export interface WholesaleCustomer {
+  id:             string
+  name:           string
+  contact_name:   string | null
+  email:          string | null
+  phone:          string | null
+  address:        string | null
+  payment_terms:  number          // days
+  is_active:      boolean
+  portal_user_id: string | null
+  created_at:     string
+  updated_at:     string
+}
+
+export interface WholesaleOrder {
+  id:            string
+  customer_id:   string
+  order_date:    string
+  delivery_date: string | null
+  status:        OrderStatus
+  notes:         string | null
+  created_by:    string | null
+  created_at:    string
+  updated_at:    string
+  // joined
+  customer?:     WholesaleCustomer
+  items?:        WholesaleOrderItem[]
+}
+
+export interface WholesaleOrderItem {
+  id:         string
+  order_id:   string
+  product_id: string
+  quantity:   number
+  unit_price: number   // pence — locked at time of order
+  created_at: string
+  // joined
+  product?:   Product
+}
+
+export interface WholesaleInvoice {
+  id:              string
+  customer_id:     string
+  order_id:        string | null
+  invoice_number:  string
+  invoice_date:    string
+  due_date:        string
+  subtotal:        number  // pence
+  total_amount:    number  // pence
+  amount_paid:     number  // pence
+  payment_status:  InvoicePaymentStatus
+  pdf_path:        string | null
+  xero_invoice_id: string | null
+  notes:           string | null
+  created_at:      string
+  updated_at:      string
+  // joined
+  customer?:       WholesaleCustomer
+  items?:          WholesaleInvoiceItem[]
+  payments?:       WholesalePayment[]
+}
+
+export interface WholesaleInvoiceItem {
+  id:          string
+  invoice_id:  string
+  product_id:  string | null
+  description: string
+  quantity:    number
+  unit_price:  number  // pence
+  total_price: number  // pence
+  created_at:  string
+}
+
+export interface WholesalePayment {
+  id:           string
+  invoice_id:   string
+  customer_id:  string
+  amount:       number  // pence
+  payment_date: string
+  method:       PaymentMethod
+  reference:    string | null
+  notes:        string | null
+  recorded_by:  string | null
+  created_at:   string
+}
+
+// Summary for dashboard / outstanding balance list
+export interface CustomerBalance {
+  customer:        WholesaleCustomer
+  total_invoiced:  number  // pence
+  total_paid:      number  // pence
+  balance_due:     number  // pence
+  overdue_amount:  number  // pence
+  invoice_count:   number
 }
 
 // EPOS CSV row shape

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { parseInvoicePdf, fuzzyMatchProduct } from '@/lib/invoice-parser'
+import { parseInvoicePdf, fuzzyMatchProduct, lookupMapping, saveMapping, type BoxSpec } from '@/lib/invoice-parser'
 
 export async function POST(request: NextRequest) {
   try {
@@ -143,21 +143,46 @@ export async function POST(request: NextRequest) {
       .select('id, name')
       .eq('is_active', true)
 
-    const items = parsed.items.map(item => {
-      const matched_id = fuzzyMatchProduct(item.product_name_raw, catalogue ?? [])
-      return {
+    const itemsToInsert = []
+    for (const item of parsed.items) {
+      // 1. Check saved mappings first — confirmed mappings win over AI guess
+      const savedMapping = await lookupMapping(supabase, supplier_name, item.product_name_raw)
+
+      // 2. Fall back to fuzzy match for new descriptions
+      let matched_id    = savedMapping?.product_id ?? null
+      let unit_type     = savedMapping?.unit_type     ?? item.unit_type
+      let units_per_case = savedMapping?.units_per_case ?? item.units_per_case
+      let box_weight_kg  = savedMapping?.box_weight_kg  ?? item.box_weight_kg
+
+      if (!matched_id) {
+        matched_id = fuzzyMatchProduct(item.product_name_raw, catalogue ?? [])
+        if (matched_id) {
+          const boxSpec: BoxSpec = {
+            unit_type:      item.unit_type,
+            units_per_case: item.units_per_case,
+            box_weight_kg:  item.box_weight_kg,
+            last_price_p:   item.unit_cost,
+          }
+          await saveMapping(supabase, supplier_name, item.product_name_raw, matched_id, null, boxSpec)
+        }
+      }
+
+      itemsToInsert.push({
         invoice_id:       invoice.id,
         product_id:       matched_id,
         product_name_raw: item.product_name_raw,
+        brand_raw:        item.brand_raw || null,
         quantity:         item.quantity,
         unit_cost:        item.unit_cost,
         total_cost:       item.total_cost,
-        units_per_case:   item.units_per_case,
+        unit_type,
+        units_per_case,
+        box_weight_kg,
         is_matched:       !!matched_id,
-      }
-    })
+      })
+    }
 
-    await supabase.from('purchase_invoice_items').insert(items)
+    await supabase.from('purchase_invoice_items').insert(itemsToInsert)
 
     return NextResponse.json({ invoice_id: invoice.id })
   } catch (err) {

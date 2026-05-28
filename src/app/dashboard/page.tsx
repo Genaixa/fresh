@@ -18,13 +18,19 @@ export default async function DashboardPage() {
     .select('*', { count: 'exact', head: true })
     .eq('status', 'pending')
 
+  const { count: unmappedCount } = await supabase
+    .from('supplier_product_mappings')
+    .select('*', { count: 'exact', head: true })
+    .eq('status', 'pending')
+
   const now = new Date()
   const hour = now.getHours()
   const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening'
   const dateStr = now.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })
   const displayName = profile?.full_name?.split(' ')[0] ?? 'David'
 
-  const hasPending = (pendingCount ?? 0) > 0
+  const hasPending  = (pendingCount ?? 0) > 0
+  const hasUnmapped = (unmappedCount ?? 0) > 0
 
   return (
     <div className="page pb-24">
@@ -71,6 +77,28 @@ export default async function DashboardPage() {
         </Link>
       )}
 
+      {/* Unmapped products banner */}
+      {hasUnmapped && (
+        <Link href="/invoice-mapping" className="block mb-4">
+          <div className="card border border-status-red/40 bg-status-red/5">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="font-semibold text-sm">
+                  {unmappedCount} delivery {unmappedCount === 1 ? 'product' : 'products'} need mapping
+                </p>
+                <p className="text-xs text-[var(--text-muted)] mt-0.5">
+                  Tap to match once — automatic forever after
+                </p>
+              </div>
+              <span className="bg-status-red text-white text-sm font-bold
+                               rounded-full w-8 h-8 flex items-center justify-center flex-shrink-0 ml-3">
+                {unmappedCount}
+              </span>
+            </div>
+          </div>
+        </Link>
+      )}
+
       {/* Quick actions grid */}
       <p className="section-title">Quick Actions</p>
       <div className="grid grid-cols-2 gap-3 mb-8">
@@ -89,6 +117,7 @@ export default async function DashboardPage() {
         <div className="grid grid-cols-2 gap-3 mt-3">
           <QuickAction href="/products"       icon="🥦" label="Products" />
           <QuickAction href="/sync"           icon="🔄" label="EPOS Sync" />
+          <QuickAction href="/epos-compare"  icon="📈" label="Price Check" />
           <QuickAction href="/margins/sim"    icon="🧮" label="Simulator" />
           <QuickAction href="/price-monitor"  icon="🤖" label="AI Monitor" />
           <QuickAction href="/invoices"       icon="📋" label="Invoices" />

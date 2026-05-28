@@ -123,20 +123,27 @@ export default async function ReviewInvoicePage({
       {showMatched && allMatched.length > 0 && <div className="mb-6">
         <p className="section-title">✓ Matched items</p>
         <div className="space-y-2">
-          {allMatched.map((item: PurchaseInvoiceItem & { product: Product | null }) => (
-            <div key={item.id} className="card flex items-center justify-between">
-              <div>
-                <p className="font-medium text-sm">{item.product?.name ?? item.product_name_raw}</p>
-                <p className="text-xs text-[var(--text-muted)]">
-                  {item.product_name_raw !== item.product?.name && item.product_name_raw}
-                </p>
+          {allMatched.map((item: PurchaseInvoiceItem & { product: Product | null }) => {
+            const boxLabel = item.unit_type === 'weight' && item.box_weight_kg
+              ? `${item.box_weight_kg}kg box`
+              : item.unit_type === 'count' && item.units_per_case
+              ? `${item.units_per_case} per box`
+              : null
+            return (
+              <div key={item.id} className="card flex items-center justify-between">
+                <div>
+                  <p className="font-medium text-sm">{item.product?.name ?? item.product_name_raw}</p>
+                  {boxLabel && (
+                    <p className="text-xs text-[var(--text-muted)]">{boxLabel}</p>
+                  )}
+                </div>
+                <div className="text-right">
+                  <p className="font-semibold">{formatPrice(item.unit_cost)}</p>
+                  <p className="text-xs text-[var(--text-muted)]">× {item.quantity}</p>
+                </div>
               </div>
-              <div className="text-right">
-                <p className="font-semibold">{formatPrice(item.unit_cost)}</p>
-                <p className="text-xs text-[var(--text-muted)]">× {item.quantity}</p>
-              </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
       </div>}
 

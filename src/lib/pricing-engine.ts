@@ -1,4 +1,45 @@
 import type { Product, PricingResult } from '@/types'
+import type { SupabaseClient } from '@supabase/supabase-js'
+
+/**
+ * Weighted average per-retail-unit purchase cost over the last 7 days.
+ * Formula: SUM(boxes × box_cost) / SUM(boxes × units_per_case)
+ * Returns null if no purchase data exists in the window.
+ */
+export async function getWeightedAvgCost(
+  supabase: SupabaseClient,
+  productId: string
+): Promise<number | null> {
+  const { data } = await supabase
+    .from('product_weighted_costs')
+    .select('weighted_unit_cost_pence')
+    .eq('product_id', productId)
+    .single()
+
+  return data?.weighted_unit_cost_pence ?? null
+}
+
+/**
+ * Batch version: returns a map of productId → weighted avg cost (pence per retail unit).
+ * Products with no recent purchases are omitted from the map.
+ */
+export async function getWeightedAvgCostBatch(
+  supabase: SupabaseClient,
+  productIds: string[]
+): Promise<Map<string, number>> {
+  const { data } = await supabase
+    .from('product_weighted_costs')
+    .select('product_id, weighted_unit_cost_pence')
+    .in('product_id', productIds)
+
+  const map = new Map<string, number>()
+  for (const row of data ?? []) {
+    if (row.weighted_unit_cost_pence != null) {
+      map.set(row.product_id, row.weighted_unit_cost_pence)
+    }
+  }
+  return map
+}
 
 /**
  * Applies three rules in order:
@@ -8,11 +49,18 @@ import type { Product, PricingResult } from '@/types'
  *
  * All prices in pence (integers).
  */
-export function calculateSuggestedPrice(product: Product): PricingResult {
+/**
+ * Calculate suggested retail price.
+ * weightedUnitCost: pass the 7-day weighted avg per-retail-unit cost (pence).
+ *   If omitted, falls back to product.purchase_cost / case_size (legacy behaviour).
+ */
+export function calculateSuggestedPrice(product: Product, weightedUnitCost?: number): PricingResult {
   const { id, purchase_cost, case_size, price_multiplier, market_ceiling, margin_floor } = product
 
-  // Divide box cost by units per case to get per-unit cost before applying markup
-  const unit_cost = case_size > 1 ? purchase_cost / case_size : purchase_cost
+  // Prefer weighted avg cost (per retail unit); fall back to static per-box cost ÷ case_size
+  const unit_cost = weightedUnitCost != null
+    ? weightedUnitCost
+    : (case_size > 1 ? purchase_cost / case_size : purchase_cost)
   const raw_price = Math.round(unit_cost * price_multiplier)
 
   let suggested_price = raw_price

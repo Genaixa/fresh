@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 
 interface DuplicateInfo {
@@ -13,7 +13,6 @@ interface DuplicateInfo {
 
 export default function UploadInvoicePage() {
   const router = useRouter()
-  const fileRef = useRef<HTMLInputElement>(null)
   const [file, setFile] = useState<File | null>(null)
   const [uploading, setUploading] = useState(false)
   const [progress, setProgress] = useState(0)
@@ -155,8 +154,8 @@ export default function UploadInvoicePage() {
         </div>
       ) : (
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div
-            onClick={() => fileRef.current?.click()}
+          <label
+            htmlFor="pdf-input"
             className="card border-2 border-dashed border-brand-accent/40 flex flex-col
                        items-center justify-center py-12 cursor-pointer active:scale-[0.99]
                        transition-transform min-h-[160px]"
@@ -171,13 +170,13 @@ export default function UploadInvoicePage() {
               </>
             )}
             <input
-              ref={fileRef}
+              id="pdf-input"
               type="file"
               accept="application/pdf"
               className="hidden"
               onChange={e => setFile(e.target.files?.[0] ?? null)}
             />
-          </div>
+          </label>
 
           {error && (
             <p className="text-status-red text-sm rounded-xl bg-status-red/10 px-4 py-3">

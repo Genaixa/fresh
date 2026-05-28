@@ -3,8 +3,8 @@
 import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
-import { calculateSuggestedPrice, } from '@/lib/pricing-engine'
-import { fuzzyMatchProduct } from '@/lib/invoice-parser'
+import { calculateSuggestedPrice, getWeightedAvgCostBatch } from '@/lib/pricing-engine'
+import { fuzzyMatchProduct, saveMapping } from '@/lib/invoice-parser'
 import type { Product } from '@/types'
 
 export async function rematchInvoiceItems(invoiceId: string) {
@@ -21,12 +21,18 @@ export async function rematchInvoiceItems(invoiceId: string) {
     return
   }
 
+  // Get the supplier name for this invoice (needed to save mappings)
+  const { data: invoice } = await supabase
+    .from('purchase_invoices')
+    .select('supplier_name')
+    .eq('id', invoiceId)
+    .single()
+
   const { data: catalogue } = await supabase
     .from('products')
     .select('id, name')
     .eq('is_active', true)
 
-  let matchCount = 0
   for (const item of items) {
     const product_id = fuzzyMatchProduct(item.product_name_raw, catalogue ?? [])
     if (product_id) {
@@ -34,7 +40,10 @@ export async function rematchInvoiceItems(invoiceId: string) {
         .from('purchase_invoice_items')
         .update({ product_id, is_matched: true })
         .eq('id', item.id)
-      matchCount++
+      // Save auto-match so next invoice skips fuzzy matching
+      if (invoice?.supplier_name) {
+        await saveMapping(supabase, invoice.supplier_name, item.product_name_raw, product_id, null)
+      }
     }
   }
 
@@ -56,18 +65,14 @@ export async function confirmInvoiceAndGeneratePrices(invoiceId: string) {
     redirect(`/invoices/${invoiceId}`)
   }
 
-  // Update each product's purchase_cost and case_size from the invoice
-  // Business rule: use negotiated_price if set, otherwise unit_cost
+  // Update case_size from invoice where available
   for (const item of items) {
-    const new_cost = item.negotiated_price ?? item.unit_cost
-    const update: Record<string, unknown> = { purchase_cost: new_cost }
     if (item.units_per_case && item.units_per_case > 1) {
-      update.case_size = item.units_per_case
+      await supabase
+        .from('products')
+        .update({ case_size: item.units_per_case })
+        .eq('id', item.product_id)
     }
-    await supabase
-      .from('products')
-      .update(update)
-      .eq('id', item.product_id)
   }
 
   // Deduplicate product IDs (multiple invoice lines can map to the same product)
@@ -76,6 +81,18 @@ export async function confirmInvoiceAndGeneratePrices(invoiceId: string) {
   )]
 
   if (productIds.length === 0) redirect('/pricing')
+
+  // Calculate weighted average cost for each product (last 7 days across all suppliers)
+  const weightedCosts = await getWeightedAvgCostBatch(supabase, productIds)
+
+  // Update purchase_cost on the product to reflect the weighted average
+  // (used as display value and fallback if weighted view has no data yet)
+  for (const [productId, cost] of weightedCosts) {
+    await supabase
+      .from('products')
+      .update({ purchase_cost: cost })
+      .eq('id', productId)
+  }
 
   // Re-fetch updated products and generate price suggestions
   const { data: products, error: prodErr } = await supabase
@@ -89,7 +106,9 @@ export async function confirmInvoiceAndGeneratePrices(invoiceId: string) {
   }
 
   const suggestions = (products as Product[]).map(product => {
-    const result = calculateSuggestedPrice(product)
+    // Use the freshly-calculated weighted avg; fall back to the product's current purchase_cost
+    const weightedCost = weightedCosts.get(product.id) ?? undefined
+    const result = calculateSuggestedPrice(product, weightedCost)
     return {
       product_id:             product.id,
       invoice_id:             invoiceId,
