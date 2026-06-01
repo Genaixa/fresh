@@ -1,0 +1,254 @@
+epos_name,epos_category,sell_price_gbp,sell_unit,invoice_match,supplier,box_cost_gbp,box_spec,cost_per_unit_gbp,gross_margin_pct,rag,notes
+Banana,,(£1.49,per bunch ~3,BANANA COSTA RICA 18KG,Dole,18.50,18KG ~120 bananas,0.15,89.9,GREEN,Cost 15p/ea; if per large bunch (4-5) = 62-75p cost → margin 53-58%. Either way very healthy
+Avocado,,1.09,per piece,AVOCADO SPAIN 18 / 10KG,Dole,16.00,18-count box,0.89,18.3,RED,Only 20p/ea margin. Spain 18-ct at £16 = 89p cost. Price should be £1.49-1.69 for healthy margin
+Cucumber,,0.69,per piece,CUCUMBER SPAIN 14/5KG,Dole,8.40,14 cucumbers ~5KG,0.60,13.0,RED,Only 9p margin per cucumber. Holland X14 at £6.50 = 46p cost → better. Still tight at £0.69
+Lime,Citrus,0.43,per piece,LIMES BRAZIL 42/4KG,Dole,7.00,42 units ~4KG,0.17,61.4,GREEN,Healthy margin
+Lemon,Citrus,0.40,per piece,LEMON SPAIN 30,Dole,7.50,30 units ~6KG,0.25,37.5,AMBER,Reasonable but slightly thin. £0.49 would be better
+Orange Small,Citrus,0.29,per piece,ORANGE NAVEL SPAIN 80/15KG,Dole,8.00,80 units ~15KG,0.10,65.5,GREEN,Strong margin on small oranges
+Orange Large,Citrus,0.69,per piece,ORANGE NAVEL SPAIN 45/15KG,Dole,20.00,45 units ~15KG,0.44,36.2,AMBER,Ok margin but dependent on grade bought
+Grapefruit Red,Citrus,0.69,per piece,GRAPEFRUIT RUBY RED SA 35/15KG,Dole,20.00,35 units ~15KG,0.57,17.4,RED,Very thin at SA price (57p cost). Cyprus at £18 = 51p cost → 26% margin = AMBER. Price should be £0.89-0.99
+Pineapple Large,,2.39,per piece,PINEAPPLE CR 8/10KG,Dole,14.00,8 units ~10KG,1.75,26.8,AMBER,Reasonable but slim. £2.79 would give 37%
+Mango,,1.50,per piece,MANGO BRAZIL 7/4KG,Dole,5.00,7 count ~4KG,0.71,52.3,GREEN,Good margin at glut pricing; at £7/box = £1/ea → margin 33% AMBER. Check current price paid
+Kiwi,,0.45,per piece,KIWI ITALY 27/4KG,Dole,8.50,27 units ~4KG,0.31,30.0,AMBER,Thin. £0.55-0.59 would give 43-47%
+Passion Fruit,Exotic,0.39,per piece,PASSION FRUIT COLOMBIA 2KG,Dole,14.00,2KG ~40 fruits,0.35,10.3,RED,Nearly break-even. 35p cost on 39p sell. Should be £0.59 minimum
+Star Fruit,Exotic,1.00,per piece,STARFRUIT THAILAND 10/2.5KG,Dole,15.00,10 units ~2.5KG,1.50,,,RED - LOSS,Selling below cost. £1/ea vs £1.50 cost. Should be £2.00-2.50
+Lychee single,,0.20,per piece,LYCHEE SA 2KG,Dole,15.00,2KG ~50 fruits,0.30,,,RED - LOSS,Selling 20p when cost is ~30p. Either price to 50p or sell in nets only
+Large Pomegranate,Exotic,1.50,per piece,POMEGRANATE ZA 8/5KG,Dole,10.00,8 units ~5KG,1.25,16.7,RED,Only 25p margin at SA price. Turkey at £7/8 = 87p cost → 42% margin. Depends on origin. Safe price: £1.89
+Pomegranate 2 for £1,,1.00,2 for £1,POMEGRANATE ZA 8/5KG,Dole,10.00,8 units ~5KG,0.625 for 2,,,RED - LOSS,At ZA £1.25/ea cost: selling 2 for £1 = 60p each = loss. Review urgently
+Sharon fruit,Exotic,0.49,per piece,KAKI FRUIT SPAIN 24-26/4KG,Dole,10.00,24 units ~4KG,0.42,14.3,RED,Thin. Cost 42p sell 49p. Should be 75p-89p
+Papaya,Exotic,3.99,per piece,PAPAYA BRAZIL 4/10KG,Dole,9.50,4 units ~10KG,2.38,40.4,GREEN,Good margin on papaya
+Dragon Fruit,Exotic,2.00,per piece,,,,,,,NO_COST,Not in delivery notes. Holland sold kiwi/dragon fruit mix. Market rate ~£2 OK as placeholder
+Coconut,Exotic,1.00,per piece,,,,,,,NO_COST,Not in delivery notes. Market £1 typical
+Jackfruit,Exotic,1.00,per piece,,,,,,,NO_COST,Not in Dole/Holland deliveries. Price unknown
+Fig,Exotic,0.69,per piece,,,,,,,NO_COST,Not in delivery notes
+Rhubarb,Exotic,4.00,per piece,RHUBARB UK 5KG,Dole,18.00,5KG,3.60,10.0,RED,Selling near cost if per 500g piece. Should be £5.50+ or sell by weight at £5/kg
+Marrow,,1.50,per piece,,,,,,,NO_COST,Not in delivery notes
+Pumpkin small,,2.49,per piece,,,,,,,NO_COST,Not in delivery notes
+Apricot Loose,Soft Fruit,0.20,per piece,APRICOT SPAIN 10X500G/5KG,Dole,14.00,10×500G = 5KG,0.28,,,RED - LOSS,20p sell vs 28p cost (if ~50g each and 100 per 5KG). Review pack size
+Apricot Punnet,Punnets,2.50,per 500G punnet,APRICOT SPAIN 10X500G/5KG,Dole,14.00,10×500G punnets,1.40,44.0,GREEN,Good margin on prepacked apricot punnet
+Strawberry Punnet,Punnets,1.80,per 250G punnet,STRAWBERRY SPAIN 16X250G,Dole,12.80,16×250G = 4KG,0.80,55.6,GREEN,Strong margin on Spain 250G punnet
+Belgium Strawberry punnet,Punnets,3.60,per 500G punnet,STRAWBERRY BELGIUM 8X500G,Dole,27.50,8×500G = 4KG,3.44,4.4,RED,Nearly break-even. Cost £3.44; sell £3.60. Need £4.99 for healthy margin (45%)
+Blueberry,Punnets,1.99,per 125G punnet,BLUEBERRY SPAIN 12X125G,Dole,14.40,12×125G = 1.5KG,1.20,39.7,AMBER,Close to GREEN but thin. £2.29 punnet would give 48%
+Nectarine Punnet,Punnets,2.50,per 500G punnet,NECTARINE SPAIN 10X500G,Dole,15.50,10×500G = 5KG,1.55,38.0,AMBER,Borderline. £2.99 would give 48%
+Nectarine Punnet 1kg LARGE,Punnets,2.99,per 1KG,NECTARINE SPAIN 10X500G,Dole,15.50,10×500G = 5KG,1.55 per 500G,48.2,GREEN,Good margin at £2.99/1KG (cost £3.10 for 1KG... wait - 2×500G = £3.10 cost vs £2.99 sell = LOSS),RED,LOSS: 1KG costs £3.10 (2 punnets); selling at £2.99. Either reduce to 500G or price at £3.99
+Nectarine Loose,Soft Fruit,0.45,per piece,NECTARINE SPAIN 10X500G,Dole,15.50,10×500G punnets ~30 fruits,0.52,,,RED - LOSS,If ~52g each and 30 per 5KG: cost 52p; sell 45p = loss. Price to 75p
+Loose Nec/Peach,Soft Fruit,0.45,per piece,NECTARINE / PEACH SPAIN,Dole,16.00,10×500G = 5KG,0.53,,,RED - LOSS,Same as above. 45p sell vs ~52p cost. Price to 75p
+Peach Punnet,Punnets,2.50,per 500G punnet,PEACH SPAIN 10X500G,Dole,16.00,10×500G = 5KG,1.60,36.0,AMBER,Thin but ok. £2.99 would give 46%
+Plum 4 for £1,Soft Fruit,1.00,4 for £1,PLUM ANGELINO ZA 10X500G,Dole,9.50,10×500G = 5KG,0.95 per 500G,,,AMBER,If ~4 plums per 500G: 4 plums cost 95p; sell £1 = only 5p margin. Very thin
+Plums Punnet,Punnets,1.99,per punnet,PLUM ANGELINO ZA 10X500G,Dole,9.50,10×500G = 5KG,0.95,52.3,GREEN,Good margin if selling 500G punnet at £1.99
+Punnet Plum,Punnets,1.00,per punnet,PLUM ANGELINO ZA 10X500G,Dole,9.50,10×500G = 5KG,0.95,5.3,RED,£1 vs 95p cost = nearly break-even. Consolidate with Plums Punnet at £1.99
+Plum Red Loose,Soft Fruit,3.60,per kg,PLUM RUBY STAR SA 5KG,Dole,13.00,5KG,2.60,27.8,AMBER,Reasonable. £3.99/kg would give 35%
+Grapes Green Punnet,Grapes,2.40,per 500G punnet,GRAPE SWEET GLOBE PE 10X500G,Dole,16.00,10×500G = 5KG,1.60,33.3,AMBER,Ok but not great. Sweet Globe PE costs £1.60 punnet. £2.99 punnet would give 46%
+Grapes Red Punnet,Grapes,2.40,per 500G punnet,GRAPE CRIMSON ZA 10X500G,Dole,16.00,10×500G = 5KG,1.60,33.3,AMBER,Same cost as green. £2.69-2.99 would improve margin
+Grape open punnet,Grapes,1.40,per open punnet,VARIOUS GRAPES,Dole,,,,,AMBER,Open punnet (loose handful) - cost depends on weight given. Check portion size
+Open punnet Grapes,Grapes,1.40,per open punnet,VARIOUS GRAPES,Dole,,,,,DUPLICATE,Duplicate of Grape open punnet - consolidate
+Closed punnet grapes,Grapes,2.20,per 500G punnet,GRAPE VARIOUS 10X500G,Dole,16.00,10×500G = 5KG,1.60,27.3,AMBER,Thin at £2.20. Should be £2.69-2.99 like Grapes Red/Green Punnet
+Grapes Bag,Grapes,2.69,per bag,GRAPE VARIOUS,Dole,,,1.60,40.5,GREEN,If 500G bag at £2.69 vs £1.60 cost = 40.5% margin. OK
+Kiwi Punnet,Punnets,2.99,per punnet ~6 kiwi,KIWI ITALY 27/4KG,Dole,8.50,27 units ~4KG,0.31 per kiwi,37.8,AMBER,6 kiwi per punnet = £1.89 cost vs £2.99 sell. Reasonable
+Pear Conference Punnet,Punnets,2.80,per 500G punnet,PEARS CONFERENCE BELGIUM 12KG,Dole,19.00,12KG,0.79,71.8,GREEN,Strong margin. Conference at £1.58/kg → 500G costs 79p
+Tangerine PUNNET,Punnets,3.50,per punnet ~8 fruit,CLEMENTINE NARDOCOTT SP 66/10KG,Dole,17.00,66 units ~10KG,0.26 per fruit,,,GREEN,8 clems @ 26p = £2.06 cost; sell £3.50 = 41% margin
+Dates Medjool box,Punnets,4.99,per 500G box,DATE MEDJOOL EGYPT 5KG,Dole,30.00,5KG,3.00 per 500G,39.9,AMBER,Just under GREEN. £5.49 would give 45%
+Sharon punnet,Punnets,3.50,per punnet ~3-4 fruit,KAKI FRUIT SPAIN 24/4KG,Dole,10.00,24 units ~4KG,1.25 for 3,64.3,GREEN,Good margin on sharon punnet
+Cherry vine tomatoes,Tomatoes,6.99,per 500G punnet,TOMATO CHERRY VINE NL 10X500G,Dole,17.00,10×500G = 5KG,1.70,75.7,GREEN,Excellent margin
+Tomato Cherry Punnet,Tomatoes,1.20,per 250G punnet,CHERRY TOMATOES DUTCH X9,Holland,6.00,9 packs,0.67,44.2,GREEN,Good margin on small cherry punnet
+Tomato Loose/Vine,Tomatoes,4.80,per kg,TOMATO VINE SPAIN 5KG,Dole,9.00,5KG,1.80,62.5,GREEN,Excellent margin
+Peppers Red,Peppers,4.49,per kg,CAPSICUM RED NL 5KG,Dole,11.00,5KG,2.20,51.0,GREEN,Healthy margin confirmed (was flagged wrong earlier - it's fine)
+Peppers Yellow,Peppers,4.49,per kg,CAPSICUM YELLOW SPAIN 5KG / YELLOW PEPPERS DUTCH,Holland,16.50,5KG approx,3.30,26.5,AMBER,Holland yellow peppers at ~£3.30/kg. £4.49 gives 26%. Dole yellow at £1.80/kg → 60% margin. Cost varies by source
+sweet pepper,Peppers,1.00,per piece,CAPSICUM MIXED / SWEET,Various,,,,,AMBER,Pointy/sweet peppers. Cost varies. Market rate ~£1 each OK if cost <60p
+Pointy pepper,Peppers,3.75,per piece,CAPSICUM POINTED SPAIN 5KG,Dole,7.50,5KG ~12-15 peppers,0.50,86.7,GREEN,Excellent margin if correct (pointed peppers at 50p each; selling at £3.75 seems very high vs market ~£1.20-1.50)
+Peppers Mixed Pack,Peppers,2.39,per pack,CAPSICUM MIXED NL 10X500G,Dole,13.50,10×500G = 5KG,1.35 per 500G,43.5,GREEN,Good margin on 500G mixed pepper pack
+Red/Green chili peppers,Peppers,0.20,per piece,CHILLIES RED 3KG,Holland,12.00,3KG ~100 chillies,0.12,40.0,GREEN,Cost ~12p each sell 20p = 40% margin. OK
+Aubergine,,3.80,per kg (assumed),AUBERGINE NL 5KG,Dole,8.00,5KG,1.60,57.9,GREEN,If sold by weight: 58% margin. If per piece: £3.80 = 7.6× cost = price error. CONFIRM sell unit
+Courgettes,,3.80,per kg (assumed),COURGETTES DUTCH/SPAIN,Holland,7.50,~10KG box,0.75,80.3,GREEN,Holland courgettes at 75p/kg. £3.80/kg = 80% margin. Or if per piece (~300g): cost 22p sell £1.14 portion = 81%. Either way healthy
+Cucumber,,0.69,per piece,CUCUMBER DUTCH X14,Holland,6.50,14 cucumbers,0.46,33.3,AMBER,Holland X14 at £6.50 = 46p/each. Sell 69p = 33% margin. Better than Dole. Still consider £0.79-0.89
+Celery,,1.20,per head,CELERY X16 GS,Holland,9.50,16 heads,0.59,50.6,GREEN,59p cost sell £1.20 = 51% margin. Good
+Lettuce Iceberg,,1.15,per head,ICEBERG X10-X12,Holland,6.50,10-12 heads,0.54,52.8,GREEN,Good margin
+Lettuce Romaine / Kos,,1.60,per head,COS LETTUCE GS X10,Holland,8.00,10 heads,0.80,50.0,GREEN,Good margin
+Onions,Onion,1.35,per piece,ONION DUTCH 4KG / SA 20KG,Holland,4.50,4KG ~8-10 onions,0.45,66.7,GREEN,45p cost sell £1.35 = 67% margin. Strong
+Onion Red,Onion,1.35,per piece,RED ONIONS DUTCH,Holland,7.80,per box,0.78,42.2,GREEN,~78p cost (estimate) sell £1.35 = 42% margin
+Onion Net,Onion,1.00,per small net,ONION DUTCH 4KG,Holland,4.50,4KG,1.125 per kg,,,AMBER,Net weight? Cost ~£1.125/kg. If 1KG net at £1.00: selling at cost. Should be £1.49-1.69
+Onions SPANISH,Onion,1.80,per piece,ONION SPAIN 20KG,Dole,15.00,20KG,0.75 per kg,,,GREEN,If sold per large Spanish onion (~300g): cost 22p sell £1.80 = 88% margin. Very good
+Onion Small Sack,Onion,4.49,per small sack,ONION DUTCH 4KG,Holland,4.50,4KG,4.50 cost,0.2,RED,Selling at cost. £4.49 vs £4.50 box cost = loss. Price to £6.99
+Shallots,Onion,1.60,per piece/pack,SHALLOT ROUND FR 20X250G,Dole,4.00,20×250G = 5KG,0.20 per 250G,,,GREEN,250G shallot pack costs 20p; sell £1.60 = 87.5% margin. Excellent
+Garlic Bulb,,0.77,per bulb,GARLIC STRINGS / NETS,Holland,4.00 - 16.50,varies,0.20 - 0.83,0 - 74,AMBER,Cost varies widely. String garlic at £4/2 strings = £2/string; individual bulbs from string ~33p. Sell 77p = 57% margin
+Garlic Pre-pack,,2.40,per prepacked net,GARLIC NET,Holland,2.40,per net,2.40,0.0,RED,Selling at cost. Market is £2.40-2.99 for garlic net wholesale. Should be £3.49-3.99 retail
+Garlic Peeled Pack (1KG),Wholesale,6.90,per 1KG pack,GARLIC PEELED CN,Dole,3.00,single peeled,,,GREEN,If cost is ~£3 (China single at £3 March 2026) selling at £6.90 = 57% margin. But check actual bulk cost
+Carrots,,1.25,per kg (assumed),CARROT UK 15KG PREPACKED,Dole,11.50,15×1KG bags,0.77,38.4,AMBER,Close to GREEN. Consider £1.49/kg for 48% margin
+Carrot Bag 1KG,,1.00,per 1KG prepacked bag,CARROT UK 15KG PREPACKED,Dole,11.50,15×1KG bags,0.77,23.3,AMBER,Thin. Each prepacked 1KG bag costs 77p; selling £1 = 23% margin. £1.25 would give 38%
+Mushroom,,4.58,per kg (assumed),MUSHROOM CUP POLAND 2.27KG,Dole,5.20,2.27KG,2.29,50.0,GREEN,If per kg: cost £2.29, sell £4.58 = 50% margin
+Mushroom Punnet,,1.25,per 250G punnet,MUSHROOM POLAND 8X250G / 12X250G,Dole,5.80 - 9.00,8-12 packs,0.73 - 0.75,40.0,GREEN,250G mushroom punnet costs 73-75p; sell £1.25 = 40-41% margin. Borderline GREEN
+Potato 2kg Bag,Potatoes,1.40,per 2KG bag,POTATO UK 10X2KG,Dole,7.50,10×2KG = 20KG,0.75,46.4,GREEN,Good margin confirmed this morning
+Potato Loose,Potatoes,1.20,per kg,POTATO WASHED UK 25KG,Dole,7.00,25KG,0.28,76.7,GREEN,Excellent margin on loose washed potato
+7.5 KG Potato,Potatoes,4.50,per 7.5KG bag,POTATO UK 7.5KG CARRIER,Dole,2.40,7.5KG bag,2.40,46.7,GREEN,Cost £2.40 sell £4.50 = 47% margin. Good
+Sack of Potato 10x2kg,Potatoes,13.00,per 10×2KG sack,POTATO UK 10X2KG,Dole,7.50,10×2KG = 20KG,7.50,42.3,GREEN,Cost £7.50 sell £13 = 42% margin. Good
+Cyprus potato,Potatoes,2.50,per bag,CYPRUS GREEN BAGS,Holland,20.00 - 22.00,per case,,,AMBER,Cyprus new potatoes. Holland at £20-22/case. Unclear pack size. Price seems low
+Sweet Potato,Potatoes,2.99,per piece,POTATO SWEET EGYPT 6KG,Dole,8.50,6KG L2,1.42 per kg,,,GREEN,If each sweet potato ~400g: cost 57p; sell £2.99 = 81% margin. Very strong
+Potatoes Baby Roast,Potatoes,2.25,per 500G punnet,,,,,,,NO_COST,Not directly in delivery notes. Likely Cyprus or UK baby potatoes
+Miniature Salad Potatoes 2.5kg,Potatoes,4.99,per 2.5KG bag,,,,,,,NO_COST,Baby salad potatoes. Check supplier
+Carrot Chips 1KG,Potato Wholesale,2.80,per 1KG,CARROT UK 15KG PREPACKED,Dole,11.50,15×1KG bags,0.77,72.5,GREEN,Carrot chips cut in-house from 77p/kg carrots; selling at £2.80/kg = 72% margin. Excellent value-add
+Courgettes Chips 1KG,Potato Wholesale,3.56,per 1KG,COURGETTES DUTCH/SPAIN,Holland,7.50,~10KG,0.75,78.9,GREEN,Courgette chips cut in-house; 75p/kg cost → £3.56/kg = 79% margin. Strong value-add
+Sweet Potato Chips 1KG,Potato Wholesale,3.56,per 1KG,POTATO SWEET EGYPT 6KG,Dole,8.50,6KG,1.42,60.1,GREEN,Good value-add margin on sweet potato chips
+Peeled Potato Regular 10KG,Potato Wholesale,19.10,per 10KG,POTATO WASHED UK 25KG,Dole,7.00,25KG,2.80 per 10KG,85.3,GREEN,Value-add: 10KG raw costs £2.80; selling peeled at £19.10 = 85% margin (but labour cost not included)
+Celeriac,,2.99,per piece,CELERIAC BOX X6,Holland,6.00,6 pieces,1.00,66.6,GREEN,Good margin
+Kohlrabi,,4.20,per piece,KOHLRABI BOX,Holland,18.00,~15 pieces,1.20,71.4,GREEN,Good margin
+Butternut Squash,,2.60,per piece,BUTTERNUT SQUASH SA 10KG,Dole,9.00,10KG,0.90 per kg,,,GREEN,If each squash ~1KG: cost 90p sell £2.60 = 65% margin
+Swede,,1.60,per piece,SWEDES DUNGAIT,Holland,4.00,per box,0.50 est,68.8,GREEN,Estimate based on Holland swede price. Market ~80p-£1.20 each so £1.60 looks fine
+Beetroot Loose,,1.98,per piece,BEETROOT NL 10KG NET,Dole,5.00,10KG,0.50 per kg,,,GREEN,If each beetroot ~300g: cost 15p sell £1.98 = 92% margin. Strong
+Parsnip,,2.80,per pack,PARSNIPS BLACK BOX,Holland,6.50,per box ~10,0.65 est,76.8,GREEN,Estimate. Parsnip pack (3-4) costs ~65-85p; selling £2.80 = healthy
+Leeks,,3.20,per piece/bunch,,,,,,,NO_COST,Not in delivery notes
+Cabbage White,Cabbage,1.00,per piece,CABBAGE WHITE 25KG DUTCH,Holland,8.00,25KG ~10 cabbages,0.80,20.0,AMBER,Thin. 80p cost sell £1.00 = 20% margin. Should be £1.49
+Cabbage Red,Cabbage,1.90,per piece,RED CABBAGE SMALL BAGS,Holland,11.00,per bag,0.92 est,51.6,GREEN,Good margin estimate
+Peas in the pod,,7.00,per kg,PEA ITALY 3KG PODS,Dole,16.00,3KG,5.33,23.9,AMBER,Tight. £7 sell vs £5.33/kg cost = 24% margin. Could go to £8.99
+Bean Sprouts,,0.89,per pack,BEAN SHOOTS SINGLE,Holland,0.50,per single,0.50,43.8,GREEN,50p cost sell 89p = 44% margin
+Sugar Snaps,,1.69,per pack,,,,,,,NO_COST,Not in delivery notes
+Fine Beans,,1.69,per pack,,,,,,,NO_COST,Not in delivery notes
+Cress,,0.44,per punnet,SALAD CRESS X16,Holland,2.80,16 punnets,0.175,60.2,GREEN,Excellent margin on cress
+Rhubarb,Exotic,4.00,per bunch,RHUBARB UK 5KG,Dole,18.00,5KG,3.60 per kg,,,RED,At £3.60/kg cost: 500G bunch costs £1.80; selling £4.00 = 55% margin. But £18/5KG is expensive. Check if March price applies. OK if sold correctly
+Dates Medjool Loose,,14.80,per kg,DATE MEDJOOL EGYPT 5KG,Dole,30.00,5KG,6.00,59.5,GREEN,£6/kg cost sell £14.80/kg = 59.5% margin. Strong
+Physallis Punnet,Punnets,1.69,per punnet,PHYSALLIS PUNNETS,Holland,1.10,per 2 punnets,0.55,67.5,GREEN,Good margin
+Pomelo box,Citrus Wholesale,0.00,wholesale box,POMELO CHINA 10 BOX,Dole,14.00,10 units,14.00,,ZERO_PRICE,No sell price. Box of 10 Pomelos costs £14. Set wholesale price or archive
+Lychees,Exotic,6.00,per bag/box,LYCHEE SA 2KG,Dole,15.00,2KG,15.00,,RED - LOSS,£6 sell vs £15 cost for 2KG box = major loss. Either selling less than 2KG or price error. Should be £9.50+ for 2KG
+Litchi,Exotic,5.90,per bag,LYCHEE SA 2KG,Dole,15.00,2KG,15.00,,RED - LOSS,Same problem. £5.90 sell vs £15 cost
+Ginger,Exotic,6.00,per piece,GINGER PP TURMERIC BOX,Holland,16.00,per box,,,AMBER,Holland ginger box at £16. Unclear units. Market £1-2 per 100g piece. £6 seems very high per piece
+Tangerine Loose,Citrus,3.30,per kg,CLEMENTINE NARDOCOTT SP 66/10KG,Dole,17.00,66 units ~10KG,1.70,48.5,GREEN,Cost £1.70/kg sell £3.30/kg = 48% margin. Good
+Apple Cooking,Apples,3.32,per kg,APPLE BRAMLEY UK 13KG,Dole,22.00,13KG,1.69,49.1,GREEN,Good margin on Bramley by weight
+Apples Braeburn,Apples,2.99,per kg,APPLE BRAEBURN FRANCE 12KG,Dole,18.00,12KG,1.50,49.8,GREEN,Good margin
+Apples Golden,Apples,2.99,per kg,APPLE GOLDEN DELICIOUS FR 12KG,Dole,18.00,12KG,1.50,49.8,GREEN,Good margin
+Apples Gala,Apples,2.99,per kg,APPLE ROYAL GALA FR 12KG,Dole,18.00,12KG,1.50,49.8,GREEN,Good margin
+Apples Granny,Apples,2.99,per kg,APPLE GRANNY SMITH FR 13KG,Dole,19.00,13KG,1.46,51.2,GREEN,Good margin
+Apples Red Delicious,Apples,2.99,per kg,APPLE RED DELICIOUS ITALY 12KG,Dole,21.00,12KG,1.75,41.5,GREEN,Good margin
+Apples Pink Lady,Apples,4.33,per kg,APPLE PINK LADY FR 4KG,Dole,7.50,~4KG,1.875,56.7,GREEN,Strong margin. Premium product justifies premium price
+Pre Pack Apple,Apples,1.99,per prepacked bag,APPLE VARIOUS,Dole,12.00,12 bags,1.00,49.7,GREEN,£1 cost per prepack bag; sell £1.99 = 50% margin
+pink lady tub,Apples,2.99,per tub,APPLE PINK LADY FR 4KG,Dole,7.50,~4KG,1.875,37.3,AMBER,If selling 500G tub at £2.99: cost ~94p; margin 69%. If per kg: cost £1.875 sell £2.99 = 37% margin
+Pink Lady Pack,Apples,3.00,per pack,APPLE PINK LADY FR 4KG,Dole,7.50,~4KG,1.875,37.5,AMBER,Near-duplicate of pink lady tub. Consolidate. Price at £3.49-3.99 for better margin
+Pink Lady Box,Wholesale,21.00,per box,APPLE PINK LADY FR 4KG box,Dole,7.50,4KG,7.50,64.3,GREEN,Selling 4KG box at £21 costs £7.50 → 64% margin. Excellent wholesale margin
+Watermelon 4s,Melons,5.50,per piece,MELON WATER CR 4/16KG,Dole,19.50,4 units ~16KG,4.875,11.4,RED,Very thin at CR price. Brazil 5/16KG at £13 = £2.60 each → 53% margin = GREEN. Origin-dependent
+Watermelon 6s,Melons,4.00,per piece,MELON WATER SMALLER,Various,,,,,NO_COST,No 6-count watermelon in delivery notes. Likely smaller melons. Cost unknown
+Honeydew large,Melons,3.50,per piece,MELON HONEYDEW ES 6/5KG,Dole,6.00,6 units ~5KG,1.00,71.4,GREEN,ES 6/5KG at £6 = £1/melon. Selling £3.50 = 71% margin. Only valid if buying Spanish. Brazil 7/15KG at £21 = £3/melon → margin 14% = RED
+Melon Honeydew,Melons,2.80,per piece,MELON HONEYDEW ES 6/5KG,Dole,6.00,6 units ~5KG,1.00,64.3,GREEN,Same as above. ES = 64% margin. Brazil = nearly break-even. TRACK ORIGIN
+Melon Canteloupe,Melons,2.00,per piece,MELON CANTALOUPE BRAZIL 5/5KG,Dole,6.00,5 units ~5KG,1.20,40.0,GREEN,Good margin
+Melon Galia,Melons,2.50,per piece,MELON GALIA BRAZIL 6/5KG,Dole,5.00 - 9.00,6 units ~5KG,0.83 - 1.50,40.0 - 66.8,GREEN,Range depending on supplier and season
+Melon Piel Desapo,Melons,2.50,per piece,MELON PIEL DESAPO CR 9/15KG,Dole,17.00,9 units ~15KG,1.89,24.5,AMBER,Thin at CR price. £2.99 would give 37%
+Pears Conference,,2.99,per kg,PEARS CONFERENCE BELGIUM 12KG,Dole,19.00,12KG,1.58,47.2,GREEN,Good margin
+Date box small,Punnets,1.49,per small box,DATE MEDJOOL EGYPT 5KG,Dole,30.00,5KG,6.00 per kg,,,AMBER,Small date box ~150-200G costs £0.90-1.20. Sell £1.49 = 19-39% margin. Should be £1.99
+Passion Fruit 3 for £1,,1.00,3 for £1,PASSION FRUIT COLOMBIA 2KG,Dole,14.00,2KG ~40 fruits,0.35,4.8,RED,3 passion fruits cost ~£1.05 vs sell £1 = slight loss. Price to 3 for £1.29 or 2 for £1
+Bean Sprouts,,0.89,per pack,BEAN SHOOTS SINGLE,Holland,0.50,single,0.50,43.8,GREEN,Good margin
+Chestnut,,0.10,per piece,,,,,,,NO_COST,Price error or very old. Market £1-2 per pack
+Chestnuts net,,1.99,per net,,,,,,,NO_COST,Not in delivery notes
+Bagged fruit,,1.00,per bag,,,,,,,NO_COST,Unclear what product. Likely a generic mixed bag
+Pommy Pack of 3,Exotic,1.20,per 3-pack,POMEGRANATE ZA 8/5KG,Dole,10.00,8 units ~5KG,0.375 for 3 small pommy,68.8,GREEN,If selling 3 small pomegranate seeds packs. Cost estimate only
+Pommy pack of 2,Exotic,0.99,per 2-pack,,,,,,,AMBER,Similar to above
+Grandilo,,1.39,per piece,GRANADILLA FRANCE 18/2KG,Dole,20.00,18 units ~2KG,1.11,20.1,AMBER,Granadilla (passion fruit type) at £1.11 cost; sell £1.39 = 20% margin. Price to £1.99
+Pithaya,,3.00,per piece,,,,,,,NO_COST,Dragon fruit (pitahaya). Not in delivery notes
+Dragon fruit,,2.50,per piece,,,,,,,NO_COST,Also dragon fruit - two entries
+Kumquat 5 for £1,Exotic,1.00,5 for £1,,,,,,,NO_COST,Not in delivery notes
+10 Kamquats for £1,Citrus,1.00,10 for £1,,,,,,,NO_COST,Same product different count. Duplicates each other
+Crambola,Exotic,1.50,per piece,STARFRUIT THAILAND 10/2.5KG,Dole,15.00,10 units,1.50,0.0,RED,Carambola = starfruit. Cost = sell price. Loss after wastage. Price to £2.50
+Sharon Fruit Box (12) - MP,,7.50,per 12-count box,KAKI FRUIT SPAIN 24/4KG,Dole,10.00,24 units ~4KG,5.00 for 12,33.3,AMBER,Wholesale box of 12 sharon fruit. Cost £5; sell £7.50 = 33% margin
+Sharon Fruit (12) - MP,,6.00,per 12-count box,KAKI FRUIT SPAIN 24/4KG,Dole,10.00,24 units ~4KG,5.00 for 12,16.7,RED,DUPLICATE of above but at lower price. £6 vs £5 cost = only 17% margin. Use £7.50 version only and delete this
+Donut Peach Box (25) - MP,,6.00,per 25-count box,PEACH DONUT SPAIN 10X500G,Dole,18.00,10×500G = 5KG ~25 peaches,9.00 for 25,,,RED - LOSS,25 peaches cost ~£9 (18/10 × 5); selling at £6 = loss. Should be £12-14
+Melon Piel Desapo Box (6) - MP,,10.00,per 6-melon box,MELON PIEL DESAPO CR 9/15KG,Dole,17.00,9 units,11.33 for 6,,,RED - LOSS,6 melons cost £11.33; selling at £10 = loss. Should be £14
+Grapefruit Red Box (66),Citrus Wholesale,0.00,per box,GRAPEFRUIT SA/CYPRUS 35/15KG,Dole,20.00,35 units,,,ZERO_PRICE,No price. Cost of 66-count batch = 2 boxes ≈ £40. Set wholesale price
+Pomegranate (8) - MP,,8.50,per 8-count,POMEGRANATE ZA 8/5KG,Dole,10.00,8 units,10.00,,RED - LOSS,Selling 8 pomegranates at £8.50 vs cost £10 = loss. Should be £14.99
+Tangerine (10 KG) - MP,,13.50,per 10KG,CLEMENTINE NARDOCOTT 10KG,Dole,17.00,10KG,17.00,,RED - LOSS,Selling 10KG at £13.50 vs cost £17 = loss. Should be £22-24
+Plums Red Loose Box (4KG) - MP,,14.00,per 4KG,PLUM VARIOUS SA 5KG,Dole,13.00,5KG,10.40 for 4KG,25.7,AMBER,4KG plums cost ~£10.40; sell £14 = 26% margin. OK for wholesale. Could be £16.99
+Peaches Loose box (28) - MP,,6.00,per 28-count,PEACH SPAIN 10X500G,Dole,16.00,10×500G ~30 peaches,14.93 for 28,,,RED - LOSS,28 peaches from 500G punnets (52g each × 28 = 1.46KG × £3.20/500G) ≈ £9.34 cost vs £6 sell = loss. Should be £12-14
+Orange Small (60) - MP,,14.00,per 60-count,ORANGE NAVEL SPAIN 45/15KG,Dole,20.00,45 units,26.67 for 60,,,RED - LOSS,60 oranges = 1.33 boxes at £20 = £26.67 cost; selling at £14 = loss. Should be £32-35
+Orange Large (60) - MP,,22.00,per 60-count,ORANGE NAVEL SPAIN 45/15KG,Dole,20.00,45 units,26.67 for 60,,,RED - LOSS,Same problem. 60 large oranges cost ~£26.67; selling £22 = loss. Should be £35-40
+Melon Honey Dew (8) - MP,,12.00,per 8-melon box,MELON HONEYDEW ES 6/5KG,Dole,6.00,6 units,8.00 for 8,33.3,AMBER,8 ES melons (1.33 boxes) cost £8; sell £12 = 33% margin. OK for wholesale
+Melon Galia (8) - MP,,12.00,per 8-melon box,MELON GALIA VARIOUS,Dole,9.00,6 units,12.00 for 8,0.0,RED,8 Galia melons cost ~£12; selling at £12 = break-even. Should be £16-18
+Melon Cantaloupe (8) - MP,,12.00,per 8-melon box,MELON CANTALOUPE BRAZIL 5/5KG,Dole,6.00,5 units,9.60 for 8,20.0,AMBER,8 cantaloupe cost £9.60; sell £12 = 20% margin. Should be £14.99
+Grapefruit Red (66) - MP,,19.00,per 66-count,GRAPEFRUIT SA 35/15KG,Dole,20.00,35 units,38.29 for 66,,,RED - LOSS,66 grapefruit = almost 2 boxes at £20 = £38.29 cost vs £19 sell = massive loss. Should be £50+
+Apricot Loose - (2 Kilo) - MP,,8.00,per 2KG,APRICOT SPAIN 10X500G,Dole,14.00,10×500G = 5KG,5.60 for 2KG,30.0,AMBER,2KG apricot costs £5.60; sell £8 = 30% margin. OK wholesale. Could be £9.99
+Cabbage White Small Net (10KG),Wholesale,0.00,per 10KG,CABBAGE WHITE 25KG DUTCH,Holland,8.00,25KG,3.20 for 10KG,,ZERO_PRICE,No price. 10KG white cabbage costs ~£3.20. Set to £5.99-6.99
+Onions Sack of Prepack,Wholesale,14.50,per sack,ONION DUTCH 24KG,Holland,23.00,24KG,23.00,,RED - LOSS,Selling onion sack at £14.50 vs £23 Dutch 24KG cost = loss. Or using different size. CHECK
+Garlic String,Wholesale,5.00,per string,GARLIC STRINGS,Holland,4.00,per 2 strings,2.00,60.0,GREEN,String of garlic costs £2; sell £5 = 60% margin. Good
+Garlic Net,Wholesale,2.40,per net,GARLIC NET,Holland,2.40,per net,2.40,0.0,RED,Selling at cost. Should be £3.99-4.99
+Garlic String MP,,4.40,per string,GARLIC STRINGS,Holland,4.00,per 2 strings,2.00,54.5,GREEN,Good margin
+Garlic Net MP,,11.50,per net,GARLIC NET,Holland,,,,,AMBER,Unknown cost - likely larger net. Review
+Garlic Peeled Pack 1KG MP,,3.80,per 1KG,GARLIC PEELED CN,Dole,3.00,single,,,AMBER,If Holland Apollo 1KG at £22 cost, selling at £3.80 = massive loss. If China single garlic peeled at £3 cost: margin 21% AMBER
+Broccoli box,Wholesale,7.50,per box,,,,,,,NO_COST,Not in delivery notes. Broccoli occasionally bought from Holland but no data
+Tumeric box,Wholesale,16.00,per box,GINGER PP TURMERIC BOX,Holland,16.00,per box,16.00,0.0,RED,Selling turmeric box at cost. Should be £22-25
+Litchi box,Wholesale,9.50,per 2KG box,LYCHEE SA 2KG,Dole,15.00,2KG,15.00,,RED - LOSS,9.50 sell vs £15 cost = major loss. Should be £22-25
+Tomato Loose/Vine Box (5KG),Wholesale,0.00,per 5KG box,TOMATO VINE SPAIN 5KG,Dole,9.00,5KG,9.00,,ZERO_PRICE,Cost £9; set wholesale price to £12.99-14.99
+Potatoes Large (10 KG Bag),Potato Wholesale,0.00,per 10KG,POTATO MIDS UK 10KG,Dole,7.50,10KG,7.50,,ZERO_PRICE,Cost £7.50; set to £9.99-10.99
+Pepper Orange Box,Wholesale,0.00,per 5KG box,CAPSICUM ORANGE SPAIN 5KG,Dole,12.00,5KG,12.00,,ZERO_PRICE,Cost £12; set to £16.99
+Pepper Red Box,Wholesale,0.00,per 5KG box,CAPSICUM RED NL 5KG,Dole,11.00,5KG,11.00,,ZERO_PRICE,Cost £11; set to £15.99
+Aubergine box (5KG),Wholesale,0.00,per 5KG box,AUBERGINE NL 5KG,Dole,8.00,5KG,8.00,,ZERO_PRICE,Cost £8; set to £11.99
+Lemon box,Wholesale,0.00,per box,LEMON SPAIN 30/6KG,Dole,8.00,30 units ~6KG,8.00,,ZERO_PRICE,Cost £8; set to £11.99
+Lime box,Wholesale,0.00,per box,LIMES BRAZIL 42/4KG,Dole,7.00,42 units ~4KG,7.00,,ZERO_PRICE,Cost £7; set to £10.99
+Pepper Box Mixed,Wholesale,0.00,per 5KG box,CAPSICUM MIXED NL 5KG,Dole,13.50,5KG,13.50,,ZERO_PRICE,Cost £13.50; set to £18.99
+Nectarine Loose Box (28),Soft Fruit Wholesale,0.00,per 28-count box,NECTARINE SPAIN 10X500G,Dole,15.50,10×500G = 5KG,15.50,,ZERO_PRICE,Cost ~£15.50/5KG; set wholesale price £21-22
+Apricot Loose Box (2KG),Soft Fruit Wholesale,0.00,per 2KG,APRICOT SPAIN 10X500G,Dole,14.00,5KG,5.60 for 2KG,,ZERO_PRICE,Set to £8 (matches MP version)
+Plum Red Box (4KG),Soft Fruit Wholesale,0.00,per 4KG,PLUM VARIOUS SA 5KG,Dole,13.00,5KG,10.40 for 4KG,,ZERO_PRICE,Set to £14 (matches MP version)
+Donut Peach Box (25),Soft Fruit Wholesale,0.00,per 25-count,PEACH DONUT SPAIN 10X500G,Dole,18.00,10×500G,,,ZERO_PRICE,Set to £12+ (MP version at £6 is a loss)
+Onion Red Sack (8KG),Wholesale,0.00,per 8KG,RED ONIONS DUTCH,Holland,7.80,per box ~5KG,,,ZERO_PRICE,8KG red onions cost ~£12.50; set to £16.99
+Onion Sack Regular (20KG),Wholesale,0.00,per 20KG,ONION SA 20KG,Holland,19.00,20KG,19.00,,ZERO_PRICE,Cost £19; set to £26.99
+Onion Spanish Sack,Wholesale,0.00,per sack,ONION SPAIN 20KG,Dole,15.00,20KG,15.00,,ZERO_PRICE,Cost £15; set to £21.99
+Carrots Sack,Wholesale,0.00,per sack,CARROT UK 15KG PREPACKED,Dole,11.50,15KG,11.50,,ZERO_PRICE,Cost £11.50; set to £16.99
+Potatoes Baby Roast Box (10KG),Potato Wholesale,0.00,per 10KG,,,,,,,ZERO_PRICE,Not in delivery notes. Check supplier
+Potatoes PrePack Sack (20KG),Potato Wholesale,0.00,per 20KG,POTATO UK 10X2KG 20KG,Dole,8.20,20KG,8.20,,ZERO_PRICE,Cost £8.20; set to £12.99
+Potatoes Washed Box (40 Count),Potato Wholesale,0.00,per 40-count,POTATO WASHED UK 25KG,Dole,7.00,25KG,7.00,,ZERO_PRICE,Set to £11.99
+Potatoes Jolly Wash Chip (Sack),Potato Wholesale,0.00,per sack,POTATO WASHED UK 25KG,Dole,7.00,25KG,7.00,,ZERO_PRICE,Set to £11.99
+Mushroom Tray (2.27KG),Wholesale,0.00,per 2.27KG tray,MUSHROOM CUP POLAND 2.27KG,Dole,5.20,2.27KG,5.20,,ZERO_PRICE,Cost £5.20; set to £7.99
+Celeriac Net,Wholesale,0.00,per net,CELERIAC BOX X6,Holland,6.00,6 pieces,6.00,,ZERO_PRICE,Set to £8.99
+Pomegranate Box,Wholesale,0.00,per box,POMEGRANATE ZA 8/5KG,Dole,10.00,8 units,10.00,,ZERO_PRICE,Set to £13.99-14.99
+Peaches Loose box (28),Soft Fruit Wholesale,0.00,per 28-count,PEACH SPAIN 10X500G,Dole,16.00,10×500G = 5KG,,,ZERO_PRICE,Set to £12+ (MP at £6 is a loss)
+Grapefruit Red Box (66),Citrus Wholesale,0.00,per 66-count,GRAPEFRUIT SA 35/15KG,Dole,20.00,35 units,,,ZERO_PRICE,66-count costs ~£38-40. Set wholesale price accordingly
+Orange Large Box (60),Citrus Wholesale,0.00,per 60-count,ORANGE NAVEL SPAIN 45/15KG,Dole,20.00,45 units,,,ZERO_PRICE,Cost ~£26.67; set to £35-38
+Orange Small Box (60),Citrus Wholesale,0.00,per 60-count,ORANGE SMALL SPAIN 80/15KG,Dole,8.00,80 units,6.00 for 60,,ZERO_PRICE,60 small oranges cost £6; set to £9.99-11.99
+White grape box LARGE BOX,Wholesale,29.00,per large box,GRAPE SWEET GLOBE / CRIMSON,Dole,16.00,10×500G = 5KG,,,AMBER,If selling full 10KG box: cost £32 vs sell £29 = loss. If 5KG: cost £16 sell £29 = 45% margin. CLARIFY size
+Grapefruit Red Box,Wholesale,18.00,per box,GRAPEFRUIT CYPRUS 35/15KG,Dole,18.00,35 units,18.00,0.0,RED,Selling at cost. Should be £24.99
+Water Bottle 500ml,,0.25,per 500ML bottle,WATER STILL UK 24X500ML,Dole,3.00,24 bottles,0.125,50.0,GREEN,Good margin
+Water Bottles - 24,,4.80,per 24-pack,WATER STILL UK 24X500ML,Dole,3.00,24 bottles,3.00,37.5,AMBER,Selling 24-pack at £4.80 vs £3 cost = 37% margin. OK for bulk
+Water Bottle Large,Drinks,0.85,per large bottle,WATER STILL UK 24X500ML,Dole,3.00,24 bottles,0.125,85.3,GREEN,85% margin if large = 500ML. Excellent
+Fruit Shoot,Drinks,0.50,per bottle,,,,,,,NO_COST,Not in delivery notes. Bought externally
+Fruit Shoot 3 for £1,Drinks,1.00,3 for £1,,,,,,,NO_COST,Not in delivery notes
+Coca Cola Bottle,Drinks,2.70,per bottle,,,,,,,NO_COST,External purchase
+Coca Zero Bottle,Drinks,2.20,per bottle,,,,,,,NO_COST,External purchase
+Sprite Bottle,Drinks,2.20,per bottle,,,,,,,NO_COST,External purchase
+Fanta Bottle,Drinks,2.20,per bottle,,,,,,,NO_COST,External purchase
+Princess orange/apple,Drinks,1.50,per bottle,,,,,,,NO_COST,Princess brand juice
+Apple Juice Princess Bottle,Drinks,1.60,per bottle,,,,,,,NO_COST,External purchase
+Orange Juice Princess Bottle,Drinks,1.99,per bottle,,,,,,,NO_COST,External purchase
+Milk,,1.49,per pint,,,,,,,NO_COST,External purchase. Sold as convenience item
+Milk Promotion,,1.35,per pint,,,,,,,NO_COST,Promotional price
+Milk Promotion 80p,,0.80,per pint,,,,,,,NO_COST,Heavy discount - check if current
+Milk Mp,,1.60,per pint,,,,,,,NO_COST,MP = manual price milk
+Eggs Tray LARGE,,7.90,per 30-egg tray,,,,,,,NO_COST,Not in delivery notes. External purchase
+Olive oil,,2.50,per bottle,,,,,,,NO_COST,Not in delivery notes
+Roasted Pistachios,Punnets,1.50,per punnet,,,,,,,NO_COST,Not in delivery notes
+Roasted Almonds,Punnets,1.50,per punnet,,,,,,,NO_COST,Not in delivery notes
+Hazelnuts,,8.00,per bag,,,,,,,NO_COST,Not in delivery notes
+Walnuts,,8.00,per bag,,,,,,,NO_COST,Not in delivery notes
+Walnut pack,,1.80,per pack,,,,,,,NO_COST,Not in delivery notes
+Dried fruit packet,,0.39,per packet,,,,,,,NO_COST,Not in delivery notes
+Tamarind,Punnets,2.99,per punnet,,,,,,,NO_COST,Not in delivery notes
+Red Currants,Exotic,2.00,per punnet,,,,,,,NO_COST,Not in delivery notes
+Cranberries,,0.89,per punnet,,,,,,,NO_COST,Not in delivery notes
+Little Gem,,1.29,per piece,,,,,,,NO_COST,Not in delivery notes
+Sugar Snaps,,1.69,per pack,,,,,,,NO_COST,Not in delivery notes
+Pear Conference Punnet,Punnets,2.80,per punnet,PEARS CONFERENCE BELGIUM 12KG,Dole,19.00,12KG,0.79 per 500G,71.8,GREEN,500G conference pear costs 79p; sell £2.80 = 72% margin
+Cucumber mini,Punnets,3.49,per pack,CUCUMBER MINI SPAIN 5KG,Dole,11.50,5KG,2.30,34.1,AMBER,Mini cucumber pack at £2.30 cost; sell £3.49 = 34% margin. Ok
+Horseradish wrapped,Exotic,3.50,per piece,HORSERADISH STICK,Holland,2.00,per stick,2.00,42.9,GREEN,Cost £2 sell £3.50 = 43% margin
+Turnip,Exotic,3.62,per piece,,,,,,,NO_COST,Not in delivery notes. Unusual price (£3.62)
+Bean Sprouts,,0.89,per pack,BEAN SHOOTS SINGLE,Holland,0.50,single,0.50,43.8,GREEN,Good
+Prune Tub,Soft Fruit,2.99,per tub,,,,,,,NO_COST,Not in delivery notes. External purchase (dried prunes)
+bargain box,,0.20,per box,,,,,,,NO_COST,Generic markdown/clearance item. No cost applicable
+Bags (Box) - MP,,0.00,n/a,BAGS PLASTIC / PAPER,Dole,varies,varies,,,CONSUMABLE,Bag sales. Not produce
+Sheciyonu,Exotic,13.20,per item,,,,,,,UNKNOWN,Unknown product. Likely a mis-entry or non-standard item. Clarify with David
+SEHECYIONU,,6.60,per item,,,,,,,UNKNOWN,Likely same as Sheciyonu. Duplicate with different price. Clarify
+Green plum,Soft Fruit,0.03,per piece,,,,,,,PRICE_ERROR,3p sell price is certainly wrong. Pricing error
+Soft Plum,,0.10,per piece,,,,,,,PRICE_ERROR,10p sell price is certainly a pricing error
+Radish Pack,,0.66,per pack,RADISH PRE PACKED X20,Holland,7.50,20 packs,0.375,43.2,GREEN,38p cost per pack; sell 66p = 43% margin
+Lychees 5 for £1,Exotic,1.00,5 for £1,LYCHEE SA 2KG,Dole,15.00,2KG ~50 lychees,1.50 for 5,,RED - LOSS,5 lychees cost ~£1.50; selling for £1 = loss. Should be 5 for £1.99 or 3 for £1
+Pumpkin small,,2.49,per piece,,,,,,,NO_COST,Not in delivery notes
+Marrow,,1.50,per piece,,,,,,,NO_COST,Not in delivery notes
+Dragon fruit,,2.50,per piece,,,,,,,DUPLICATE,Duplicate of Dragon Fruit at £2.00. Consolidate
+Pithaya,,3.50,per piece,,,,,,,DUPLICATE,Duplicate of Pithaya at £3.00. Consolidate. Price £3.00-3.50
+Cabbage White,Cabbage,1.00,per piece,,,,,,,DUPLICATE,Third entry for Cabbage White. Delete duplicates
+Tangerine Loose,Citrus,3.30,per kg,,,,,,,DUPLICATE,Second entry. Delete
+Strawberry Punnet,Punnets,1.80,per punnet,,,,,,,DUPLICATE,Second entry. Delete
+Plums Punnet,Punnets,1.99,per punnet,,,,,,,DUPLICATE,Second entry. Delete
+Nectarine Punnet,Punnets,2.50,per punnet,,,,,,,DUPLICATE,Second entry. Delete
+Open punnet Grapes,Grapes,1.40,per punnet,,,,,,,DUPLICATE,Duplicate of Grape open punnet. Delete
