@@ -1,0 +1,211 @@
+{
+  "month": "2023-12",
+  "generated": "2026-06-01",
+  "note": "AI-interpreted from pdfplumber raw text. Dole (3 deliveries, 20\u201322 Dec). JR Holland: Sales Ledger Statements only \u2014 no line items available. Pre-Christmas deliveries. Grape Sweet Favour Spain 10\u00d7500G: \u00a38 (20 Dec, 3 boxes) and \u00a37 (21 Dec, 5 boxes) \u2014 new Spanish variety not seen again; very cheap end-of-season pricing. Pineapple CR 7-unit at \u00a38 (21 Dec \u2014 small cheap format; vs 8-unit at \u00a310 in Jan 2024). Apple Pink Lady France 70/12KG at \u00a327 (22 Dec \u2014 \u00a31 more expensive than the \u00a326 seen in Jan 2024; peak pre-Christmas pricing). Grape Iris Brazil 10\u00d7500G at \u00a317 (22 Dec, 2 boxes \u2014 only appearance in dataset; Iris = dark seedless variety). Satsuma ES 99/10KG at \u00a316 (22 Dec, 3 boxes \u2014 X99 Pepe brand; early-season November satsuma run). Pomelo China 10 at \u00a315 (22 Dec). Kiwi Italy 27/3KG at \u00a39 (22 Dec \u2014 slightly higher than \u00a38.50 seen in Jan 2024). Melon Galia Brazil 6/5KG at \u00a35 (20 Dec \u2014 cheapest melon in dataset). Pomegranate Turkey 12/5KG at \u00a38 (20 Dec). Grape Crimson Turkey 2KG 10\u00d7500G at \u00a316 (20 Dec \u2014 Turkey-origin crimson unusual).",
+  "suppliers": [
+    "dole wholesale gateshead",
+    "jr holland"
+  ],
+  "delivery_count": 3,
+  "deliveries": [
+    {
+      "date": "20/12/2023",
+      "delivery_no": "9324648",
+      "supplier": "dole wholesale gateshead",
+      "items": [
+        {
+          "raw": "GRAPE SWEET FAVOUR SPAIN 10X500G 5KG .",
+          "product": "Grape Sweet Favour (Spain)",
+          "origin": "Spain",
+          "qty_boxes": 3,
+          "box_spec": "10\u00d7500G = 5KG (Flow Wrap)",
+          "box_price_gbp": 8.0,
+          "unit_cost_per_punnet_500g": 0.8,
+          "unit_cost_per_kg": 1.6,
+          "confidence": "high",
+          "note": "Sweet Favour = unknown Spanish variety; only Dec 2023 sighting; very cheap"
+        },
+        {
+          "raw": "POMEGRANATE . TURKEY 12 5KG .",
+          "product": "Pomegranate (Turkey)",
+          "origin": "Turkey",
+          "qty_boxes": 2,
+          "box_spec": "12 units ~5KG (Poupart)",
+          "box_price_gbp": 8.0,
+          "unit_cost_per_each": 0.667,
+          "unit_cost_per_kg": 1.6,
+          "confidence": "high"
+        },
+        {
+          "raw": "PEARS CONFERENCE BELGIUM . 12KG .",
+          "product": "Pear Conference",
+          "origin": "Belgium",
+          "qty_boxes": 1,
+          "box_spec": "12KG (Dole)",
+          "box_price_gbp": 19.0,
+          "unit_cost_per_kg": 1.583,
+          "confidence": "high"
+        },
+        {
+          "raw": "MELON GALIA BRAZIL 6 5KG .",
+          "product": "Melon Galia",
+          "origin": "Brazil",
+          "qty_boxes": 1,
+          "box_spec": "6 melons ~5KG (Fruit Vision)",
+          "box_price_gbp": 5.0,
+          "unit_cost_per_each": 0.833,
+          "unit_cost_per_kg": 1.0,
+          "confidence": "high",
+          "note": "\u00a35/5KG = cheapest melon in entire dataset"
+        },
+        {
+          "raw": "GRAPE CRIMSON TURKEY . 2KG . 10x500g",
+          "product": "Grape Crimson (Turkey)",
+          "origin": "Turkey",
+          "qty_boxes": 1,
+          "box_spec": "10\u00d7500G ~5KG (Poupart)",
+          "box_price_gbp": 16.0,
+          "unit_cost_per_punnet_500g": 1.6,
+          "unit_cost_per_kg": 3.2,
+          "confidence": "high",
+          "note": "Turkey-origin Crimson \u2014 unusual; most Crimson is SA"
+        },
+        {
+          "raw": "BANANA . COSTA RICA . 18.2KG .",
+          "product": "Banana",
+          "origin": "Costa Rica",
+          "qty_boxes": 1,
+          "box_spec": "18.2KG (Chiquita)",
+          "box_price_gbp": 18.5,
+          "unit_cost_per_kg": 1.016,
+          "confidence": "high"
+        }
+      ]
+    },
+    {
+      "date": "21/12/2023",
+      "delivery_no": "9328282",
+      "supplier": "dole wholesale gateshead",
+      "items": [
+        {
+          "raw": "GRAPE SWEET FAVOUR SPAIN 10X500G 5KG .",
+          "product": "Grape Sweet Favour (Spain)",
+          "origin": "Spain",
+          "qty_boxes": 5,
+          "box_spec": "10\u00d7500G = 5KG (Exsa)",
+          "box_price_gbp": 7.0,
+          "unit_cost_per_punnet_500g": 0.7,
+          "unit_cost_per_kg": 1.4,
+          "confidence": "high",
+          "note": "Down from \u00a38 the previous day \u2014 clearance pricing"
+        },
+        {
+          "raw": "PINEAPPLE . COSTA RICA 7 . .",
+          "product": "Pineapple",
+          "origin": "Costa Rica",
+          "qty_boxes": 2,
+          "box_spec": "7 units (Dole)",
+          "box_price_gbp": 8.0,
+          "unit_cost_per_each": 1.143,
+          "confidence": "high",
+          "note": "7-unit box at \u00a38 \u2014 smaller/cheaper than the 8-unit at \u00a310 seen in Jan 2024"
+        },
+        {
+          "raw": "BANANA . COLOMBIA . 18.2KG .",
+          "product": "Banana",
+          "origin": "Colombia",
+          "qty_boxes": 1,
+          "box_spec": "18.2KG (Chiquita)",
+          "box_price_gbp": 18.5,
+          "unit_cost_per_kg": 1.016,
+          "confidence": "high"
+        },
+        {
+          "raw": "APPLE BRAEBURN FRANCE 66 12KG .",
+          "product": "Apple Braeburn",
+          "origin": "France",
+          "qty_boxes": 1,
+          "box_spec": "66 units ~12KG (X66 Blue Whale)",
+          "box_price_gbp": 18.0,
+          "unit_cost_per_each": 0.273,
+          "unit_cost_per_kg": 1.5,
+          "confidence": "high"
+        }
+      ]
+    },
+    {
+      "date": "22/12/2023",
+      "delivery_no": "9332361",
+      "supplier": "dole wholesale gateshead",
+      "items": [
+        {
+          "raw": "POMELO . CHINA 10 . .",
+          "product": "Pomelo",
+          "origin": "China",
+          "qty_boxes": 1,
+          "box_spec": "10 units",
+          "box_price_gbp": 15.0,
+          "unit_cost_per_each": 1.5,
+          "confidence": "high"
+        },
+        {
+          "raw": "SATSUMA . ES 99 10KG .",
+          "product": "Satsuma (Spain)",
+          "origin": "Spain",
+          "qty_boxes": 3,
+          "box_spec": "99 units ~10KG (X99 Pepe)",
+          "box_price_gbp": 16.0,
+          "unit_cost_per_each": 0.162,
+          "unit_cost_per_kg": 1.6,
+          "confidence": "high",
+          "note": "99-count = smaller grade satsuma; 3 boxes = early December run"
+        },
+        {
+          "raw": "PEARS CONFERENCE BELGIUM . 12KG .",
+          "product": "Pear Conference",
+          "origin": "Belgium",
+          "qty_boxes": 1,
+          "box_spec": "12KG (Dole)",
+          "box_price_gbp": 19.0,
+          "unit_cost_per_kg": 1.583,
+          "confidence": "high"
+        },
+        {
+          "raw": "KIWI . ITALY 27 3KG .",
+          "product": "Kiwi",
+          "origin": "Italy",
+          "qty_boxes": 3,
+          "box_spec": "27 units ~3KG",
+          "box_price_gbp": 9.0,
+          "unit_cost_per_each": 0.333,
+          "confidence": "high",
+          "note": "\u00a39 vs \u00a38.50 in Jan 2024 \u2014 slightly higher December price"
+        },
+        {
+          "raw": "GRAPE IRIS BRAZIL 10X500G 5KG PREPACKED",
+          "product": "Grape Iris (Brazil)",
+          "origin": "Brazil",
+          "qty_boxes": 2,
+          "box_spec": "10\u00d7500G = 5KG prepacked (Red)",
+          "box_price_gbp": 17.0,
+          "unit_cost_per_punnet_500g": 1.7,
+          "unit_cost_per_kg": 3.4,
+          "confidence": "high",
+          "note": "Iris = dark seedless Brazilian variety; only appearance in dataset"
+        },
+        {
+          "raw": "APPLE PINK LADY FRANCE 70 12KG .",
+          "product": "Apple Pink Lady",
+          "origin": "France",
+          "qty_boxes": 1,
+          "box_spec": "70 units ~12KG (X70 Blue Whale)",
+          "box_price_gbp": 27.0,
+          "unit_cost_per_each": 0.386,
+          "unit_cost_per_kg": 2.25,
+          "confidence": "high",
+          "note": "\u00a327 = peak December Pink Lady; \u00a31 higher than the \u00a326 seen in Jan 2024"
+        }
+      ]
+    }
+  ]
+}

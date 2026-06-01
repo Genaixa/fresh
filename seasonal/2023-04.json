@@ -1,0 +1,61 @@
+{
+  "month": "2023-04",
+  "generated": "2026-06-01",
+  "note": "AI-interpreted from pdfplumber raw text. Very sparse \u2014 only 28 April items survive, captured from a JR Holland batch invoice filed in May. No Dole delivery notes exist for April 2023. JR Holland: Plums African D/Didis (\u00d74, \u00a310), Pomegranates X12 (\u00a38), Pineapples X8 Fyfe (\u00a39.50), Yellow X9 Euro melon (\u00a317), Galia X6 (\u00a39). April 2023 is the earliest Holland data in the archive.",
+  "suppliers": [
+    "jr holland"
+  ],
+  "delivery_count": 2,
+  "deliveries": [
+    {
+      "date": "28/04/2023",
+      "ticket_no": "2394564",
+      "supplier": "jr holland",
+      "items": [
+        {
+          "raw": "PLUMS AFRICAN D DIDIS",
+          "product": "Plum Africa Delight",
+          "qty_boxes": 4,
+          "box_price_gbp": 10.0,
+          "confidence": "high"
+        },
+        {
+          "raw": "POMEGRANATES X12",
+          "product": "Pomegranate",
+          "qty_boxes": 1,
+          "box_price_gbp": 8.0,
+          "confidence": "high"
+        },
+        {
+          "raw": "PINEAPPLES X8 FYFE",
+          "product": "Pineapple",
+          "qty_boxes": 1,
+          "box_price_gbp": 9.5,
+          "confidence": "high"
+        },
+        {
+          "raw": "YELLOW X9 EURO",
+          "product": "Melon Yellow",
+          "qty_boxes": 1,
+          "box_price_gbp": 17.0,
+          "confidence": "medium",
+          "note": "YELLOW X9 EURO = likely 9-unit yellow melon box (Cantaloupe or Yellow Galia)"
+        }
+      ]
+    },
+    {
+      "date": "28/04/2023",
+      "ticket_no": "2394647",
+      "supplier": "jr holland",
+      "items": [
+        {
+          "raw": "GALIA X6",
+          "product": "Melon Galia",
+          "qty_boxes": 1,
+          "box_price_gbp": 9.0,
+          "confidence": "high"
+        }
+      ]
+    }
+  ]
+}

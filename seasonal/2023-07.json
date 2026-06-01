@@ -1,0 +1,729 @@
+{
+  "month": "2023-07",
+  "generated": "2026-06-01",
+  "note": "AI-interpreted from pdfplumber raw text. JR Holland batch invoices only (67 line items, 03\u201331 July). No Dole delivery notes for July 2023. Peak summer stone fruit. Black grapes dominant: Cirello 45KG loose (\u00a316.50, 13-17 Jul); ZII 10 packs (\u00a310, 13 Jul); Seedless X10 (\u00a310-13); Itum15 punnets (\u00a312, 19-24 Jul). Cherries 5KG Orchard Hill at \u00a332 (19 Jul). Nectarines recurring (X24-X28, \u00a34-7). Peaches Flat AA (\u00a38\u00d72 on 05, 10 Jul; \u00a310\u00d73 'AAA' 14 Jul). Apricots 5KG (\u00a311-12, 12-14, 19 Jul). Pomegranates X8-X9 recurring (\u00a310-11). Conference pear: 60+ Woods at \u00a327 (12 Jul \u2014 peak July price), 65/70 Eureka at \u00a330 (24 Jul \u2014 most expensive conference seen). Kiwi Fruit X36 Salvi at \u00a314 (24 Jul). Oranges X60 Cochan \u00a322 (07 Jul). Kohlrabi box recurring throughout (\u00a317.50-18). Celeriac Box X6 from mid-month (\u00a36, recurring). Chicory Box (\u00a315-15.50, 10, 24 Jul). Chervil 100G at \u00a31.10 (10 Jul \u2014 small specialty herb). Endive Single \u00a32 (10 Jul). Butternut Squash Pink Box X10 recurring from 06 Jul (\u00a311.50-12). Garlic PP 20\u00d7400G \u00a316.50 (06 Jul). Onions 4KG net (20 boxes on 03 Jul \u2014 large veg run). Beetroot Bunched (03 Jul). Salad Cress X16 (03 Jul). Plum Tomatoes Rimini (03 Jul, 8 boxes). Chantenay carrots (10 Jul).",
+  "suppliers": [
+    "jr holland"
+  ],
+  "delivery_count": 22,
+  "deliveries": [
+    {
+      "date": "03/07/2023",
+      "ticket_no": "2416881",
+      "supplier": "jr holland",
+      "items": [
+        {
+          "raw": "PLUM TOMATOES RIMINI BABY PLUMVINE",
+          "product": "Tomato Plum (Baby)",
+          "qty_boxes": 8,
+          "box_price_gbp": 9.5,
+          "confidence": "high"
+        },
+        {
+          "raw": "MIXED PEPPERS DUTCH TRI COLOUR X10",
+          "product": "Pepper (Mixed)",
+          "qty_boxes": 1,
+          "box_price_gbp": 9.0,
+          "confidence": "high"
+        },
+        {
+          "raw": "SALAD CRESS X16",
+          "product": "Salad Cress",
+          "qty_boxes": 5,
+          "box_price_gbp": 2.5,
+          "confidence": "high"
+        }
+      ]
+    },
+    {
+      "date": "03/07/2023",
+      "ticket_no": "2416884",
+      "supplier": "jr holland",
+      "items": [
+        {
+          "raw": "ONIONS 4 KILO",
+          "product": "Onion",
+          "qty_boxes": 20,
+          "box_price_gbp": 4.5,
+          "note": "20 boxes = large July onion run",
+          "confidence": "high"
+        },
+        {
+          "raw": "MIDS GARDEN",
+          "product": "Potato Mids",
+          "qty_boxes": 2,
+          "box_price_gbp": 11.0,
+          "confidence": "high"
+        },
+        {
+          "raw": "CYPRUS GREEN BAGS",
+          "product": "Potato (Cyprus)",
+          "qty_boxes": 1,
+          "box_price_gbp": 20.0,
+          "confidence": "high"
+        },
+        {
+          "raw": "BEETROOT BUNCHED",
+          "product": "Beetroot",
+          "qty_boxes": 1,
+          "box_price_gbp": 12.0,
+          "confidence": "high"
+        }
+      ]
+    },
+    {
+      "date": "04/07/2023",
+      "ticket_no": "2417303",
+      "supplier": "jr holland",
+      "items": [
+        {
+          "raw": "HORSERADISH STICK",
+          "product": "Horseradish",
+          "qty_boxes": 4,
+          "box_price_gbp": 2.0,
+          "confidence": "high"
+        },
+        {
+          "raw": "SHALLOTTS PRE PAC",
+          "product": "Shallot",
+          "qty_boxes": 3,
+          "box_price_gbp": 1.0,
+          "confidence": "high"
+        }
+      ]
+    },
+    {
+      "date": "04/07/2023",
+      "ticket_no": "2417310",
+      "supplier": "jr holland",
+      "items": [
+        {
+          "raw": "NECTARINES X24 FRUITONI",
+          "product": "Nectarine",
+          "qty_boxes": 7,
+          "box_price_gbp": 7.0,
+          "confidence": "high"
+        }
+      ]
+    },
+    {
+      "date": "05/07/2023",
+      "ticket_no": "2417606",
+      "supplier": "jr holland",
+      "items": [
+        {
+          "raw": "PEACHES FLAT AA",
+          "product": "Peach (Flat)",
+          "qty_boxes": 6,
+          "box_price_gbp": 8.0,
+          "confidence": "high"
+        }
+      ]
+    },
+    {
+      "date": "05/07/2023",
+      "ticket_no": "2417644",
+      "supplier": "jr holland",
+      "items": [
+        {
+          "raw": "KOHLRABI BOX",
+          "product": "Kohlrabi",
+          "qty_boxes": 1,
+          "box_price_gbp": 18.0,
+          "confidence": "high"
+        }
+      ]
+    },
+    {
+      "date": "06/07/2023",
+      "ticket_no": "2418064",
+      "supplier": "jr holland",
+      "items": [
+        {
+          "raw": "BUTTERNUT SQUASH PINK BOX X10",
+          "product": "Butternut Squash",
+          "qty_boxes": 3,
+          "box_price_gbp": 11.5,
+          "confidence": "high"
+        }
+      ]
+    },
+    {
+      "date": "06/07/2023",
+      "ticket_no": "2418067",
+      "supplier": "jr holland",
+      "items": [
+        {
+          "raw": "GARLIC PP 20 X 400G",
+          "product": "Garlic",
+          "qty_boxes": 1,
+          "box_price_gbp": 16.5,
+          "confidence": "high"
+        }
+      ]
+    },
+    {
+      "date": "06/07/2023",
+      "ticket_no": "2418068",
+      "supplier": "jr holland",
+      "items": [
+        {
+          "raw": "ONIONS 4 KILO",
+          "product": "Onion",
+          "qty_boxes": 10,
+          "box_price_gbp": 4.5,
+          "confidence": "high"
+        }
+      ]
+    },
+    {
+      "date": "06/07/2023",
+      "ticket_no": "2418076",
+      "supplier": "jr holland",
+      "items": [
+        {
+          "raw": "BUTTERNUT SQUASH PINK BOX X10",
+          "product": "Butternut Squash",
+          "qty_boxes": 1,
+          "box_price_gbp": 11.5,
+          "confidence": "high"
+        }
+      ]
+    },
+    {
+      "date": "07/07/2023",
+      "ticket_no": "2418516",
+      "supplier": "jr holland",
+      "items": [
+        {
+          "raw": "ORANGES X60 COCHAN",
+          "product": "Orange",
+          "qty_boxes": 2,
+          "box_price_gbp": 22.0,
+          "note": "60-count orange box; summer Valencia likely",
+          "confidence": "high"
+        },
+        {
+          "raw": "CONFERENCE 50+",
+          "product": "Pear Conference",
+          "qty_boxes": 2,
+          "box_price_gbp": 23.0,
+          "confidence": "high"
+        }
+      ]
+    },
+    {
+      "date": "10/07/2023",
+      "ticket_no": "2419138",
+      "supplier": "jr holland",
+      "items": [
+        {
+          "raw": "PEACHES X20 BEAN",
+          "product": "Peach",
+          "qty_boxes": 6,
+          "box_price_gbp": 6.0,
+          "confidence": "high"
+        },
+        {
+          "raw": "BLACK GRAPES AUTUMN ROYAL",
+          "product": "Grape (Black)",
+          "qty_boxes": 1,
+          "box_price_gbp": 13.0,
+          "note": "Autumn Royal = seedless black variety",
+          "confidence": "high"
+        },
+        {
+          "raw": "SEEDLESS X10",
+          "product": "Grape (Seedless)",
+          "qty_boxes": 1,
+          "box_price_gbp": 13.0,
+          "confidence": "high"
+        },
+        {
+          "raw": "PEACHES FLAT AA",
+          "product": "Peach (Flat)",
+          "qty_boxes": 2,
+          "box_price_gbp": 8.0,
+          "confidence": "high"
+        }
+      ]
+    },
+    {
+      "date": "10/07/2023",
+      "ticket_no": "2419173",
+      "supplier": "jr holland",
+      "items": [
+        {
+          "raw": "BUTTERNUT SQUASH PINK BOX X10",
+          "product": "Butternut Squash",
+          "qty_boxes": 1,
+          "box_price_gbp": 12.0,
+          "confidence": "high"
+        },
+        {
+          "raw": "CHERVIL 100G",
+          "product": "Chervil",
+          "qty_boxes": 1,
+          "box_price_gbp": 1.1,
+          "note": "Specialty herb \u2014 small quantity",
+          "confidence": "high"
+        },
+        {
+          "raw": "ENDIVES SINGLE",
+          "product": "Endive",
+          "qty_boxes": 1,
+          "box_price_gbp": 2.0,
+          "confidence": "high"
+        },
+        {
+          "raw": "CHICORY BOX",
+          "product": "Chicory",
+          "qty_boxes": 1,
+          "box_price_gbp": 15.0,
+          "confidence": "high"
+        }
+      ]
+    },
+    {
+      "date": "10/07/2023",
+      "ticket_no": "2419178",
+      "supplier": "jr holland",
+      "items": [
+        {
+          "raw": "CARROTS CHANTENAY",
+          "product": "Carrot (Chantenay)",
+          "qty_boxes": 3,
+          "box_price_gbp": 10.5,
+          "confidence": "high"
+        }
+      ]
+    },
+    {
+      "date": "11/07/2023",
+      "ticket_no": "2419591",
+      "supplier": "jr holland",
+      "items": [
+        {
+          "raw": "KOHLRABI BOX",
+          "product": "Kohlrabi",
+          "qty_boxes": 1,
+          "box_price_gbp": 18.0,
+          "confidence": "high"
+        }
+      ]
+    },
+    {
+      "date": "12/07/2023",
+      "ticket_no": "2419893",
+      "supplier": "jr holland",
+      "items": [
+        {
+          "raw": "NECTARINES X28",
+          "product": "Nectarine",
+          "qty_boxes": 6,
+          "box_price_gbp": 4.0,
+          "note": "\u00a34/box = cheap mid-season clearance nectarine",
+          "confidence": "high"
+        }
+      ]
+    },
+    {
+      "date": "12/07/2023",
+      "ticket_no": "2419894",
+      "supplier": "jr holland",
+      "items": [
+        {
+          "raw": "CONFERENCE X60+ WOODS",
+          "product": "Pear Conference",
+          "qty_boxes": 1,
+          "box_price_gbp": 27.0,
+          "note": "\u00a327 = expensive July conference; Woods brand",
+          "confidence": "high"
+        }
+      ]
+    },
+    {
+      "date": "12/07/2023",
+      "ticket_no": "2419928",
+      "supplier": "jr holland",
+      "items": [
+        {
+          "raw": "APRICOTS 5KG",
+          "product": "Apricot",
+          "qty_boxes": 3,
+          "box_price_gbp": 12.0,
+          "confidence": "high"
+        },
+        {
+          "raw": "POMEGRANATES X9",
+          "product": "Pomegranate",
+          "qty_boxes": 1,
+          "box_price_gbp": 10.0,
+          "confidence": "high"
+        },
+        {
+          "raw": "YELLOW X10 EURO",
+          "product": "Melon Yellow",
+          "qty_boxes": 1,
+          "box_price_gbp": 18.0,
+          "confidence": "high"
+        }
+      ]
+    },
+    {
+      "date": "13/07/2023",
+      "ticket_no": "2420306",
+      "supplier": "jr holland",
+      "items": [
+        {
+          "raw": "BLACK GRAPES 45KG CIRELLO",
+          "product": "Grape Cirello (Black)",
+          "qty_boxes": 2,
+          "box_price_gbp": 16.5,
+          "note": "45KG bulk loose box \u2014 large format wholesale grape",
+          "confidence": "high"
+        },
+        {
+          "raw": "BLACK GRAPES X10 ZII",
+          "product": "Grape ZII (Black)",
+          "qty_boxes": 2,
+          "box_price_gbp": 10.0,
+          "confidence": "high"
+        },
+        {
+          "raw": "SEEDLESS X10",
+          "product": "Grape (Seedless)",
+          "qty_boxes": 1,
+          "box_price_gbp": 10.0,
+          "confidence": "high"
+        },
+        {
+          "raw": "POMEGRANATES X9",
+          "product": "Pomegranate",
+          "qty_boxes": 1,
+          "box_price_gbp": 10.0,
+          "confidence": "high"
+        }
+      ]
+    },
+    {
+      "date": "13/07/2023",
+      "ticket_no": "2420307",
+      "supplier": "jr holland",
+      "items": [
+        {
+          "raw": "RED CABBAGE SMALL BAGS",
+          "product": "Cabbage Red",
+          "qty_boxes": 2,
+          "box_price_gbp": 11.0,
+          "confidence": "high"
+        }
+      ]
+    },
+    {
+      "date": "14/07/2023",
+      "ticket_no": "2420730",
+      "supplier": "jr holland",
+      "items": [
+        {
+          "raw": "BLACK GRAPES 45KG CIRELLO",
+          "product": "Grape Cirello (Black)",
+          "qty_boxes": 1,
+          "box_price_gbp": 16.5,
+          "confidence": "high"
+        },
+        {
+          "raw": "NECTARINES X24",
+          "product": "Nectarine",
+          "qty_boxes": 7,
+          "box_price_gbp": 6.0,
+          "confidence": "high"
+        },
+        {
+          "raw": "PEACHES FLAT AAA",
+          "product": "Peach (Flat)",
+          "qty_boxes": 3,
+          "box_price_gbp": 10.0,
+          "confidence": "high"
+        },
+        {
+          "raw": "APRICOTS 5KG",
+          "product": "Apricot",
+          "qty_boxes": 2,
+          "box_price_gbp": 11.0,
+          "confidence": "high"
+        }
+      ]
+    },
+    {
+      "date": "17/07/2023",
+      "ticket_no": "2421365",
+      "supplier": "jr holland",
+      "items": [
+        {
+          "raw": "BLACK GRAPES 45KG CIRELLO",
+          "product": "Grape Cirello (Black)",
+          "qty_boxes": 1,
+          "box_price_gbp": 16.5,
+          "confidence": "high"
+        },
+        {
+          "raw": "SEEDLESS X10 SUGARONE",
+          "product": "Grape Sugarone (Seedless)",
+          "qty_boxes": 1,
+          "box_price_gbp": 12.0,
+          "confidence": "high"
+        }
+      ]
+    },
+    {
+      "date": "19/07/2023",
+      "ticket_no": "2422143",
+      "supplier": "jr holland",
+      "items": [
+        {
+          "raw": "CHERRIES 5KG ORCHARD HILL",
+          "product": "Cherry",
+          "qty_boxes": 1,
+          "box_price_gbp": 32.0,
+          "note": "\u00a332/5KG = peak July cherry; Orchard Hill brand",
+          "confidence": "high"
+        }
+      ]
+    },
+    {
+      "date": "19/07/2023",
+      "ticket_no": "2422153",
+      "supplier": "jr holland",
+      "items": [
+        {
+          "raw": "PLUMS X66",
+          "product": "Plum",
+          "qty_boxes": 1,
+          "box_price_gbp": 9.0,
+          "note": "66-count plum box",
+          "confidence": "high"
+        },
+        {
+          "raw": "APRICOTS 5KG AA",
+          "product": "Apricot",
+          "qty_boxes": 1,
+          "box_price_gbp": 12.0,
+          "confidence": "high"
+        },
+        {
+          "raw": "POMEGRANATES X8",
+          "product": "Pomegranate",
+          "qty_boxes": 1,
+          "box_price_gbp": 11.0,
+          "confidence": "high"
+        },
+        {
+          "raw": "BLACK GRAPES PNTS ITUM15",
+          "product": "Grape Itum15 (Punnets)",
+          "qty_boxes": 2,
+          "box_price_gbp": 12.0,
+          "confidence": "high"
+        },
+        {
+          "raw": "SEEDLESS X10",
+          "product": "Grape (Seedless)",
+          "qty_boxes": 2,
+          "box_price_gbp": 12.0,
+          "confidence": "high"
+        }
+      ]
+    },
+    {
+      "date": "19/07/2023",
+      "ticket_no": "2422163",
+      "supplier": "jr holland",
+      "items": [
+        {
+          "raw": "KOHLRABI BOX",
+          "product": "Kohlrabi",
+          "qty_boxes": 1,
+          "box_price_gbp": 18.0,
+          "confidence": "high"
+        },
+        {
+          "raw": "CELERIAC BOX X 6",
+          "product": "Celeriac",
+          "qty_boxes": 2,
+          "box_price_gbp": 6.0,
+          "confidence": "high"
+        }
+      ]
+    },
+    {
+      "date": "20/07/2023",
+      "ticket_no": "2422566",
+      "supplier": "jr holland",
+      "items": [
+        {
+          "raw": "POMEGRANATES X8",
+          "product": "Pomegranate",
+          "qty_boxes": 1,
+          "box_price_gbp": 11.0,
+          "confidence": "high"
+        }
+      ]
+    },
+    {
+      "date": "24/07/2023",
+      "ticket_no": "2423659",
+      "supplier": "jr holland",
+      "items": [
+        {
+          "raw": "CONFERENCE 65/70 EUREKA",
+          "product": "Pear Conference",
+          "qty_boxes": 1,
+          "box_price_gbp": 30.0,
+          "note": "\u00a330 = most expensive Conference in dataset",
+          "confidence": "high"
+        },
+        {
+          "raw": "BLACK GRAPES PNTS ITUM15",
+          "product": "Grape Itum15 (Punnets)",
+          "qty_boxes": 1,
+          "box_price_gbp": 12.0,
+          "confidence": "high"
+        },
+        {
+          "raw": "SEEDLESS X10 SUGARONE",
+          "product": "Grape Sugarone (Seedless)",
+          "qty_boxes": 1,
+          "box_price_gbp": 12.0,
+          "confidence": "high"
+        },
+        {
+          "raw": "KIWI FRUIT X36 SALVI",
+          "product": "Kiwi",
+          "qty_boxes": 1,
+          "box_price_gbp": 14.0,
+          "note": "X36 = 36 kiwis; Salvi brand at \u00a314",
+          "confidence": "high"
+        },
+        {
+          "raw": "POMEGRANATES X8",
+          "product": "Pomegranate",
+          "qty_boxes": 1,
+          "box_price_gbp": 11.0,
+          "confidence": "high"
+        }
+      ]
+    },
+    {
+      "date": "24/07/2023",
+      "ticket_no": "2423672",
+      "supplier": "jr holland",
+      "items": [
+        {
+          "raw": "KOHLRABI BOX",
+          "product": "Kohlrabi",
+          "qty_boxes": 1,
+          "box_price_gbp": 17.5,
+          "confidence": "high"
+        },
+        {
+          "raw": "SHALLOTTS PRE PAC SMALL NETS",
+          "product": "Shallot",
+          "qty_boxes": 3,
+          "box_price_gbp": 1.0,
+          "confidence": "high"
+        },
+        {
+          "raw": "CHICORY BOX",
+          "product": "Chicory",
+          "qty_boxes": 1,
+          "box_price_gbp": 15.5,
+          "confidence": "high"
+        }
+      ]
+    },
+    {
+      "date": "24/07/2023",
+      "ticket_no": "2423676",
+      "supplier": "jr holland",
+      "items": [
+        {
+          "raw": "CELERIAC BOX X 6",
+          "product": "Celeriac",
+          "qty_boxes": 1,
+          "box_price_gbp": 6.0,
+          "confidence": "high"
+        }
+      ]
+    },
+    {
+      "date": "25/07/2023",
+      "ticket_no": "2424063",
+      "supplier": "jr holland",
+      "items": [
+        {
+          "raw": "CELERIAC BOX X 6",
+          "product": "Celeriac",
+          "qty_boxes": 1,
+          "box_price_gbp": 6.0,
+          "confidence": "high"
+        }
+      ]
+    },
+    {
+      "date": "26/07/2023",
+      "ticket_no": "2424390",
+      "supplier": "jr holland",
+      "items": [
+        {
+          "raw": "POMEGRANATES X8",
+          "product": "Pomegranate",
+          "qty_boxes": 1,
+          "box_price_gbp": 11.0,
+          "confidence": "high"
+        }
+      ]
+    },
+    {
+      "date": "26/07/2023",
+      "ticket_no": "2424392",
+      "supplier": "jr holland",
+      "items": [
+        {
+          "raw": "CELERIAC BOX X 6",
+          "product": "Celeriac",
+          "qty_boxes": 1,
+          "box_price_gbp": 6.0,
+          "confidence": "high"
+        }
+      ]
+    },
+    {
+      "date": "31/07/2023",
+      "ticket_no": "2425942",
+      "supplier": "jr holland",
+      "items": [
+        {
+          "raw": "ORANGE PEPPERS TANGMERE",
+          "product": "Pepper (Orange)",
+          "qty_boxes": 2,
+          "box_price_gbp": 8.0,
+          "confidence": "high"
+        }
+      ]
+    },
+    {
+      "date": "31/07/2023",
+      "ticket_no": "2425945",
+      "supplier": "jr holland",
+      "items": [
+        {
+          "raw": "CHILLIES RED UK 3KG BLACK BOX",
+          "product": "Chilli (Red)",
+          "qty_boxes": 1,
+          "box_price_gbp": 15.0,
+          "confidence": "high"
+        }
+      ]
+    }
+  ]
+}

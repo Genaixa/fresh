@@ -1,0 +1,1007 @@
+{
+  "month": "2023-06",
+  "generated": "2026-06-01",
+  "note": "AI-interpreted from pdfplumber raw text. JR Holland batch invoices only (90 line items, 01\u201330 June). No Dole delivery notes for June 2023. Early summer peak. Stone fruit season strong: Nectarines X24-X30 recurring (Boix \u00a310, Verges \u00a312, Zag \u00a36), Peaches X32 Fundacion \u00a310 (01 Jun). Cherries 5KG at \u00a340 (14 Jun \u2014 peak cherry price) and Strawberries Oaklands at \u00a340 (13 Jun \u2014 premium UK strawberry). Conference 60+ Adora at \u00a325 \u00d7 5 (16 Jun). Plums Parisienne recurring (\u00a312-14). Watermelon X5/X6 from 21-22 Jun (\u00a317-20 \u2014 early summer). Cantaloupe X6/X12 recurring. Pineapples X8 Tropical Sweet \u00a312 (20 Jun). Kohlrabi featuring throughout (\u00a315-19). Heavy veg: Courgettes (green and yellow), Dutch Tomatoes Red Allure (\u00a35-5.50), Cherry Tomatoes (multiple types), Onions (SA 20KG and 4KG nets), Cucumbers X14 Dutch \u00a34.30 \u00d7 8 (21 Jun \u2014 large cucumber run), Parsnips, Celery X16 GS \u00a311. Physallis punnets (small quantities, \u00a31-1.10). Bean Shoots, Tamarillo, Kaki X12 Roscardi (exotic items early June). Beetroot bunched (12, 19 Jun). Peas English \u00a316.50 (12 Jun). Garlic Strings \u00a34 (01 Jun). SPANISH X1 Angela (potato variety, 6 boxes \u00d7 \u00a321 = large potato order 13 Jun).",
+  "suppliers": [
+    "jr holland"
+  ],
+  "delivery_count": 24,
+  "deliveries": [
+    {
+      "date": "01/06/2023",
+      "ticket_no": "2405726",
+      "supplier": "jr holland",
+      "items": [
+        {
+          "raw": "PEACHES X32 FUNDACION",
+          "product": "Peach",
+          "qty_boxes": 1,
+          "box_price_gbp": 10.0,
+          "confidence": "high"
+        },
+        {
+          "raw": "PACKHAM X10 9 FRUITS",
+          "product": "Pear Packham",
+          "qty_boxes": 1,
+          "box_price_gbp": 12.0,
+          "confidence": "high"
+        }
+      ]
+    },
+    {
+      "date": "01/06/2023",
+      "ticket_no": "2405727",
+      "supplier": "jr holland",
+      "items": [
+        {
+          "raw": "GARLIC STRINGS",
+          "product": "Garlic",
+          "qty_boxes": 2,
+          "box_price_gbp": 4.0,
+          "confidence": "high"
+        },
+        {
+          "raw": "CELERIAC BOX",
+          "product": "Celeriac",
+          "qty_boxes": 1,
+          "box_price_gbp": 6.0,
+          "confidence": "high"
+        },
+        {
+          "raw": "SHALLOTTS PRE PAC SMALL NETS",
+          "product": "Shallot",
+          "qty_boxes": 2,
+          "box_price_gbp": 1.0,
+          "confidence": "high"
+        },
+        {
+          "raw": "KIWI FRUIT DRAGON FRUIT",
+          "product": "Dragon Fruit/Kiwi mix",
+          "qty_boxes": 2,
+          "box_price_gbp": 3.5,
+          "confidence": "high"
+        },
+        {
+          "raw": "PHYSALLIS PUNNETS",
+          "product": "Physallis",
+          "qty_boxes": 2,
+          "box_price_gbp": 1.1,
+          "confidence": "high"
+        }
+      ]
+    },
+    {
+      "date": "01/06/2023",
+      "ticket_no": "2405732",
+      "supplier": "jr holland",
+      "items": [
+        {
+          "raw": "CHERRY TOMATOES X9 DUTCH",
+          "product": "Tomato Cherry",
+          "qty_boxes": 1,
+          "box_price_gbp": 5.8,
+          "confidence": "high"
+        },
+        {
+          "raw": "CHERRY TOMATOES X9 CAMPOS",
+          "product": "Tomato Cherry",
+          "qty_boxes": 2,
+          "box_price_gbp": 6.0,
+          "confidence": "high"
+        },
+        {
+          "raw": "CHERRY TOMATOES CHERITA DUTCH",
+          "product": "Tomato Cherry",
+          "qty_boxes": 1,
+          "box_price_gbp": 6.5,
+          "confidence": "high"
+        },
+        {
+          "raw": "DUTCH TOMATOES VITURA",
+          "product": "Tomato",
+          "qty_boxes": 5,
+          "box_price_gbp": 5.5,
+          "confidence": "high"
+        },
+        {
+          "raw": "COURGETTES YELLOW",
+          "product": "Courgette (Yellow)",
+          "qty_boxes": 1,
+          "box_price_gbp": 7.5,
+          "confidence": "high"
+        }
+      ]
+    },
+    {
+      "date": "01/06/2023",
+      "ticket_no": "2405734",
+      "supplier": "jr holland",
+      "items": [
+        {
+          "raw": "PARSNIPS BLACK BOX",
+          "product": "Parsnip",
+          "qty_boxes": 1,
+          "box_price_gbp": 6.5,
+          "confidence": "high"
+        }
+      ]
+    },
+    {
+      "date": "02/06/2023",
+      "ticket_no": "2406188",
+      "supplier": "jr holland",
+      "items": [
+        {
+          "raw": "PHYSALLIS PUNNETS",
+          "product": "Physallis",
+          "qty_boxes": 2,
+          "box_price_gbp": 1.0,
+          "confidence": "high"
+        }
+      ]
+    },
+    {
+      "date": "07/06/2023",
+      "ticket_no": "2407834",
+      "supplier": "jr holland",
+      "items": [
+        {
+          "raw": "HISPI X8",
+          "product": "Cabbage Hispi",
+          "qty_boxes": 1,
+          "box_price_gbp": 8.0,
+          "confidence": "high"
+        },
+        {
+          "raw": "PARSNIPS BLACK BOX",
+          "product": "Parsnip",
+          "qty_boxes": 3,
+          "box_price_gbp": 6.5,
+          "confidence": "high"
+        },
+        {
+          "raw": "ONIONS 10 KILO SOUTH AFRICA",
+          "product": "Onion",
+          "qty_boxes": 2,
+          "box_price_gbp": 10.0,
+          "confidence": "high"
+        }
+      ]
+    },
+    {
+      "date": "07/06/2023",
+      "ticket_no": "2407841",
+      "supplier": "jr holland",
+      "items": [
+        {
+          "raw": "BEAN SHOOTS SINGLE",
+          "product": "Bean Shoots",
+          "qty_boxes": 4,
+          "box_price_gbp": 0.5,
+          "confidence": "high"
+        },
+        {
+          "raw": "TAMARILLO PP TAMARIND",
+          "product": "Tamarillo",
+          "qty_boxes": 1,
+          "box_price_gbp": 1.9,
+          "confidence": "high"
+        }
+      ]
+    },
+    {
+      "date": "07/06/2023",
+      "ticket_no": "2407843",
+      "supplier": "jr holland",
+      "items": [
+        {
+          "raw": "KAKI X12 ROSCARDI",
+          "product": "Sharon Fruit (Kaki)",
+          "qty_boxes": 1,
+          "box_price_gbp": 6.0,
+          "confidence": "high"
+        }
+      ]
+    },
+    {
+      "date": "08/06/2023",
+      "ticket_no": "2408294",
+      "supplier": "jr holland",
+      "items": [
+        {
+          "raw": "MIXED PEPPERS DUTCH X12",
+          "product": "Pepper (Mixed)",
+          "qty_boxes": 1,
+          "box_price_gbp": 18.0,
+          "confidence": "high"
+        },
+        {
+          "raw": "CELERY X16 GS",
+          "product": "Celery",
+          "qty_boxes": 1,
+          "box_price_gbp": 11.0,
+          "confidence": "high"
+        }
+      ]
+    },
+    {
+      "date": "08/06/2023",
+      "ticket_no": "2408295",
+      "supplier": "jr holland",
+      "items": [
+        {
+          "raw": "RED CABBAGE SMALL BAGS",
+          "product": "Cabbage Red",
+          "qty_boxes": 2,
+          "box_price_gbp": 12.0,
+          "confidence": "high"
+        },
+        {
+          "raw": "ONIONS 10 KILO SOUTH AFRICA",
+          "product": "Onion",
+          "qty_boxes": 1,
+          "box_price_gbp": 10.0,
+          "confidence": "high"
+        },
+        {
+          "raw": "ONIONS 4 KILO NEW SESON",
+          "product": "Onion",
+          "qty_boxes": 22,
+          "box_price_gbp": 4.5,
+          "note": "22 boxes = major new-season onion run",
+          "confidence": "high"
+        }
+      ]
+    },
+    {
+      "date": "08/06/2023",
+      "ticket_no": "2408313",
+      "supplier": "jr holland",
+      "items": [
+        {
+          "raw": "PHYSALLIS PUNNETS",
+          "product": "Physallis",
+          "qty_boxes": 4,
+          "box_price_gbp": 1.1,
+          "confidence": "high"
+        },
+        {
+          "raw": "PAWPAWS SINGLE",
+          "product": "Papaya",
+          "qty_boxes": 2,
+          "box_price_gbp": 2.8,
+          "confidence": "high"
+        },
+        {
+          "raw": "SHALLOTTS PRE PAC SMALL NETS",
+          "product": "Shallot",
+          "qty_boxes": 1,
+          "box_price_gbp": 1.0,
+          "confidence": "high"
+        }
+      ]
+    },
+    {
+      "date": "08/06/2023",
+      "ticket_no": "2408316",
+      "supplier": "jr holland",
+      "items": [
+        {
+          "raw": "KAKI X12 ROSCARDI",
+          "product": "Sharon Fruit (Kaki)",
+          "qty_boxes": 1,
+          "box_price_gbp": 6.0,
+          "confidence": "high"
+        },
+        {
+          "raw": "NECTARINES X30 VERGES",
+          "product": "Nectarine",
+          "qty_boxes": 1,
+          "box_price_gbp": 12.0,
+          "confidence": "high"
+        }
+      ]
+    },
+    {
+      "date": "09/06/2023",
+      "ticket_no": "2408795",
+      "supplier": "jr holland",
+      "items": [
+        {
+          "raw": "ONIONS 20KG SOUTH AFRICAN",
+          "product": "Onion",
+          "qty_boxes": 2,
+          "box_price_gbp": 19.0,
+          "confidence": "high"
+        }
+      ]
+    },
+    {
+      "date": "09/06/2023",
+      "ticket_no": "2408796",
+      "supplier": "jr holland",
+      "items": [
+        {
+          "raw": "CELERY X16 GS UK",
+          "product": "Celery",
+          "qty_boxes": 1,
+          "box_price_gbp": 11.0,
+          "confidence": "high"
+        }
+      ]
+    },
+    {
+      "date": "12/06/2023",
+      "ticket_no": "2409509",
+      "supplier": "jr holland",
+      "items": [
+        {
+          "raw": "NECTARINES X30 VERGES",
+          "product": "Nectarine",
+          "qty_boxes": 4,
+          "box_price_gbp": 12.0,
+          "confidence": "high"
+        }
+      ]
+    },
+    {
+      "date": "12/06/2023",
+      "ticket_no": "2409519",
+      "supplier": "jr holland",
+      "items": [
+        {
+          "raw": "ONIONS 4 KILO",
+          "product": "Onion",
+          "qty_boxes": 5,
+          "box_price_gbp": 4.5,
+          "confidence": "high"
+        },
+        {
+          "raw": "BEETROOT BUNCHED",
+          "product": "Beetroot",
+          "qty_boxes": 1,
+          "box_price_gbp": 13.0,
+          "confidence": "high"
+        },
+        {
+          "raw": "PEAS ENGLISH",
+          "product": "Pea",
+          "qty_boxes": 1,
+          "box_price_gbp": 16.5,
+          "note": "English peas \u00a316.50 \u2014 summer season",
+          "confidence": "high"
+        }
+      ]
+    },
+    {
+      "date": "12/06/2023",
+      "ticket_no": "2409523",
+      "supplier": "jr holland",
+      "items": [
+        {
+          "raw": "CYPRUS GREEN BAGS",
+          "product": "Potato (Cyprus)",
+          "qty_boxes": 1,
+          "box_price_gbp": 22.0,
+          "note": "Cyprus new potatoes at \u00a322 \u2014 premium early-season",
+          "confidence": "high"
+        }
+      ]
+    },
+    {
+      "date": "13/06/2023",
+      "ticket_no": "2409921",
+      "supplier": "jr holland",
+      "items": [
+        {
+          "raw": "SPANISH X1 ANGELA",
+          "product": "Potato (Spanish)",
+          "qty_boxes": 6,
+          "box_price_gbp": 21.0,
+          "note": "6 boxes = large Spanish potato order; X1 Angela = specific variety",
+          "confidence": "high"
+        },
+        {
+          "raw": "BAKERS 40 40S AB",
+          "product": "Potato (Baker)",
+          "qty_boxes": 2,
+          "box_price_gbp": 15.0,
+          "confidence": "high"
+        },
+        {
+          "raw": "CARROTS FRENCH",
+          "product": "Carrot",
+          "qty_boxes": 1,
+          "box_price_gbp": 11.0,
+          "confidence": "high"
+        }
+      ]
+    },
+    {
+      "date": "13/06/2023",
+      "ticket_no": "2409926",
+      "supplier": "jr holland",
+      "items": [
+        {
+          "raw": "STRAWBERRIES OAKLANDS",
+          "product": "Strawberry",
+          "qty_boxes": 1,
+          "box_price_gbp": 40.0,
+          "note": "\u00a340 = premium UK/Belgian strawberry; peak June price",
+          "confidence": "high"
+        },
+        {
+          "raw": "PACKHAM FORELLE PNTS",
+          "product": "Pear (Packham/Forelle)",
+          "qty_boxes": 1,
+          "box_price_gbp": 16.0,
+          "confidence": "high"
+        }
+      ]
+    },
+    {
+      "date": "14/06/2023",
+      "ticket_no": "2410313",
+      "supplier": "jr holland",
+      "items": [
+        {
+          "raw": "CHERRIES 5KILO",
+          "product": "Cherry",
+          "qty_boxes": 1,
+          "box_price_gbp": 40.0,
+          "note": "\u00a340/5KG = peak cherry season price",
+          "confidence": "high"
+        },
+        {
+          "raw": "NECTARINES X24 BOIX",
+          "product": "Nectarine",
+          "qty_boxes": 5,
+          "box_price_gbp": 10.0,
+          "confidence": "high"
+        }
+      ]
+    },
+    {
+      "date": "15/06/2023",
+      "ticket_no": "2410738",
+      "supplier": "jr holland",
+      "items": [
+        {
+          "raw": "CATELOUPE X12 EURO",
+          "product": "Melon Cantaloupe",
+          "qty_boxes": 1,
+          "box_price_gbp": 12.0,
+          "confidence": "high"
+        },
+        {
+          "raw": "PLUMS PARISIENNE",
+          "product": "Plum",
+          "qty_boxes": 1,
+          "box_price_gbp": 14.0,
+          "confidence": "high"
+        }
+      ]
+    },
+    {
+      "date": "15/06/2023",
+      "ticket_no": "2410772",
+      "supplier": "jr holland",
+      "items": [
+        {
+          "raw": "PLUM TOMATOES RIMINI BABY PLUMVINE",
+          "product": "Tomato Plum (Baby Plum Vine)",
+          "qty_boxes": 1,
+          "box_price_gbp": 7.8,
+          "confidence": "high"
+        },
+        {
+          "raw": "COURGETTES YELLOW",
+          "product": "Courgette (Yellow)",
+          "qty_boxes": 1,
+          "box_price_gbp": 11.0,
+          "confidence": "high"
+        }
+      ]
+    },
+    {
+      "date": "16/06/2023",
+      "ticket_no": "2411278",
+      "supplier": "jr holland",
+      "items": [
+        {
+          "raw": "CONFERENCE 60+ ADORA",
+          "product": "Pear Conference",
+          "qty_boxes": 5,
+          "box_price_gbp": 25.0,
+          "note": "5 boxes \u00d7 \u00a325 = expensive mid-season Conference; Adora variety",
+          "confidence": "high"
+        }
+      ]
+    },
+    {
+      "date": "19/06/2023",
+      "ticket_no": "2411984",
+      "supplier": "jr holland",
+      "items": [
+        {
+          "raw": "PLUMS PARISIENNE",
+          "product": "Plum",
+          "qty_boxes": 1,
+          "box_price_gbp": 14.0,
+          "confidence": "high"
+        },
+        {
+          "raw": "NECTARINES X28 ZAG",
+          "product": "Nectarine",
+          "qty_boxes": 8,
+          "box_price_gbp": 6.0,
+          "confidence": "high"
+        }
+      ]
+    },
+    {
+      "date": "19/06/2023",
+      "ticket_no": "2412004",
+      "supplier": "jr holland",
+      "items": [
+        {
+          "raw": "DUTCH TOMATOES RED ALLURE",
+          "product": "Tomato",
+          "qty_boxes": 8,
+          "box_price_gbp": 5.5,
+          "confidence": "high"
+        },
+        {
+          "raw": "COURGETTES YELLOW",
+          "product": "Courgette (Yellow)",
+          "qty_boxes": 2,
+          "box_price_gbp": 10.8,
+          "confidence": "high"
+        }
+      ]
+    },
+    {
+      "date": "19/06/2023",
+      "ticket_no": "2412008",
+      "supplier": "jr holland",
+      "items": [
+        {
+          "raw": "ONIONS 20KG SOUTH AFRICAN",
+          "product": "Onion",
+          "qty_boxes": 1,
+          "box_price_gbp": 19.0,
+          "confidence": "high"
+        },
+        {
+          "raw": "BEETROOT BUNCHED",
+          "product": "Beetroot",
+          "qty_boxes": 1,
+          "box_price_gbp": 12.5,
+          "confidence": "high"
+        }
+      ]
+    },
+    {
+      "date": "19/06/2023",
+      "ticket_no": "2412010",
+      "supplier": "jr holland",
+      "items": [
+        {
+          "raw": "SHALLOTTS PRE PAC",
+          "product": "Shallot",
+          "qty_boxes": 5,
+          "box_price_gbp": 1.0,
+          "confidence": "high"
+        }
+      ]
+    },
+    {
+      "date": "20/06/2023",
+      "ticket_no": "2412407",
+      "supplier": "jr holland",
+      "items": [
+        {
+          "raw": "PINEAPPLES X8 TROPICAL SWEET",
+          "product": "Pineapple",
+          "qty_boxes": 2,
+          "box_price_gbp": 12.0,
+          "confidence": "high"
+        }
+      ]
+    },
+    {
+      "date": "21/06/2023",
+      "ticket_no": "2412773",
+      "supplier": "jr holland",
+      "items": [
+        {
+          "raw": "WATER X5",
+          "product": "Watermelon",
+          "qty_boxes": 1,
+          "box_price_gbp": 17.0,
+          "confidence": "high"
+        }
+      ]
+    },
+    {
+      "date": "21/06/2023",
+      "ticket_no": "2412783",
+      "supplier": "jr holland",
+      "items": [
+        {
+          "raw": "COURGETTES YELLOW",
+          "product": "Courgette (Yellow)",
+          "qty_boxes": 1,
+          "box_price_gbp": 10.0,
+          "confidence": "high"
+        },
+        {
+          "raw": "CUCUMBERS X14 DUTCH",
+          "product": "Cucumber",
+          "qty_boxes": 8,
+          "box_price_gbp": 4.3,
+          "note": "8 boxes \u00d7 14 cucumbers = 112 cucumbers",
+          "confidence": "high"
+        },
+        {
+          "raw": "AUBERGINES DUTCH LGE",
+          "product": "Aubergine",
+          "qty_boxes": 1,
+          "box_price_gbp": 6.0,
+          "confidence": "high"
+        },
+        {
+          "raw": "DUTCH TOMATOES RED ALLURE",
+          "product": "Tomato",
+          "qty_boxes": 1,
+          "box_price_gbp": 5.0,
+          "confidence": "high"
+        }
+      ]
+    },
+    {
+      "date": "21/06/2023",
+      "ticket_no": "2412786",
+      "supplier": "jr holland",
+      "items": [
+        {
+          "raw": "ONIONS 20KG SOUTH AFRICAN",
+          "product": "Onion",
+          "qty_boxes": 1,
+          "box_price_gbp": 19.0,
+          "confidence": "high"
+        }
+      ]
+    },
+    {
+      "date": "21/06/2023",
+      "ticket_no": "2412788",
+      "supplier": "jr holland",
+      "items": [
+        {
+          "raw": "KOHLRABI BOX X 15",
+          "product": "Kohlrabi",
+          "qty_boxes": 1,
+          "box_price_gbp": 18.5,
+          "confidence": "high"
+        }
+      ]
+    },
+    {
+      "date": "22/06/2023",
+      "ticket_no": "2413204",
+      "supplier": "jr holland",
+      "items": [
+        {
+          "raw": "WATER X6 MABE",
+          "product": "Watermelon",
+          "qty_boxes": 6,
+          "box_price_gbp": 17.0,
+          "note": "6 boxes \u00d7 6 melons = 36 watermelons \u2014 large June run",
+          "confidence": "high"
+        },
+        {
+          "raw": "PLUMS PARISIENNE",
+          "product": "Plum",
+          "qty_boxes": 3,
+          "box_price_gbp": 12.0,
+          "confidence": "high"
+        },
+        {
+          "raw": "CATELOUPE X6",
+          "product": "Melon Cantaloupe",
+          "qty_boxes": 1,
+          "box_price_gbp": 12.0,
+          "confidence": "high"
+        }
+      ]
+    },
+    {
+      "date": "22/06/2023",
+      "ticket_no": "2413206",
+      "supplier": "jr holland",
+      "items": [
+        {
+          "raw": "CHILLIES RED 3KG",
+          "product": "Chilli (Red)",
+          "qty_boxes": 1,
+          "box_price_gbp": 12.0,
+          "confidence": "high"
+        }
+      ]
+    },
+    {
+      "date": "22/06/2023",
+      "ticket_no": "2413217",
+      "supplier": "jr holland",
+      "items": [
+        {
+          "raw": "ONIONS 20KG SOUTH AFRICAN",
+          "product": "Onion",
+          "qty_boxes": 2,
+          "box_price_gbp": 19.0,
+          "confidence": "high"
+        },
+        {
+          "raw": "RED CABBAGE SMALL BAGS",
+          "product": "Cabbage Red",
+          "qty_boxes": 1,
+          "box_price_gbp": 11.0,
+          "confidence": "high"
+        }
+      ]
+    },
+    {
+      "date": "22/06/2023",
+      "ticket_no": "2413218",
+      "supplier": "jr holland",
+      "items": [
+        {
+          "raw": "COURGETTES NATURES CHOICE",
+          "product": "Courgette",
+          "qty_boxes": 6,
+          "box_price_gbp": 6.0,
+          "confidence": "high"
+        },
+        {
+          "raw": "COURGETTES YELLOW",
+          "product": "Courgette (Yellow)",
+          "qty_boxes": 2,
+          "box_price_gbp": 10.0,
+          "confidence": "high"
+        },
+        {
+          "raw": "DUTCH TOMATOES DUTCH",
+          "product": "Tomato",
+          "qty_boxes": 10,
+          "box_price_gbp": 4.5,
+          "confidence": "high"
+        },
+        {
+          "raw": "MUSHROOM IRISH BLACK TRAY",
+          "product": "Mushroom Flat",
+          "qty_boxes": 5,
+          "box_price_gbp": 5.0,
+          "confidence": "high"
+        }
+      ]
+    },
+    {
+      "date": "23/06/2023",
+      "ticket_no": "2413685",
+      "supplier": "jr holland",
+      "items": [
+        {
+          "raw": "RED PEPPERS DUTCH LGE",
+          "product": "Pepper (Red)",
+          "qty_boxes": 3,
+          "box_price_gbp": 7.5,
+          "confidence": "high"
+        }
+      ]
+    },
+    {
+      "date": "23/06/2023",
+      "ticket_no": "2413686",
+      "supplier": "jr holland",
+      "items": [
+        {
+          "raw": "CARROTS FRENCH",
+          "product": "Carrot",
+          "qty_boxes": 2,
+          "box_price_gbp": 10.5,
+          "confidence": "high"
+        }
+      ]
+    },
+    {
+      "date": "26/06/2023",
+      "ticket_no": "2414415",
+      "supplier": "jr holland",
+      "items": [
+        {
+          "raw": "KOHLRABI LARGE",
+          "product": "Kohlrabi",
+          "qty_boxes": 1,
+          "box_price_gbp": 19.0,
+          "confidence": "high"
+        }
+      ]
+    },
+    {
+      "date": "26/06/2023",
+      "ticket_no": "2414416",
+      "supplier": "jr holland",
+      "items": [
+        {
+          "raw": "WATER X5 20KILO",
+          "product": "Watermelon",
+          "qty_boxes": 1,
+          "box_price_gbp": 20.0,
+          "confidence": "high"
+        }
+      ]
+    },
+    {
+      "date": "26/06/2023",
+      "ticket_no": "2414431",
+      "supplier": "jr holland",
+      "items": [
+        {
+          "raw": "ONIONS 4 KILO",
+          "product": "Onion",
+          "qty_boxes": 15,
+          "box_price_gbp": 4.5,
+          "confidence": "high"
+        }
+      ]
+    },
+    {
+      "date": "27/06/2023",
+      "ticket_no": "2414811",
+      "supplier": "jr holland",
+      "items": [
+        {
+          "raw": "WATER X5",
+          "product": "Watermelon",
+          "qty_boxes": 1,
+          "box_price_gbp": 20.0,
+          "confidence": "high"
+        }
+      ]
+    },
+    {
+      "date": "27/06/2023",
+      "ticket_no": "2414816",
+      "supplier": "jr holland",
+      "items": [
+        {
+          "raw": "ONIONS 4 KILO",
+          "product": "Onion",
+          "qty_boxes": 15,
+          "box_price_gbp": 4.5,
+          "confidence": "high"
+        }
+      ]
+    },
+    {
+      "date": "28/06/2023",
+      "ticket_no": "2415196",
+      "supplier": "jr holland",
+      "items": [
+        {
+          "raw": "NECTARINES X26 DIVINE",
+          "product": "Nectarine",
+          "qty_boxes": 5,
+          "box_price_gbp": 6.0,
+          "confidence": "high"
+        }
+      ]
+    },
+    {
+      "date": "28/06/2023",
+      "ticket_no": "2415213",
+      "supplier": "jr holland",
+      "items": [
+        {
+          "raw": "AUBERGINES BLACK BOX",
+          "product": "Aubergine",
+          "qty_boxes": 1,
+          "box_price_gbp": 6.5,
+          "confidence": "high"
+        }
+      ]
+    },
+    {
+      "date": "28/06/2023",
+      "ticket_no": "2415215",
+      "supplier": "jr holland",
+      "items": [
+        {
+          "raw": "MIDS GARDEN",
+          "product": "Potato Mids",
+          "qty_boxes": 7,
+          "box_price_gbp": 11.0,
+          "confidence": "high"
+        }
+      ]
+    },
+    {
+      "date": "28/06/2023",
+      "ticket_no": "2415217",
+      "supplier": "jr holland",
+      "items": [
+        {
+          "raw": "CHINESE LEAF X8 WRIGHTS",
+          "product": "Chinese Leaves",
+          "qty_boxes": 1,
+          "box_price_gbp": 7.5,
+          "confidence": "high"
+        }
+      ]
+    },
+    {
+      "date": "29/06/2023",
+      "ticket_no": "2415655",
+      "supplier": "jr holland",
+      "items": [
+        {
+          "raw": "ONIONS 4 KILO",
+          "product": "Onion",
+          "qty_boxes": 5,
+          "box_price_gbp": 4.5,
+          "confidence": "high"
+        }
+      ]
+    },
+    {
+      "date": "30/06/2023",
+      "ticket_no": "2416154",
+      "supplier": "jr holland",
+      "items": [
+        {
+          "raw": "PLUM TOMATOES BABY PLUM CHERRYVIN",
+          "product": "Tomato Plum (Baby)",
+          "qty_boxes": 5,
+          "box_price_gbp": 9.9,
+          "confidence": "high"
+        }
+      ]
+    },
+    {
+      "date": "30/06/2023",
+      "ticket_no": "2416156",
+      "supplier": "jr holland",
+      "items": [
+        {
+          "raw": "CARROTS FRENCH",
+          "product": "Carrot",
+          "qty_boxes": 3,
+          "box_price_gbp": 9.5,
+          "confidence": "high"
+        },
+        {
+          "raw": "MIDS GARDEN",
+          "product": "Potato Mids",
+          "qty_boxes": 5,
+          "box_price_gbp": 11.0,
+          "confidence": "high"
+        }
+      ]
+    },
+    {
+      "date": "30/06/2023",
+      "ticket_no": "2416171",
+      "supplier": "jr holland",
+      "items": [
+        {
+          "raw": "POMEGRANATES X8",
+          "product": "Pomegranate",
+          "qty_boxes": 1,
+          "box_price_gbp": 9.0,
+          "confidence": "high"
+        }
+      ]
+    }
+  ]
+}

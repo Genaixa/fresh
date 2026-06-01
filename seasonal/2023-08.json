@@ -1,0 +1,307 @@
+{
+  "month": "2023-08",
+  "generated": "2026-06-01",
+  "note": "AI-interpreted from pdfplumber raw text. JR Holland batch invoices only (27 line items, 07\u201323 August). No Dole delivery notes for August 2023. Late summer, veg-heavy. Butternut Squash Agropaco recurring (\u00a39.50, 15-21 Aug). Spanish X1 Karla potato at \u00a315 \u00d7 3 (17 Aug). Washed Loose 25KG Brown/Jumbo potato (\u00a315.50, 15-17 Aug). Garlic PP 20\u00d7400G Apollo at \u00a322 (15 Aug \u2014 up from \u00a316.50 in July). Kohlrabi \u00d7 2 (\u00a318, 15 Aug). Aubergines Dutch (\u00a39-11). Yellow Peppers Union Jack \u00a39.50 \u00d7 2 (16 Aug). Parsnips Poskitts (16 Aug). Red Onions Summum (16-17 Aug). Courgettes Black Box \u00a35.50 (16 Aug). Peaches X24 at \u00a33.50 \u00d7 4 (23 Aug \u2014 very cheap late-season peach). Ginger PP Turmeric Box at \u00a316 (23 Aug \u00d7 2). Tamarillo (23 Aug). Horseradish (21, 23 Aug). Orange Peppers Tangmere \u00a38 \u00d7 3 (08 Aug).",
+  "suppliers": [
+    "jr holland"
+  ],
+  "delivery_count": 11,
+  "deliveries": [
+    {
+      "date": "07/08/2023",
+      "ticket_no": "2428073",
+      "supplier": "jr holland",
+      "items": [
+        {
+          "raw": "AUBERGINES DUTCH LGE",
+          "product": "Aubergine",
+          "qty_boxes": 3,
+          "box_price_gbp": 9.0,
+          "confidence": "high"
+        }
+      ]
+    },
+    {
+      "date": "08/08/2023",
+      "ticket_no": "2428446",
+      "supplier": "jr holland",
+      "items": [
+        {
+          "raw": "ORANGE PEPPERS TANGMERE",
+          "product": "Pepper (Orange)",
+          "qty_boxes": 3,
+          "box_price_gbp": 8.0,
+          "confidence": "high"
+        }
+      ]
+    },
+    {
+      "date": "15/08/2023",
+      "ticket_no": "2430522",
+      "supplier": "jr holland",
+      "items": [
+        {
+          "raw": "BUTTERNUT SQUASH AGROPACO",
+          "product": "Butternut Squash",
+          "qty_boxes": 3,
+          "box_price_gbp": 9.5,
+          "confidence": "high"
+        }
+      ]
+    },
+    {
+      "date": "15/08/2023",
+      "ticket_no": "2430523",
+      "supplier": "jr holland",
+      "items": [
+        {
+          "raw": "GARLIC PP 20 X 400G APOLLO",
+          "product": "Garlic",
+          "qty_boxes": 1,
+          "box_price_gbp": 22.0,
+          "note": "Up from \u00a316.50 in July \u2014 garlic price surge",
+          "confidence": "high"
+        },
+        {
+          "raw": "KOHLRABI BOX",
+          "product": "Kohlrabi",
+          "qty_boxes": 2,
+          "box_price_gbp": 18.0,
+          "confidence": "high"
+        },
+        {
+          "raw": "SHALLOTTS PRE PAC SMALL NETS",
+          "product": "Shallot",
+          "qty_boxes": 4,
+          "box_price_gbp": 1.0,
+          "confidence": "high"
+        },
+        {
+          "raw": "CHILLIES GREEN UK 3KG",
+          "product": "Chilli (Green)",
+          "qty_boxes": 1,
+          "box_price_gbp": 9.5,
+          "confidence": "high"
+        }
+      ]
+    },
+    {
+      "date": "15/08/2023",
+      "ticket_no": "2430527",
+      "supplier": "jr holland",
+      "items": [
+        {
+          "raw": "RED CABBAGE SMALL BAGS",
+          "product": "Cabbage Red",
+          "qty_boxes": 1,
+          "box_price_gbp": 6.0,
+          "confidence": "high"
+        },
+        {
+          "raw": "WASHED LOOSE 25KG BROWN JUMBO",
+          "product": "Potato (Washed Loose)",
+          "qty_boxes": 1,
+          "box_price_gbp": 15.5,
+          "confidence": "high"
+        }
+      ]
+    },
+    {
+      "date": "16/08/2023",
+      "ticket_no": "2430784",
+      "supplier": "jr holland",
+      "items": [
+        {
+          "raw": "WATER X4 BOUGET",
+          "product": "Watermelon",
+          "qty_boxes": 1,
+          "box_price_gbp": 16.0,
+          "confidence": "high"
+        }
+      ]
+    },
+    {
+      "date": "16/08/2023",
+      "ticket_no": "2430804",
+      "supplier": "jr holland",
+      "items": [
+        {
+          "raw": "PARSNIPS POSKITTS",
+          "product": "Parsnip",
+          "qty_boxes": 2,
+          "box_price_gbp": 8.0,
+          "confidence": "high"
+        },
+        {
+          "raw": "RED ONIONS NETS SUMMUM",
+          "product": "Onion (Red)",
+          "qty_boxes": 1,
+          "box_price_gbp": 7.8,
+          "confidence": "high"
+        }
+      ]
+    },
+    {
+      "date": "16/08/2023",
+      "ticket_no": "2430808",
+      "supplier": "jr holland",
+      "items": [
+        {
+          "raw": "YELLOW PEPPERS UNION JACK",
+          "product": "Pepper (Yellow)",
+          "qty_boxes": 2,
+          "box_price_gbp": 9.5,
+          "confidence": "high"
+        },
+        {
+          "raw": "COURGETTES BLACK BOX",
+          "product": "Courgette",
+          "qty_boxes": 2,
+          "box_price_gbp": 5.5,
+          "confidence": "high"
+        }
+      ]
+    },
+    {
+      "date": "17/08/2023",
+      "ticket_no": "2431181",
+      "supplier": "jr holland",
+      "items": [
+        {
+          "raw": "WASHED LOOSE JUMBO AB",
+          "product": "Potato (Washed Loose)",
+          "qty_boxes": 2,
+          "box_price_gbp": 15.5,
+          "confidence": "high"
+        },
+        {
+          "raw": "SPANISH X1 KARLA",
+          "product": "Potato (Spanish)",
+          "qty_boxes": 3,
+          "box_price_gbp": 15.0,
+          "confidence": "high"
+        },
+        {
+          "raw": "RED ONIONS NETS SUMMUM",
+          "product": "Onion (Red)",
+          "qty_boxes": 1,
+          "box_price_gbp": 7.8,
+          "confidence": "high"
+        }
+      ]
+    },
+    {
+      "date": "17/08/2023",
+      "ticket_no": "2431182",
+      "supplier": "jr holland",
+      "items": [
+        {
+          "raw": "AUBERGINES DUTCH",
+          "product": "Aubergine",
+          "qty_boxes": 1,
+          "box_price_gbp": 11.0,
+          "confidence": "high"
+        }
+      ]
+    },
+    {
+      "date": "18/08/2023",
+      "ticket_no": "2431614",
+      "supplier": "jr holland",
+      "items": [
+        {
+          "raw": "BUTTERNUT SQUASH AGROPACO",
+          "product": "Butternut Squash",
+          "qty_boxes": 1,
+          "box_price_gbp": 9.5,
+          "confidence": "high"
+        }
+      ]
+    },
+    {
+      "date": "21/08/2023",
+      "ticket_no": "2432228",
+      "supplier": "jr holland",
+      "items": [
+        {
+          "raw": "HORSERADISH STICK",
+          "product": "Horseradish",
+          "qty_boxes": 2,
+          "box_price_gbp": 2.0,
+          "confidence": "high"
+        },
+        {
+          "raw": "BUTTERNUT SQUASH AGROPACO",
+          "product": "Butternut Squash",
+          "qty_boxes": 3,
+          "box_price_gbp": 9.5,
+          "confidence": "high"
+        }
+      ]
+    },
+    {
+      "date": "23/08/2023",
+      "ticket_no": "2432974",
+      "supplier": "jr holland",
+      "items": [
+        {
+          "raw": "PEACHES X24",
+          "product": "Peach",
+          "qty_boxes": 4,
+          "box_price_gbp": 3.5,
+          "note": "\u00a33.50/box = very cheap late-summer peach clearance",
+          "confidence": "high"
+        }
+      ]
+    },
+    {
+      "date": "23/08/2023",
+      "ticket_no": "2433000",
+      "supplier": "jr holland",
+      "items": [
+        {
+          "raw": "TAMARILLO PP TAMARIND",
+          "product": "Tamarillo",
+          "qty_boxes": 1,
+          "box_price_gbp": 2.0,
+          "confidence": "high"
+        },
+        {
+          "raw": "GINGER PP TURMERIC BOX",
+          "product": "Ginger/Turmeric",
+          "qty_boxes": 1,
+          "box_price_gbp": 16.0,
+          "confidence": "high"
+        },
+        {
+          "raw": "SHALLOTTS PRE PAC SMALL NETS",
+          "product": "Shallot",
+          "qty_boxes": 1,
+          "box_price_gbp": 1.0,
+          "confidence": "high"
+        },
+        {
+          "raw": "HORSERADISH STICK",
+          "product": "Horseradish",
+          "qty_boxes": 1,
+          "box_price_gbp": 2.0,
+          "confidence": "high"
+        }
+      ]
+    },
+    {
+      "date": "23/08/2023",
+      "ticket_no": "2433008",
+      "supplier": "jr holland",
+      "items": [
+        {
+          "raw": "GINGER PP TURMERIC BOX",
+          "product": "Ginger/Turmeric",
+          "qty_boxes": 1,
+          "box_price_gbp": 16.0,
+          "confidence": "high"
+        }
+      ]
+    }
+  ]
+}

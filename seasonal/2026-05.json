@@ -1,0 +1,328 @@
+{
+  "month": "2026-05",
+  "generated": "2026-06-01",
+  "note": "AI-interpreted from pdfplumber raw text. Dole (18 deliveries) + JR Holland produce tickets (10). NOTE: Holland ticket account now shows 'DEVORAH GRYNAVS' (vs Nathan Hirsch previously) — possible ownership/management change. Three major Dole fruit deliveries: 14 May (£880, 81 boxes), 18 May (£600, 57 boxes), 19 May (£839, 69 boxes). Stone fruit season fully open: Peach Spain 10×500G (£15-17), Nectarine Spain 10×500G (£14-18), Peach Donut Spain (flat peach, £18 — premium), Plum Angelino SA/ES 10×500G (£9.50). First Apricot Spain 10×500G at £14 (18 May). Strawberry UK 20×400G Nationwide at £54 (18 May) — extraordinary; £6.75/400G punnet = peak UK season premium. Belgium Hoogstraten 8×500G at £27.50 (14 May), REO white box at £31 (19 May). Satsuma Peru 70/10KG Gold Cup at £16 (21 May). Watermelon Portugal 4/20KG Mabe at £20 (21 May, 4 boxes — large PT melon). Avocado Spain 10KG at £8 (01 May); Avocado Hass ZA 10KG jumble at £6.50 (19 May). Apple Royal Gala Chile 78/12KG Frusan at £22 recurring (premium new-season Chile). Apple Cripps Pink Chile 12KG at £14 (08 May). Apple Pink Lady FR 10×500G prepacked at £14 (19 May). Starfruit Thailand 10/2.5KG at £15 (18 May — reappears after Jan 2024). Grape Jack Salute SA 10×500G at £15.50-16 (new variety recurring). Grape Sugar Crisp BR 10×500G at £16. Grapefruit Star Ruby SA 35/15KG at £20 recurring. Lime Brazil 42/4KG at £7 (19 May). Mango Brazil 7/4KG at £5 (14 May, 10 boxes — glut). Orange Navel Morocco 70/15KG at £14 (19 May). Pears Forelle SA 10×1KG 10KG at £16.50 (14 May). Clementine Nardocott (Spain and Morocco) persisting into May at £16-17 — exceptionally late. Carrot UK 15×15KG now at £12 (up from earlier). Capsicum Red NL 5KG at £11 (28 May, 7 boxes). Holland (10 tickets): heavy veg — cucumbers ×15-22 boxes/visit (UK Black Box at £7, Dutch at £5.50-7), red and yellow peppers, aubergines Dutch, vine tomatoes, cherry tomatoes, courgettes, iceberg, cos lettuce, celery, mushrooms. Chileans (stone fruit SA/Chile) at Holland: 2×£16 (15 May), 7×£12 (21 May). Spring onions (14 May, X12 at £3). Salad cress X16 (18, 26 May). Radish prepacked X20 Dutch (27 May). Cress Salad UK (20 May).",
+  "suppliers": ["dole wholesale gateshead", "jr holland"],
+  "delivery_count": 28,
+  "deliveries": [
+    {
+      "date": "01/05/2026", "delivery_no": "11153100", "supplier": "dole wholesale gateshead",
+      "items": [
+        {"raw": "AVOCADO . SPAIN . 10KG .", "product": "Avocado", "origin": "Spain", "qty_boxes": 1, "box_spec": "10KG (Best IL white box)", "box_price_gbp": 8.00, "unit_cost_per_kg": 0.80, "confidence": "high", "note": "£8/10KG avocado — loose/unsized format"}
+      ]
+    },
+    {
+      "date": "05/05/2026", "delivery_no": "11157580", "supplier": "dole wholesale gateshead",
+      "items": [
+        {"raw": "MUSHROOM FLAT PL . 1.5KG .", "product": "Mushroom Flat", "origin": "Poland", "qty_boxes": 1, "box_spec": "1.5KG (Flats)", "box_price_gbp": 5.50, "unit_cost_per_kg": 3.667, "confidence": "high"}
+      ]
+    },
+    {
+      "date": "06/05/2026", "delivery_no": "11160300", "supplier": "dole wholesale gateshead",
+      "items": [
+        {"raw": "AUBERGINE . NL . 5KG .", "product": "Aubergine", "origin": "Netherlands", "qty_boxes": 3, "box_spec": "5KG (Perfekt)", "box_price_gbp": 8.50, "unit_cost_per_kg": 1.70, "confidence": "high"}
+      ]
+    },
+    {
+      "date": "07/05/2026", "delivery_no": "11162682", "supplier": "dole wholesale gateshead",
+      "items": [
+        {"raw": "MUSHROOM FLAT PL . 1.5KG .", "product": "Mushroom Flat", "origin": "Poland", "qty_boxes": 1, "box_spec": "1.5KG (Flat)", "box_price_gbp": 3.00, "unit_cost_per_kg": 2.00, "confidence": "high", "note": "£3 vs £5.50 two days earlier — large price drop for same product"}
+      ]
+    },
+    {
+      "date": "08/05/2026", "delivery_no": "11165778", "supplier": "dole wholesale gateshead",
+      "items": [
+        {"raw": "POTATO . UK 10X2KG 20KG PREPACKED", "product": "Potato", "origin": "UK", "qty_boxes": 1, "box_spec": "10×2KG = 20KG prepacked (Thickpenny)", "box_price_gbp": 7.00, "unit_cost_per_kg": 0.35, "confidence": "high"},
+        {"raw": "APPLE RED DELICIOUS FR . 4KG .", "product": "Apple Red Delicious", "origin": "France", "qty_boxes": 3, "box_spec": "~4KG (Samboa)", "box_price_gbp": 6.50, "unit_cost_per_kg": 1.625, "confidence": "high"},
+        {"raw": "APPLE CRIPPS PINK CL . 12KG .", "product": "Apple Cripps Pink (Pink Lady)", "origin": "Chile", "qty_boxes": 2, "box_spec": "12KG (Poupart)", "box_price_gbp": 14.00, "unit_cost_per_kg": 1.167, "confidence": "high", "note": "Chile Cripps Pink = unbranded Pink Lady; £14 vs France £7.50/4KG = £22.50/12KG — Chile significantly cheaper"},
+        {"raw": "BANANA . COSTA RICA . 18KG .", "product": "Banana", "origin": "Costa Rica", "qty_boxes": 1, "box_spec": "18KG (Chiquita)", "box_price_gbp": 18.50, "unit_cost_per_kg": 1.028, "confidence": "high"},
+        {"raw": "CLEMENTINE NARDOCOTT MOROCCO 66 10KG .", "product": "Clementine Nardocott (Morocco)", "origin": "Morocco", "qty_boxes": 1, "box_spec": "66 units ~10KG (Sweet Citrus)", "box_price_gbp": 16.00, "unit_cost_per_each": 0.242, "unit_cost_per_kg": 1.60, "confidence": "high", "note": "Nardocott still in stock in May — very late season"}
+      ]
+    },
+    {
+      "date": "11/05/2026", "delivery_no": "11169614", "supplier": "dole wholesale gateshead",
+      "items": [
+        {"raw": "MUSHROOM BUTTON PL . 2.27KG .", "product": "Mushroom Button", "origin": "Poland", "qty_boxes": 2, "box_spec": "2.27KG (Button)", "box_price_gbp": 5.50, "unit_cost_per_kg": 2.42, "confidence": "high"},
+        {"raw": "TOMATO CHERITA NETHERLANDS . 3KG .", "product": "Tomato Cherita", "origin": "Netherlands", "qty_boxes": 1, "box_spec": "3KG (Red Egg Mini)", "box_price_gbp": 14.00, "unit_cost_per_kg": 4.667, "confidence": "high"},
+        {"raw": "POTATO . UK 10X2KG 20KG PREPACKED", "product": "Potato", "origin": "UK", "qty_boxes": 10, "box_spec": "10×2KG = 20KG prepacked (Thickpenny)", "box_price_gbp": 7.00, "unit_cost_per_kg": 0.35, "confidence": "high"},
+        {"raw": "CARROT . UK 15X1KG . PREPACKED", "product": "Carrot", "origin": "UK", "qty_boxes": 2, "box_spec": "15×1KG = 15KG prepacked (PP Carrot X15)", "box_price_gbp": 12.00, "unit_cost_per_kg": 0.80, "confidence": "high"},
+        {"raw": "PEA . ITALY . 3KG .", "product": "Pea (Pods)", "origin": "Italy", "qty_boxes": 1, "box_spec": "3KG fresh pea pods", "box_price_gbp": 14.00, "unit_cost_per_kg": 4.667, "confidence": "high"}
+      ]
+    },
+    {
+      "date": "12/05/2026", "delivery_no": "11171958", "supplier": "dole wholesale gateshead",
+      "items": [
+        {"raw": "POTATO WASHED UK . 25KG . G/vale soraya", "product": "Potato (Washed)", "origin": "UK", "qty_boxes": 1, "box_spec": "25KG (Greenvale Soraya)", "box_price_gbp": 7.50, "unit_cost_per_kg": 0.30, "confidence": "high"}
+      ]
+    },
+    {
+      "date": "13/05/2026", "delivery_no": "11174186", "supplier": "dole wholesale gateshead",
+      "items": [
+        {"raw": "POTATO . UK 10X2KG 20KG PREPACKED", "product": "Potato", "origin": "UK", "qty_boxes": 5, "box_spec": "10×2KG = 20KG prepacked (Tulip)", "box_price_gbp": 8.00, "unit_cost_per_kg": 0.40, "confidence": "high"},
+        {"raw": "MUSHROOM CLOSED CUP POLAND . 2.27KG .", "product": "Mushroom Closed Cup", "origin": "Poland", "qty_boxes": 1, "box_spec": "2.27KG (Fresh Cup Mush)", "box_price_gbp": 5.20, "unit_cost_per_kg": 2.29, "confidence": "high"}
+      ]
+    },
+    {
+      "date": "14/05/2026", "delivery_no": "11176511", "supplier": "dole wholesale gateshead",
+      "items": [
+        {"raw": "POMEGRANATE . ZA 8 5KG .", "product": "Pomegranate (SA)", "origin": "South Africa", "qty_boxes": 1, "box_spec": "8 units ~5KG (Sapex)", "box_price_gbp": 10.00, "unit_cost_per_each": 1.25, "unit_cost_per_kg": 2.00, "confidence": "high"},
+        {"raw": "POTATO . UK 10X2KG 20KG PREPACKED", "product": "Potato", "origin": "UK", "qty_boxes": 4, "box_spec": "10×2KG = 20KG prepacked (Tulip)", "box_price_gbp": 8.00, "unit_cost_per_kg": 0.40, "confidence": "high"},
+        {"raw": "POTATO MIDS UK . 10KG BOXED", "product": "Potato Mids", "origin": "UK", "qty_boxes": 6, "box_spec": "10KG boxed (Veniza Box Mids)", "box_price_gbp": 7.50, "unit_cost_per_kg": 0.75, "confidence": "high"},
+        {"raw": "POTATO WASHED UK . 25KG .", "product": "Potato (Washed)", "origin": "UK", "qty_boxes": 3, "box_spec": "25KG (Greenvale Soraya)", "box_price_gbp": 7.50, "unit_cost_per_kg": 0.30, "confidence": "high"},
+        {"raw": "MUSHROOM CLOSED CUP POLAND . 2.27KG .", "product": "Mushroom Closed Cup", "origin": "Poland", "qty_boxes": 3, "box_spec": "2.27KG (Fresh White Cups)", "box_price_gbp": 5.20, "unit_cost_per_kg": 2.29, "confidence": "high"},
+        {"raw": "STRAWBERRY . BELGIUM 8X500G 4KG .", "product": "Strawberry", "origin": "Belgium", "qty_boxes": 1, "box_spec": "8×500G = 4KG (Hoogstraten)", "box_price_gbp": 27.50, "unit_cost_per_punnet_500g": 3.4375, "unit_cost_per_kg": 6.875, "confidence": "high", "note": "Premium Belgian strawberry; £27.50 vs £32 in April 2024 — slightly cheaper"},
+        {"raw": "ORANGE NAVEL SPAIN 40 15KG .", "product": "Orange Navel (Spain)", "origin": "Spain", "qty_boxes": 1, "box_spec": "40 units ~15KG (Podium)", "box_price_gbp": 20.00, "unit_cost_per_each": 0.50, "unit_cost_per_kg": 1.333, "confidence": "high"},
+        {"raw": "CLEMENTINE NARDOCOTT SPAIN 66 10KG .", "product": "Clementine Nardocott (Spain)", "origin": "Spain", "qty_boxes": 6, "box_spec": "66 units ~10KG (Sweet Citrus)", "box_price_gbp": 17.00, "unit_cost_per_each": 0.258, "unit_cost_per_kg": 1.70, "confidence": "high", "note": "6 boxes Nardocott in mid-May — last gasp of citrus season"},
+        {"raw": "PEARS FORELLE SOUTH AFRICA 10X1KG 10KG PREPACKED", "product": "Pear Forelle (SA)", "origin": "South Africa", "qty_boxes": 1, "box_spec": "10×1KG = 10KG prepacked (Betko)", "box_price_gbp": 16.50, "unit_cost_per_kg": 1.65, "confidence": "high"},
+        {"raw": "PEARS CONFERENCE NETHERLANDS 10X1KG 10KG PREPACKED", "product": "Pear Conference", "origin": "Netherlands", "qty_boxes": 1, "box_spec": "10×1KG = 10KG prepacked (Urfrut)", "box_price_gbp": 13.00, "unit_cost_per_kg": 1.30, "confidence": "high"},
+        {"raw": "PEACH . SPAIN 10X500G 5KG PP", "product": "Peach", "origin": "Spain", "qty_boxes": 2, "box_spec": "10×500G = 5KG prepacked (Poupart)", "box_price_gbp": 17.00, "unit_cost_per_punnet_500g": 1.70, "unit_cost_per_kg": 3.40, "confidence": "high"},
+        {"raw": "NECTARINE . SPAIN 10X500G . PP", "product": "Nectarine", "origin": "Spain", "qty_boxes": 3, "box_spec": "10×500G = 5KG prepacked (Alan Fruits)", "box_price_gbp": 18.00, "unit_cost_per_punnet_500g": 1.80, "unit_cost_per_kg": 3.60, "confidence": "high"},
+        {"raw": "MANGO . BRAZIL 7 4KG .", "product": "Mango", "origin": "Brazil", "qty_boxes": 10, "box_spec": "7 count ~4KG (Growers)", "box_price_gbp": 5.00, "unit_cost_per_each": 0.714, "confidence": "high", "note": "10 boxes at £5 = major mango glut; £5/7 = £0.71/mango"},
+        {"raw": "MELON PIEL DE SAPO CR 9 15KG .", "product": "Melon Piel de Sapo", "origin": "Costa Rica", "qty_boxes": 1, "box_spec": "9 melons ~15KG (Nunez)", "box_price_gbp": 17.00, "unit_cost_per_each": 1.889, "unit_cost_per_kg": 1.133, "confidence": "high"},
+        {"raw": "MELON HONEYDEW ES 6 5KG .", "product": "Melon Honeydew", "origin": "Spain", "qty_boxes": 5, "box_spec": "6 melons ~5KG (Size 4 Green Box)", "box_price_gbp": 6.00, "unit_cost_per_each": 1.00, "unit_cost_per_kg": 1.20, "confidence": "high", "note": "£6/5KG = cheap small-format Spanish honeydew"},
+        {"raw": "MELON WATER COSTA RICA 4 16KG .", "product": "Watermelon", "origin": "Costa Rica", "qty_boxes": 2, "box_spec": "4 melons ~16KG (Murgiverde)", "box_price_gbp": 19.50, "unit_cost_per_each": 4.875, "unit_cost_per_kg": 1.219, "confidence": "high"},
+        {"raw": "KIWI . ITALY 27 4KG .", "product": "Kiwi", "origin": "Italy", "qty_boxes": 1, "box_spec": "27 units ~4KG", "box_price_gbp": 8.50, "unit_cost_per_each": 0.315, "confidence": "high"},
+        {"raw": "PLUM ANGELINO ZA 10X500G 5KG PREPACKED", "product": "Plum Angelino (SA)", "origin": "South Africa", "qty_boxes": 2, "box_spec": "10×500G = 5KG prepacked (Poupart)", "box_price_gbp": 9.50, "unit_cost_per_punnet_500g": 0.95, "unit_cost_per_kg": 1.90, "confidence": "high"},
+        {"raw": "GRAPE SUGAR CRISP BR 10X500G 5KG PREPACKED", "product": "Grape Sugar Crisp (Brazil)", "origin": "Brazil", "qty_boxes": 1, "box_spec": "10×500G = 5KG prepacked (IFG Eleven)", "box_price_gbp": 16.00, "unit_cost_per_punnet_500g": 1.60, "unit_cost_per_kg": 3.20, "confidence": "high"},
+        {"raw": "GRAPE CRIMSON ZA 10X500G 5KG PREPACKED", "product": "Grape Crimson (SA)", "origin": "South Africa", "qty_boxes": 4, "box_spec": "10×500G = 5KG prepacked (JLM)", "box_price_gbp": 16.00, "unit_cost_per_punnet_500g": 1.60, "unit_cost_per_kg": 3.20, "confidence": "high"},
+        {"raw": "GRAPEFRUIT STAR RUBY SOUTH AFRICA 35 15KG .", "product": "Grapefruit Star Ruby", "origin": "South Africa", "qty_boxes": 3, "box_spec": "35 units ~15KG (Letaba)", "box_price_gbp": 20.00, "unit_cost_per_each": 0.571, "unit_cost_per_kg": 1.333, "confidence": "high"},
+        {"raw": "BANANA . COSTA RICA . 18KG .", "product": "Banana", "origin": "Costa Rica", "qty_boxes": 3, "box_spec": "18KG (Chiquita)", "box_price_gbp": 18.50, "unit_cost_per_kg": 1.028, "confidence": "high"},
+        {"raw": "APPLE ROYAL GALA UK 12X8 . PREPACKED", "product": "Apple Royal Gala", "origin": "UK", "qty_boxes": 1, "box_spec": "12×8 prepacked (Willowsad)", "box_price_gbp": 12.00, "confidence": "high"},
+        {"raw": "APPLE GOLDEN DELICIOUS PL 12X1 12KG PREPACKED", "product": "Apple Golden Delicious", "origin": "Poland", "qty_boxes": 1, "box_spec": "12×1KG = 12KG prepacked (Wilosad)", "box_price_gbp": 12.00, "unit_cost_per_kg": 1.00, "confidence": "high"},
+        {"raw": "APPLE PINK LADY FR . 4KG .", "product": "Apple Pink Lady", "origin": "France", "qty_boxes": 2, "box_spec": "~4KG (Small Box)", "box_price_gbp": 7.50, "unit_cost_per_kg": 1.875, "confidence": "high"},
+        {"raw": "APPLE GOLDEN DELICIOUS FRANCE . 12KG . PERLIM", "product": "Apple Golden Delicious", "origin": "France", "qty_boxes": 1, "box_spec": "12KG (Perlim)", "box_price_gbp": 17.50, "unit_cost_per_kg": 1.458, "confidence": "high"},
+        {"raw": "APPLE ROYAL GALA CHILE 78 12KG .", "product": "Apple Royal Gala", "origin": "Chile", "qty_boxes": 1, "box_spec": "78 units ~12KG (Frusan)", "box_price_gbp": 22.00, "unit_cost_per_each": 0.282, "unit_cost_per_kg": 1.833, "confidence": "high", "note": "Chile Royal Gala at £22 — most expensive apple origin in May 2026"},
+        {"raw": "APPLE BRAMLEY UK 90/100 13KG .", "product": "Apple Bramley", "origin": "UK", "qty_boxes": 1, "box_spec": "90/100 grade ~13KG", "box_price_gbp": 21.00, "unit_cost_per_kg": 1.615, "confidence": "high"}
+      ]
+    },
+    {
+      "date": "15/05/2026", "delivery_no": "11177701", "supplier": "dole wholesale gateshead",
+      "items": [
+        {"raw": "BANANA . COSTA RICA . 18KG .", "product": "Banana", "origin": "Costa Rica", "qty_boxes": 2, "box_spec": "18KG (Chiquita)", "box_price_gbp": 18.50, "unit_cost_per_kg": 1.028, "confidence": "high"},
+        {"raw": "MUSHROOM CLOSED CUP POLAND . 2.27KG .", "product": "Mushroom Closed Cup", "origin": "Poland", "qty_boxes": 6, "box_spec": "2.27KG (Fresh White Cups)", "box_price_gbp": 5.20, "unit_cost_per_kg": 2.29, "confidence": "high"},
+        {"raw": "PEACH . SPAIN 10X500G 5KG PP", "product": "Peach", "origin": "Spain", "qty_boxes": 6, "box_spec": "10×500G = 5KG prepacked (Lison)", "box_price_gbp": 16.00, "unit_cost_per_punnet_500g": 1.60, "unit_cost_per_kg": 3.20, "confidence": "high"}
+      ]
+    },
+    {
+      "date": "18/05/2026", "delivery_no": "11183533", "supplier": "dole wholesale gateshead",
+      "items": [
+        {"raw": "STRAWBERRY . SPAIN 16X250G . . CUNA", "product": "Strawberry", "origin": "Spain", "qty_boxes": 2, "box_spec": "16×250G = 4KG (Cuna)", "box_price_gbp": 12.80, "unit_cost_per_punnet_250g": 0.80, "unit_cost_per_kg": 3.20, "confidence": "high"},
+        {"raw": "MUSHROOM . POLAND 12X250G 3KG . Pre packed x12", "product": "Mushroom Closed Cup", "origin": "Poland", "qty_boxes": 2, "box_spec": "12×250G = 3KG prepacked", "box_price_gbp": 9.00, "unit_cost_per_pack_250g": 0.75, "unit_cost_per_kg": 3.00, "confidence": "high"},
+        {"raw": "CAPSICUM MIXED NL 10X500G 5KG PACKED", "product": "Pepper (Mixed)", "origin": "Netherlands", "qty_boxes": 1, "box_spec": "10×500G = 5KG packed", "box_price_gbp": 13.50, "unit_cost_per_pack_500g": 1.35, "unit_cost_per_kg": 2.70, "confidence": "high"},
+        {"raw": "POTATO MIDS UK . 10KG BOXED", "product": "Potato Mids", "origin": "UK", "qty_boxes": 2, "box_spec": "10KG boxed (Veniza Box Mids)", "box_price_gbp": 7.50, "unit_cost_per_kg": 0.75, "confidence": "high"},
+        {"raw": "POTATO . UK 10X2KG 20KG PREPACKED", "product": "Potato", "origin": "UK", "qty_boxes": 8, "box_spec": "10×2KG = 20KG prepacked (Thickpenny)", "box_price_gbp": 7.00, "unit_cost_per_kg": 0.35, "confidence": "high"},
+        {"raw": "CARROT . UK 15 15KG PREPACKED", "product": "Carrot", "origin": "UK", "qty_boxes": 2, "box_spec": "15×1KG = 15KG prepacked (Prepack Carrot X15)", "box_price_gbp": 12.00, "unit_cost_per_kg": 0.80, "confidence": "high"},
+        {"raw": "STRAWBERRY . UK 20X400G 8KG . Nationwide", "product": "Strawberry (UK)", "origin": "UK", "qty_boxes": 1, "box_spec": "20×400G = 8KG (Nationwide)", "box_price_gbp": 54.00, "unit_cost_per_punnet_400g": 2.70, "unit_cost_per_kg": 6.75, "confidence": "high", "note": "£54/8KG = £6.75/kg = most expensive strawberry in dataset; peak UK season premium"},
+        {"raw": "POMEGRANATE . ZA 8 5KG .", "product": "Pomegranate (SA)", "origin": "South Africa", "qty_boxes": 3, "box_spec": "8 units ~5KG (Sapex)", "box_price_gbp": 10.00, "unit_cost_per_each": 1.25, "unit_cost_per_kg": 2.00, "confidence": "high"},
+        {"raw": "BLUEBERRY . SPAIN 12X125G . . Mam", "product": "Blueberry", "origin": "Spain", "qty_boxes": 1, "box_spec": "12×125G = 1.5KG (Mam)", "box_price_gbp": 14.40, "unit_cost_per_punnet_125g": 1.20, "unit_cost_per_kg": 9.60, "confidence": "high"},
+        {"raw": "CLEMENTINE NARDOCOTT SPAIN 66 10KG .", "product": "Clementine Nardocott (Spain)", "origin": "Spain", "qty_boxes": 2, "box_spec": "66 units ~10KG (Sweet Citrus)", "box_price_gbp": 17.00, "unit_cost_per_each": 0.258, "unit_cost_per_kg": 1.70, "confidence": "high"},
+        {"raw": "PINEAPPLE . COSTA RICA 8 10KG .", "product": "Pineapple", "origin": "Costa Rica", "qty_boxes": 1, "box_spec": "8 units ~10KG (Dole)", "box_price_gbp": 14.00, "unit_cost_per_each": 1.75, "unit_cost_per_kg": 1.40, "confidence": "high"},
+        {"raw": "PEARS CONFERENCE BELGIUM . 12KG .", "product": "Pear Conference", "origin": "Belgium", "qty_boxes": 1, "box_spec": "12KG (Dole)", "box_price_gbp": 19.00, "unit_cost_per_kg": 1.583, "confidence": "high"},
+        {"raw": "PEARS CONFERENCE NETHERLANDS 10X1KG 10KG PREPACKED", "product": "Pear Conference", "origin": "Netherlands", "qty_boxes": 1, "box_spec": "10×1KG = 10KG prepacked (Uri Fruit)", "box_price_gbp": 14.00, "unit_cost_per_kg": 1.40, "confidence": "high"},
+        {"raw": "NECTARINE . SPAIN 10X500G 5KG BASKET", "product": "Nectarine", "origin": "Spain", "qty_boxes": 1, "box_spec": "10×500G = 5KG basket (Flow Wrap)", "box_price_gbp": 14.00, "unit_cost_per_punnet_500g": 1.40, "unit_cost_per_kg": 2.80, "confidence": "high"},
+        {"raw": "KIWI . ITALY 27 4KG .", "product": "Kiwi", "origin": "Italy", "qty_boxes": 2, "box_spec": "27 units ~4KG", "box_price_gbp": 8.50, "unit_cost_per_each": 0.315, "confidence": "high"},
+        {"raw": "GRAPE JACK SALUTE SOUTH AFRICA 10X500G 5KG .", "product": "Grape Jack Salute (SA)", "origin": "South Africa", "qty_boxes": 1, "box_spec": "10×500G = 5KG (EXSER Green/Brown Box)", "box_price_gbp": 16.00, "unit_cost_per_punnet_500g": 1.60, "unit_cost_per_kg": 3.20, "confidence": "high", "note": "Jack Salute = SA autumn seedless grape variety; new in 2026"},
+        {"raw": "BANANA . COSTA RICA . 18KG .", "product": "Banana", "origin": "Costa Rica", "qty_boxes": 1, "box_spec": "18KG (Chiquita)", "box_price_gbp": 18.50, "unit_cost_per_kg": 1.028, "confidence": "high"},
+        {"raw": "APPLE PINK LADY FR . 4KG .", "product": "Apple Pink Lady", "origin": "France", "qty_boxes": 2, "box_spec": "~4KG (Small Box)", "box_price_gbp": 7.50, "unit_cost_per_kg": 1.875, "confidence": "high"},
+        {"raw": "APPLE GOLDEN DELICIOUS FRANCE 74 12KG .", "product": "Apple Golden Delicious", "origin": "France", "qty_boxes": 1, "box_spec": "74 units ~12KG (Blue Whale)", "box_price_gbp": 17.50, "unit_cost_per_each": 0.236, "unit_cost_per_kg": 1.458, "confidence": "high"},
+        {"raw": "APPLE ROYAL GALA CHILE 78 12KG .", "product": "Apple Royal Gala", "origin": "Chile", "qty_boxes": 1, "box_spec": "78 units ~12KG (Frusan)", "box_price_gbp": 22.00, "unit_cost_per_each": 0.282, "unit_cost_per_kg": 1.833, "confidence": "high"},
+        {"raw": "STARFRUIT . THAILAND 10 2.5KG .", "product": "Starfruit (Carambola)", "origin": "Thailand", "qty_boxes": 1, "box_spec": "10 units ~2.5KG", "box_price_gbp": 15.00, "unit_cost_per_each": 1.50, "confidence": "high", "note": "Starfruit reappears after Jan 2024; £15 vs £20 then"},
+        {"raw": "APPLE BRAEBURN FRANCE 74 12KG .", "product": "Apple Braeburn", "origin": "France", "qty_boxes": 1, "box_spec": "74 units ~12KG (Blue Whale)", "box_price_gbp": 18.00, "unit_cost_per_each": 0.243, "unit_cost_per_kg": 1.50, "confidence": "high"},
+        {"raw": "PLUM ANGELINO ZA 10X500G 5KG PREPACKED", "product": "Plum Angelino (SA)", "origin": "South Africa", "qty_boxes": 4, "box_spec": "10×500G = 5KG prepacked (Poupart)", "box_price_gbp": 9.50, "unit_cost_per_punnet_500g": 0.95, "unit_cost_per_kg": 1.90, "confidence": "high"},
+        {"raw": "APRICOT . SPAIN 10X500G 5KG PACKED BLACK BOX", "product": "Apricot", "origin": "Spain", "qty_boxes": 3, "box_spec": "10×500G = 5KG packed (Black Box)", "box_price_gbp": 14.00, "unit_cost_per_punnet_500g": 1.40, "unit_cost_per_kg": 2.80, "confidence": "high", "note": "First Spanish apricot of 2026 season; £14/5KG"}
+      ]
+    },
+    {
+      "date": "19/05/2026", "delivery_no": "11185733", "supplier": "dole wholesale gateshead",
+      "items": [
+        {"raw": "APPLE PINK LADY FR 10X500G 5KG PREPACKED", "product": "Apple Pink Lady", "origin": "France", "qty_boxes": 4, "box_spec": "10×500G = 5KG prepacked", "box_price_gbp": 14.00, "unit_cost_per_punnet_500g": 1.40, "unit_cost_per_kg": 2.80, "confidence": "high", "note": "Pink Lady in prepacked punnet format — vs 4KG loose at £7.50"},
+        {"raw": "POTATO . UK 10X2KG 20KG PREPACKED", "product": "Potato", "origin": "UK", "qty_boxes": 15, "box_spec": "10×2KG = 20KG prepacked (Tulip)", "box_price_gbp": 8.20, "unit_cost_per_kg": 0.41, "confidence": "high"},
+        {"raw": "AVOCADO HASS ZA . 10KG JUMBLE PACK", "product": "Avocado Hass", "origin": "South Africa", "qty_boxes": 2, "box_spec": "10KG jumble (Fruit Plastic Crate)", "box_price_gbp": 6.50, "unit_cost_per_kg": 0.65, "confidence": "high", "note": "SA Hass avocado at £6.50/10KG = very cheap; jumble = mixed sizes"},
+        {"raw": "PEA . ITALY . 3.5KG .", "product": "Pea (Pods)", "origin": "Italy", "qty_boxes": 1, "box_spec": "3.5KG pod peas", "box_price_gbp": 14.00, "unit_cost_per_kg": 4.00, "confidence": "high"},
+        {"raw": "POTATO MIDS WASHED ES . 10KG .", "product": "Potato Mids (Washed)", "origin": "Spain", "qty_boxes": 2, "box_spec": "10KG boxed (Vanisia)", "box_price_gbp": 7.50, "unit_cost_per_kg": 0.75, "confidence": "high"},
+        {"raw": "LIMES . BRAZIL 42 4KG .", "product": "Lime", "origin": "Brazil", "qty_boxes": 1, "box_spec": "42 units ~4KG (Tropical)", "box_price_gbp": 7.00, "unit_cost_per_each": 0.167, "unit_cost_per_kg": 1.75, "confidence": "high"},
+        {"raw": "MUSHROOM CLOSED CUP POLAND . 2.27KG .", "product": "Mushroom Closed Cup", "origin": "Poland", "qty_boxes": 5, "box_spec": "2.27KG (Polish)", "box_price_gbp": 5.20, "unit_cost_per_kg": 2.29, "confidence": "high"},
+        {"raw": "CARROT . UK 15 15KG PREPACKED", "product": "Carrot", "origin": "UK", "qty_boxes": 2, "box_spec": "15×1KG = 15KG prepacked (Prepack Carrot X15)", "box_price_gbp": 12.00, "unit_cost_per_kg": 0.80, "confidence": "high"},
+        {"raw": "CLEMENTINE NARDOCOTT MA 56 10KG .", "product": "Clementine Nardocott (Morocco)", "origin": "Morocco", "qty_boxes": 3, "box_spec": "56 units ~10KG (Sweet Citrus)", "box_price_gbp": 17.00, "unit_cost_per_each": 0.304, "unit_cost_per_kg": 1.70, "confidence": "high"},
+        {"raw": "PLUM ANGELINO ES 10X500G 5KG PREPACKED", "product": "Plum Angelino (Spain)", "origin": "Spain", "qty_boxes": 3, "box_spec": "10×500G = 5KG prepacked (Poupart)", "box_price_gbp": 9.50, "unit_cost_per_punnet_500g": 0.95, "unit_cost_per_kg": 1.90, "confidence": "high"},
+        {"raw": "STRAWBERRY . BELGIUM 8X500G . . REO white box", "product": "Strawberry", "origin": "Belgium", "qty_boxes": 1, "box_spec": "8×500G = 4KG (REO White Box)", "box_price_gbp": 31.00, "unit_cost_per_punnet_500g": 3.875, "unit_cost_per_kg": 7.75, "confidence": "high"},
+        {"raw": "PEARS CONFERENCE BELGIUM . 12KG .", "product": "Pear Conference", "origin": "Belgium", "qty_boxes": 5, "box_spec": "12KG (Dole)", "box_price_gbp": 19.00, "unit_cost_per_kg": 1.583, "confidence": "high"},
+        {"raw": "PEARS CONFERENCE NETHERLANDS 10X1KG 10KG PREPACKED", "product": "Pear Conference", "origin": "Netherlands", "qty_boxes": 1, "box_spec": "10×1KG = 10KG prepacked (Uri Fruit)", "box_price_gbp": 14.00, "unit_cost_per_kg": 1.40, "confidence": "high"},
+        {"raw": "ORANGE NAVEL MOROCCO 70 15KG .", "product": "Orange Navel (Morocco)", "origin": "Morocco", "qty_boxes": 1, "box_spec": "70 units ~15KG (Joby)", "box_price_gbp": 14.00, "unit_cost_per_each": 0.20, "unit_cost_per_kg": 0.933, "confidence": "high", "note": "Morocco navel replacing Spain in May — late-season Morocco"},
+        {"raw": "PEACH DONUT SPAIN 10X500G 5KG PREPACKED", "product": "Peach Donut (Flat)", "origin": "Spain", "qty_boxes": 3, "box_spec": "10×500G = 5KG prepacked (Brigette)", "box_price_gbp": 18.00, "unit_cost_per_punnet_500g": 1.80, "unit_cost_per_kg": 3.60, "confidence": "high", "note": "Donut/flat peach premium — £18 vs standard peach £15-17"},
+        {"raw": "PEACH . SPAIN 10X500G 5KG PP", "product": "Peach", "origin": "Spain", "qty_boxes": 1, "box_spec": "10×500G = 5KG prepacked (Alan)", "box_price_gbp": 15.00, "unit_cost_per_punnet_500g": 1.50, "unit_cost_per_kg": 3.00, "confidence": "high"},
+        {"raw": "NECTARINE . SPAIN 10X500G . PP", "product": "Nectarine", "origin": "Spain", "qty_boxes": 3, "box_spec": "10×500G = 5KG prepacked (Alan)", "box_price_gbp": 15.50, "unit_cost_per_punnet_500g": 1.55, "unit_cost_per_kg": 3.10, "confidence": "high"},
+        {"raw": "KIWI . ITALY 27 4KG . GOLD KIWI", "product": "Kiwi (Gold)", "origin": "Italy", "qty_boxes": 1, "box_spec": "27 units ~4KG (Gold variety)", "box_price_gbp": 9.00, "unit_cost_per_each": 0.333, "confidence": "high"},
+        {"raw": "GRAPE SUGAR CRISP BR 10X500G 5KG PREPACKED", "product": "Grape Sugar Crisp (Brazil)", "origin": "Brazil", "qty_boxes": 3, "box_spec": "10×500G = 5KG prepacked (IFG Eleven)", "box_price_gbp": 16.00, "unit_cost_per_punnet_500g": 1.60, "unit_cost_per_kg": 3.20, "confidence": "high"},
+        {"raw": "GRAPE JACK SALUTE SOUTH AFRICA 10X500G 5KG .", "product": "Grape Jack Salute (SA)", "origin": "South Africa", "qty_boxes": 3, "box_spec": "10×500G = 5KG (EXSER Green/Brown Box)", "box_price_gbp": 15.50, "unit_cost_per_punnet_500g": 1.55, "unit_cost_per_kg": 3.10, "confidence": "high"},
+        {"raw": "BANANA . COSTA RICA . 13KG . DOLE", "product": "Banana", "origin": "Costa Rica", "qty_boxes": 3, "box_spec": "13KG (Dole)", "box_price_gbp": 18.00, "unit_cost_per_kg": 1.385, "confidence": "high", "note": "Dole-branded 13KG vs Chiquita 18KG — smaller format"},
+        {"raw": "APPLE ROYAL GALA CHILE 78 12KG .", "product": "Apple Royal Gala", "origin": "Chile", "qty_boxes": 1, "box_spec": "78 units ~12KG (Frusan)", "box_price_gbp": 22.00, "unit_cost_per_each": 0.282, "unit_cost_per_kg": 1.833, "confidence": "high"},
+        {"raw": "APPLE BRAMLEY UK 90/100 13KG .", "product": "Apple Bramley", "origin": "UK", "qty_boxes": 1, "box_spec": "90/100 grade ~13KG", "box_price_gbp": 21.00, "unit_cost_per_kg": 1.615, "confidence": "high"}
+      ]
+    },
+    {
+      "date": "20/05/2026", "delivery_no": "11188141", "supplier": "dole wholesale gateshead",
+      "items": [
+        {"raw": "MUSHROOM BUTTON PL . 2.27KG TRAY", "product": "Mushroom Button", "origin": "Poland", "qty_boxes": 1, "box_spec": "2.27KG tray", "box_price_gbp": 5.50, "unit_cost_per_kg": 2.42, "confidence": "high"},
+        {"raw": "CRESS SALAD UK 12 . .", "product": "Salad Cress", "origin": "UK", "qty_boxes": 1, "box_spec": "12 trays", "box_price_gbp": 2.50, "unit_cost_per_tray": 0.208, "confidence": "high"}
+      ]
+    },
+    {
+      "date": "21/05/2026", "delivery_no": "11190476", "supplier": "dole wholesale gateshead",
+      "items": [
+        {"raw": "SATSUMA . PERU 70 10KG . GOLD CUP", "product": "Satsuma (Peru)", "origin": "Peru", "qty_boxes": 1, "box_spec": "70 units ~10KG (Gold Cup)", "box_price_gbp": 16.00, "unit_cost_per_each": 0.229, "unit_cost_per_kg": 1.60, "confidence": "high", "note": "Peru satsuma in May — only the second in dataset (cf. May 2023 at £24)"},
+        {"raw": "MELON WATER PT 4 20KG . Mabe", "product": "Watermelon", "origin": "Portugal", "qty_boxes": 4, "box_spec": "4 melons ~20KG (Mabe)", "box_price_gbp": 20.00, "unit_cost_per_each": 5.00, "unit_cost_per_kg": 1.00, "confidence": "high", "note": "Portugal watermelon, 20KG = very large melons; 4 boxes = 16 melons"},
+        {"raw": "GRAPE JACK SALUTE SOUTH AFRICA 10X500G 5KG .", "product": "Grape Jack Salute (SA)", "origin": "South Africa", "qty_boxes": 1, "box_spec": "10×500G = 5KG (EXSER)", "box_price_gbp": 16.00, "unit_cost_per_punnet_500g": 1.60, "unit_cost_per_kg": 3.20, "confidence": "high"},
+        {"raw": "GRAPEFRUIT STAR RUBY SOUTH AFRICA 35 15KG .", "product": "Grapefruit Star Ruby", "origin": "South Africa", "qty_boxes": 2, "box_spec": "35 units ~15KG (Letaba)", "box_price_gbp": 20.00, "unit_cost_per_each": 0.571, "unit_cost_per_kg": 1.333, "confidence": "high"},
+        {"raw": "BANANA . COSTA RICA . 18KG .", "product": "Banana", "origin": "Costa Rica", "qty_boxes": 1, "box_spec": "18KG (Chiquita)", "box_price_gbp": 18.50, "unit_cost_per_kg": 1.028, "confidence": "high"},
+        {"raw": "APPLE PINK LADY FR . 4KG .", "product": "Apple Pink Lady", "origin": "France", "qty_boxes": 6, "box_spec": "~4KG (Small Box)", "box_price_gbp": 7.50, "unit_cost_per_kg": 1.875, "confidence": "high", "note": "6 boxes = large Pink Lady order"}
+      ]
+    },
+    {
+      "date": "26/05/2026", "delivery_no": "11198212", "supplier": "dole wholesale gateshead",
+      "items": [
+        {"raw": "POTATO . UK 10X2KG 20KG PREPACKED", "product": "Potato", "origin": "UK", "qty_boxes": 12, "box_spec": "10×2KG = 20KG prepacked (Tulip)", "box_price_gbp": 8.50, "unit_cost_per_kg": 0.425, "confidence": "high"},
+        {"raw": "POTATO MIDS WASHED ES . 10KG .", "product": "Potato Mids (Washed)", "origin": "Spain", "qty_boxes": 2, "box_spec": "10KG boxed (Vanisia)", "box_price_gbp": 7.50, "unit_cost_per_kg": 0.75, "confidence": "high"},
+        {"raw": "POTATO WASHED UK . 25KG . G/vale soraya", "product": "Potato (Washed)", "origin": "UK", "qty_boxes": 1, "box_spec": "25KG (Greenvale Soraya)", "box_price_gbp": 7.00, "unit_cost_per_kg": 0.28, "confidence": "high"},
+        {"raw": "MUSHROOM CLOSED CUP POLAND . 2.27KG .", "product": "Mushroom Closed Cup", "origin": "Poland", "qty_boxes": 5, "box_spec": "2.27KG (Polish)", "box_price_gbp": 5.20, "unit_cost_per_kg": 2.29, "confidence": "high"},
+        {"raw": "CARROT . UK 15 15KG PREPACKED", "product": "Carrot", "origin": "UK", "qty_boxes": 1, "box_spec": "15×1KG = 15KG prepacked (Prepack Carrot)", "box_price_gbp": 12.00, "unit_cost_per_kg": 0.80, "confidence": "high"},
+        {"raw": "MUSHROOM BUTTON PL . 2.27KG .", "product": "Mushroom Button", "origin": "Poland", "qty_boxes": 2, "box_spec": "2.27KG (Button)", "box_price_gbp": 4.00, "unit_cost_per_kg": 1.76, "confidence": "high"}
+      ]
+    },
+    {
+      "date": "27/05/2026", "delivery_no": "11200402", "supplier": "dole wholesale gateshead",
+      "items": [
+        {"raw": "PEA . ITALY . 3KG .", "product": "Pea (Pods)", "origin": "Italy", "qty_boxes": 1, "box_spec": "3KG pod peas", "box_price_gbp": 16.00, "unit_cost_per_kg": 5.333, "confidence": "high"}
+      ]
+    },
+    {
+      "date": "28/05/2026", "delivery_no": "11202888", "supplier": "dole wholesale gateshead",
+      "items": [
+        {"raw": "CARROT . UK 15 15KG PREPACKED", "product": "Carrot", "origin": "UK", "qty_boxes": 1, "box_spec": "15×1KG = 15KG prepacked (Prepack Carrot)", "box_price_gbp": 11.50, "unit_cost_per_kg": 0.767, "confidence": "high"},
+        {"raw": "POTATO . UK 10X2KG 20KG PREPACKED", "product": "Potato", "origin": "UK", "qty_boxes": 4, "box_spec": "10×2KG = 20KG prepacked (Thickpenny)", "box_price_gbp": 7.50, "unit_cost_per_kg": 0.375, "confidence": "high"},
+        {"raw": "POTATO MIDS WASHED ES . 10KG .", "product": "Potato Mids (Washed)", "origin": "Spain", "qty_boxes": 2, "box_spec": "10KG boxed (Vanisia)", "box_price_gbp": 7.50, "unit_cost_per_kg": 0.75, "confidence": "high"},
+        {"raw": "CAPSICUM RED NL . 5KG .", "product": "Pepper (Red)", "origin": "Netherlands", "qty_boxes": 7, "box_spec": "5KG (Dutch)", "box_price_gbp": 11.00, "unit_cost_per_kg": 2.20, "confidence": "high", "note": "7 boxes red peppers = major pepper run; £11/5KG"}
+      ]
+    },
+    {
+      "date": "29/05/2026", "delivery_no": "11206015", "supplier": "dole wholesale gateshead",
+      "items": [
+        {"raw": "AUBERGINE . NL . 5KG .", "product": "Aubergine", "origin": "Netherlands", "qty_boxes": 1, "box_spec": "5KG (Dutch)", "box_price_gbp": 8.00, "unit_cost_per_kg": 1.60, "confidence": "high"}
+      ]
+    },
+    {
+      "date": "14/05/2026", "ticket_no": "2735813", "supplier": "jr holland",
+      "items": [
+        {"raw": "SPRING ONIONS - X12 HAPPYLAND", "product": "Spring Onion", "qty_boxes": 1, "box_price_gbp": 3.00, "confidence": "high"}
+      ]
+    },
+    {
+      "date": "16/05/2026", "ticket_no": "2736198", "supplier": "jr holland",
+      "items": [
+        {"raw": "CHILEAN - SIZE 1", "product": "Plum/Stone Fruit (Chilean)", "qty_boxes": 2, "box_price_gbp": 16.00, "confidence": "medium", "note": "Chilean = SA/Chile stone fruit (plum/nectarine); £16/box"}
+      ]
+    },
+    {
+      "date": "18/05/2026", "ticket_no": "2736853", "supplier": "jr holland",
+      "items": [
+        {"raw": "CELERY - X16 GS", "product": "Celery", "qty_boxes": 1, "box_price_gbp": 9.50, "confidence": "high"},
+        {"raw": "SALAD CRESS - X16", "product": "Salad Cress", "qty_boxes": 1, "box_price_gbp": 2.80, "confidence": "high"},
+        {"raw": "AUBERGINES - DUTCH", "product": "Aubergine", "qty_boxes": 4, "box_price_gbp": 8.80, "confidence": "high"},
+        {"raw": "COS LETTUCE - GS", "product": "Lettuce Cos", "qty_boxes": 1, "box_price_gbp": 8.00, "confidence": "high"},
+        {"raw": "ICEBERG - FARMERS BEST X10", "product": "Lettuce Iceberg", "qty_boxes": 1, "box_price_gbp": 6.50, "confidence": "high"},
+        {"raw": "RED PEPPERS - DUTCH", "product": "Pepper (Red)", "qty_boxes": 4, "box_price_gbp": 8.50, "confidence": "high"},
+        {"raw": "YELLOW PEPPERS - DUTCH LGE", "product": "Pepper (Yellow)", "qty_boxes": 4, "box_price_gbp": 7.00, "confidence": "high"},
+        {"raw": "DUTCH TOMATOES - BLACK LARGE UK", "product": "Tomato", "qty_boxes": 5, "box_price_gbp": 7.00, "confidence": "high"},
+        {"raw": "CHERRY TOMATOES - PPCHERRYVINE X10", "product": "Tomato Cherry Vine", "qty_boxes": 10, "box_price_gbp": 7.00, "confidence": "high", "note": "10 boxes cherry vine tomato = large Holland tomato run"}
+      ]
+    },
+    {
+      "date": "19/05/2026", "ticket_no": "2737210", "supplier": "jr holland",
+      "items": [
+        {"raw": "COURGETTES - ZEUS", "product": "Courgette", "qty_boxes": 2, "box_price_gbp": 7.80, "confidence": "high"},
+        {"raw": "CUCUMBERS - X16 UK BLACK BOX", "product": "Cucumber", "qty_boxes": 15, "box_price_gbp": 7.00, "confidence": "high", "note": "15 boxes UK cucumbers = 240 cucumbers — large run"},
+        {"raw": "AUBERGINES - DUTCH", "product": "Aubergine", "qty_boxes": 2, "box_price_gbp": 8.80, "confidence": "high"},
+        {"raw": "ICEBERG - FARMERS BEST X10", "product": "Lettuce Iceberg", "qty_boxes": 1, "box_price_gbp": 6.50, "confidence": "high"},
+        {"raw": "COS LETTUCE - GS", "product": "Lettuce Cos", "qty_boxes": 1, "box_price_gbp": 8.00, "confidence": "high"},
+        {"raw": "RED PEPPERS - DUTCH LGE", "product": "Pepper (Red)", "qty_boxes": 7, "box_price_gbp": 8.00, "confidence": "high"},
+        {"raw": "YELLOW PEPPERS - DUTCH LGE", "product": "Pepper (Yellow)", "qty_boxes": 3, "box_price_gbp": 7.00, "confidence": "high"},
+        {"raw": "MIXED PEPPERS - X10 DUTCH TRI COLOUR", "product": "Pepper (Mixed)", "qty_boxes": 1, "box_price_gbp": 13.50, "confidence": "high"},
+        {"raw": "VINE TOMATOES - UK BLACK BOX", "product": "Tomato Vine", "qty_boxes": 5, "box_price_gbp": 7.50, "confidence": "high"},
+        {"raw": "CHERRY TOMATOES - PPCHERRYVINE X10", "product": "Tomato Cherry Vine", "qty_boxes": 4, "box_price_gbp": 7.00, "confidence": "high"}
+      ]
+    },
+    {
+      "date": "20/05/2026", "ticket_no": "2737551", "supplier": "jr holland",
+      "items": [
+        {"raw": "RED PEPPERS - DUTCH LGE", "product": "Pepper (Red)", "qty_boxes": 1, "box_price_gbp": 8.80, "confidence": "high"},
+        {"raw": "YELLOW PEPPERS - DUTCH LGE", "product": "Pepper (Yellow)", "qty_boxes": 1, "box_price_gbp": 7.50, "confidence": "high"},
+        {"raw": "MUSHROOM - POLISH", "product": "Mushroom Closed Cup", "qty_boxes": 1, "box_price_gbp": 5.40, "confidence": "high"},
+        {"raw": "CUCUMBERS - X14 DUTCH", "product": "Cucumber", "qty_boxes": 1, "box_price_gbp": 7.50, "confidence": "high"}
+      ]
+    },
+    {
+      "date": "21/05/2026", "ticket_no": "2737939", "supplier": "jr holland",
+      "items": [
+        {"raw": "WHITE CABBAGE - 25 KILO DUTCH", "product": "Cabbage White", "qty_boxes": 1, "box_price_gbp": 8.00, "confidence": "high"},
+        {"raw": "CARROTS - CHINESE", "product": "Carrot (Chinese)", "qty_boxes": 1, "box_price_gbp": 8.00, "confidence": "high"},
+        {"raw": "CHILEAN - SIZE 1", "product": "Plum/Stone Fruit (Chilean)", "qty_boxes": 7, "box_price_gbp": 12.00, "confidence": "medium", "note": "7 boxes at £12 = large stone fruit run; down from £16 (16 May)"}
+      ]
+    },
+    {
+      "date": "26/05/2026", "ticket_no": "2739072", "supplier": "jr holland",
+      "items": [
+        {"raw": "CELERY - X16 ,GS", "product": "Celery", "qty_boxes": 1, "box_price_gbp": 9.60, "confidence": "high"},
+        {"raw": "COURGETTES - MANDO", "product": "Courgette", "qty_boxes": 6, "box_price_gbp": 7.50, "confidence": "high"},
+        {"raw": "SALAD CRESS - X16", "product": "Salad Cress", "qty_boxes": 1, "box_price_gbp": 2.80, "confidence": "high"},
+        {"raw": "CUCUMBERS - X14 DUTCH", "product": "Cucumber", "qty_boxes": 22, "box_price_gbp": 6.50, "confidence": "high", "note": "22 boxes = 308 cucumbers — biggest single cucumber order in dataset"},
+        {"raw": "AUBERGINES - DUTCH LGE", "product": "Aubergine", "qty_boxes": 5, "box_price_gbp": 6.80, "confidence": "high"},
+        {"raw": "COS LETTUCE - X10 COS GS", "product": "Lettuce Cos", "qty_boxes": 1, "box_price_gbp": 7.50, "confidence": "high"},
+        {"raw": "ICEBERG - X12 GS BLUE", "product": "Lettuce Iceberg", "qty_boxes": 1, "box_price_gbp": 7.20, "confidence": "high"},
+        {"raw": "MUSHROOM - X12X250 GM PRE PACK", "product": "Mushroom Closed Cup", "qty_boxes": 3, "box_spec": "12×250G = 3KG prepacked", "box_price_gbp": 8.80, "confidence": "high"},
+        {"raw": "RED PEPPERS - DUTCH LGE", "product": "Pepper (Red)", "qty_boxes": 8, "box_price_gbp": 7.80, "confidence": "high"},
+        {"raw": "YELLOW PEPPERS - DUTCH LGE", "product": "Pepper (Yellow)", "qty_boxes": 3, "box_price_gbp": 6.80, "confidence": "high"},
+        {"raw": "VINE TOMATOES - SENSATION DUTCH", "product": "Tomato Vine", "qty_boxes": 8, "box_price_gbp": 7.00, "confidence": "high"},
+        {"raw": "CHERRY TOMATOES - X9 DUTCH", "product": "Tomato Cherry", "qty_boxes": 7, "box_price_gbp": 5.00, "confidence": "high"}
+      ]
+    },
+    {
+      "date": "27/05/2026", "ticket_no": "2739389", "supplier": "jr holland",
+      "items": [
+        {"raw": "CUCUMBERS - X14 DUTCH", "product": "Cucumber", "qty_boxes": 15, "box_price_gbp": 6.50, "confidence": "high"},
+        {"raw": "AUBERGINES - DUTCH LGE", "product": "Aubergine", "qty_boxes": 2, "box_price_gbp": 6.80, "confidence": "high"},
+        {"raw": "MUSHROOM - POLISH", "product": "Mushroom Closed Cup", "qty_boxes": 3, "box_price_gbp": 5.40, "confidence": "high"},
+        {"raw": "MUSHROOM - X12X250 GM PRE PACK", "product": "Mushroom Closed Cup", "qty_boxes": 2, "box_spec": "12×250G = 3KG prepacked", "box_price_gbp": 8.80, "confidence": "high"},
+        {"raw": "RED PEPPERS - 5KILO RED POINTED", "product": "Pepper (Red Pointed)", "qty_boxes": 1, "box_price_gbp": 9.50, "confidence": "high"},
+        {"raw": "RED PEPPERS - DUTCH LGE", "product": "Pepper (Red)", "qty_boxes": 4, "box_price_gbp": 8.00, "confidence": "high"},
+        {"raw": "YELLOW PEPPERS - DUTCH LGE", "product": "Pepper (Yellow)", "qty_boxes": 1, "box_price_gbp": 6.00, "confidence": "high"},
+        {"raw": "MIXED PEPPERS - TRI COLOUR DUTCH 500 GM", "product": "Pepper (Mixed)", "qty_boxes": 1, "box_price_gbp": 12.50, "confidence": "high"},
+        {"raw": "RADISH PRE PACKED - X20 DUTCH", "product": "Radish", "qty_boxes": 1, "box_price_gbp": 7.50, "confidence": "high"},
+        {"raw": "DUTCH TOMATOES - DUTCH BLACK BOX", "product": "Tomato", "qty_boxes": 2, "box_price_gbp": 7.00, "confidence": "high"},
+        {"raw": "CHERRY TOMATOES - X9 DUTCH", "product": "Tomato Cherry", "qty_boxes": 5, "box_price_gbp": 5.00, "confidence": "high"}
+      ]
+    },
+    {
+      "date": "28/05/2026", "ticket_no": "2739849", "supplier": "jr holland",
+      "items": [
+        {"raw": "CELERY - X16GS", "product": "Celery", "qty_boxes": 1, "box_price_gbp": 9.60, "confidence": "high"},
+        {"raw": "COURGETTES - ZEUS", "product": "Courgette", "qty_boxes": 1, "box_price_gbp": 6.80, "confidence": "high"},
+        {"raw": "CUCUMBERS - X14 DUTCH", "product": "Cucumber", "qty_boxes": 10, "box_price_gbp": 5.50, "confidence": "high", "note": "£5.50 vs £6.50 on 26-27 May — price softening"},
+        {"raw": "AUBERGINES - DUTCH LGE", "product": "Aubergine", "qty_boxes": 4, "box_price_gbp": 6.00, "confidence": "high"},
+        {"raw": "ICEBERG - X12 GS BLUE", "product": "Lettuce Iceberg", "qty_boxes": 1, "box_price_gbp": 7.00, "confidence": "high"},
+        {"raw": "COS LETTUCE - X10 COS GS", "product": "Lettuce Cos", "qty_boxes": 1, "box_price_gbp": 7.50, "confidence": "high"},
+        {"raw": "MUSHROOM - X12X250 GM PRE PACK", "product": "Mushroom Closed Cup", "qty_boxes": 2, "box_spec": "12×250G = 3KG prepacked", "box_price_gbp": 8.80, "confidence": "high"},
+        {"raw": "YELLOW PEPPERS - DUTCH LARGE", "product": "Pepper (Yellow)", "qty_boxes": 1, "box_price_gbp": 8.00, "confidence": "high"},
+        {"raw": "DUTCH TOMATOES - UK GHOUSE BOX", "product": "Tomato", "qty_boxes": 6, "box_price_gbp": 6.50, "confidence": "high"}
+      ]
+    },
+    {
+      "date": "29/05/2026", "ticket_no": "2739928", "supplier": "jr holland",
+      "items": [
+        {"raw": "YELLOW PEPPERS - UK LARGE", "product": "Pepper (Yellow)", "qty_boxes": 1, "box_price_gbp": 8.00, "confidence": "high"},
+        {"raw": "AUBERGINES - DUTCH LGE", "product": "Aubergine", "qty_boxes": 1, "box_price_gbp": 6.00, "confidence": "high"},
+        {"raw": "CUCUMBERS - X14 DUTCH", "product": "Cucumber", "qty_boxes": 2, "box_price_gbp": 5.50, "confidence": "high"},
+        {"raw": "MUSHROOM - POLISH", "product": "Mushroom Closed Cup", "qty_boxes": 2, "box_price_gbp": 5.40, "confidence": "high"}
+      ]
+    }
+  ]
+}
