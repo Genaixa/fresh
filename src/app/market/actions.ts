@@ -61,3 +61,12 @@ export async function closeMarketSession(sessionId: string) {
     .eq('id', sessionId)
   revalidatePath('/market')
 }
+
+export async function startNewTrip() {
+  const supabase = await createClient()
+  const today = new Date().toISOString().split('T')[0]
+  await supabase
+    .from('market_sessions')
+    .insert({ session_date: today, status: 'open' })
+  revalidatePath('/market')
+}

@@ -65,12 +65,15 @@ export default async function MarketPage() {
   const today        = new Date().toISOString().split('T')[0]
   const currentMonth = new Date().getMonth() + 1
 
-  // ── Session ──────────────────────────────────────────────────────────────
-  let { data: session } = await supabase
+  // ── Session — most recent for today (multiple trips per day allowed) ────────
+  const { data: sessions } = await supabase
     .from('market_sessions')
     .select('id, session_date, status, roots_batches, veg_batches, fruit_batches')
     .eq('session_date', today)
-    .single()
+    .order('created_at', { ascending: false })
+    .limit(1)
+
+  let session = sessions?.[0] ?? null
 
   if (!session) {
     const { data } = await supabase

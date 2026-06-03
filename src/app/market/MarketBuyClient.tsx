@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { closeMarketSession, completeSectionBatch, upsertMarketItem } from './actions'
+import { closeMarketSession, completeSectionBatch, startNewTrip, upsertMarketItem } from './actions'
 import { CONFIG } from './config'
 import type { MarketProduct, MarketSession, MarketSessionItem, SupplierIds } from './page'
 
@@ -543,6 +543,13 @@ export default function MarketBuyClient({ session, products, existingItems, supp
             <button onClick={() => setShowSummary(true)}
               className="text-xs font-semibold text-gray-600 border border-gray-300 px-3 py-1.5 rounded-lg active:bg-gray-50">
               Summary
+            </button>
+          )}
+          {session.status === 'closed' && (
+            <button
+              onClick={async () => { await startNewTrip() }}
+              className="text-xs font-semibold text-white bg-gray-900 px-3 py-1.5 rounded-lg active:bg-gray-700">
+              New trip
             </button>
           )}
           {summary && session.status === 'open' && !confirmReset && (
