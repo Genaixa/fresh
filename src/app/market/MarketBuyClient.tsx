@@ -30,7 +30,7 @@ type PricingCalc = {
   effectiveUnitLabel: string | null  // 'each' for weight items sold per piece; null = use config unitLabel
 }
 
-function calcPricing(pricePounds: string, product: MarketProduct): PricingCalc | null {
+function calcPricing(pricePounds: string, product: MarketProduct, countOverride?: number): PricingCalc | null {
   const boxPence = Math.round(parseFloat(pricePounds) * 100)
   if (!boxPence || isNaN(boxPence) || boxPence <= 0) return null
   const cfg = CONFIG[product.name]
@@ -42,10 +42,9 @@ function calcPricing(pricePounds: string, product: MarketProduct): PricingCalc |
   if (product.caseSize > 1) {
     unitsPerBox = product.caseSize
   } else if (cfg.unitType === 'count') {
-    unitsPerBox = cfg.typicalBoxCount
+    unitsPerBox = countOverride ?? cfg.typicalBoxCount
   } else if (cfg.retailUnitsPerBox) {
-    // Weight item but sold per piece — use the estimated count per box
-    unitsPerBox = cfg.retailUnitsPerBox
+    unitsPerBox = countOverride ?? cfg.retailUnitsPerBox
     effectiveUnitLabel = 'each'
   }
 
@@ -76,11 +75,12 @@ function calcPricing(pricePounds: string, product: MarketProduct): PricingCalc |
 // ── Row state ─────────────────────────────────────────────────────────────────
 
 type RowState = {
-  qty:         number
-  pricePounds: string
-  supplier:    'dole' | 'holland'
-  status:      'green' | 'amber' | 'red' | null
-  saving:      boolean
+  qty:          number
+  pricePounds:  string
+  countPerBox:  number        // actual pieces/units in the box (may differ from CONFIG default)
+  supplier:     'dole' | 'holland'
+  status:       'green' | 'amber' | 'red' | null
+  saving:       boolean
 }
 
 // All products use two entries: `${productId}:0` = Dole, `${productId}:1` = JR Holland
@@ -97,6 +97,15 @@ type Props = {
 // ── Main component ────────────────────────────────────────────────────────────
 
 export default function MarketBuyClient({ session, products, existingItems, supplierIds }: Props) {
+
+  const defaultCountPerBox = (p: MarketProduct): number => {
+    const cfg = CONFIG[p.name]
+    if (!cfg) return 1
+    if (p.caseSize > 1) return p.caseSize
+    if (cfg.unitType === 'count') return cfg.typicalBoxCount
+    if (cfg.retailUnitsPerBox) return cfg.retailUnitsPerBox
+    return cfg.typicalBoxCount
+  }
 
   const initRows = (): Map<string, RowState> => {
     const m = new Map<string, RowState>()
@@ -123,13 +132,17 @@ export default function MarketBuyClient({ session, products, existingItems, supp
         const dItem = byEntry.get(`${p.id}:${dIdx}`)
         const hItem = byEntry.get(`${p.id}:${hIdx}`)
 
+        const defCount = defaultCountPerBox(p)
+
         m.set(`${p.id}:${dIdx}`, dItem ? {
           qty: dItem.qty_boxes,
           pricePounds: dItem.price_pence ? (dItem.price_pence / 100).toFixed(2) : '',
+          countPerBox: dItem.units_per_case ?? defCount,
           supplier: 'dole', status: dItem.deal_status as RowState['status'], saving: false,
         } : {
           qty: batch === 0 && !preferredIsHolland ? ws : 0,
           pricePounds: p.doleLastPricePence ? (p.doleLastPricePence / 100).toFixed(2) : '',
+          countPerBox: defCount,
           supplier: 'dole',
           status: p.doleLastPricePence ? getDealStatus(p.doleLastPricePence, p.junAvgBoxPricePence) : null,
           saving: false,
@@ -138,10 +151,12 @@ export default function MarketBuyClient({ session, products, existingItems, supp
         m.set(`${p.id}:${hIdx}`, hItem ? {
           qty: hItem.qty_boxes,
           pricePounds: hItem.price_pence ? (hItem.price_pence / 100).toFixed(2) : '',
+          countPerBox: hItem.units_per_case ?? defCount,
           supplier: 'holland', status: hItem.deal_status as RowState['status'], saving: false,
         } : {
           qty: batch === 0 && preferredIsHolland ? ws : 0,
           pricePounds: p.hollandLastPricePence ? (p.hollandLastPricePence / 100).toFixed(2) : '',
+          countPerBox: defCount,
           supplier: 'holland',
           status: p.hollandLastPricePence ? getDealStatus(p.hollandLastPricePence, p.junAvgBoxPricePence) : null,
           saving: false,
@@ -226,13 +241,14 @@ export default function MarketBuyClient({ session, products, existingItems, supp
       setRows(prev => { const n = new Map(prev); const c = n.get(key); if (c) n.set(key, { ...c, saving: true }); return n })
       try {
         await upsertMarketItem({
-          sessionId:  session.id,
+          sessionId:    session.id,
           productId,
           entryIndex,
-          supplierId: row.supplier === 'dole' ? supplierIds.dole : supplierIds.holland,
-          qtyBoxes:   row.qty,
+          supplierId:   row.supplier === 'dole' ? supplierIds.dole : supplierIds.holland,
+          qtyBoxes:     row.qty,
           pricePence,
-          dealStatus: row.status,
+          dealStatus:   row.status,
+          unitsPerCase: row.countPerBox,
         })
       } finally {
         setRows(prev => { const n = new Map(prev); const c = n.get(key); if (c) n.set(key, { ...c, saving: false }); return n })
@@ -290,15 +306,17 @@ export default function MarketBuyClient({ session, products, existingItems, supp
         const dIdx = newBatch * 2
         const hIdx = newBatch * 2 + 1
         const preferredIsHolland = CONFIG[p.name]?.preferredSupplier === 'holland'
+        const cfg2 = CONFIG[p.name]
+        const defC = !cfg2 ? 1 : p.caseSize > 1 ? p.caseSize : cfg2.unitType === 'count' ? cfg2.typicalBoxCount : cfg2.retailUnitsPerBox ?? cfg2.typicalBoxCount
         n.set(`${p.id}:${dIdx}`, {
-          qty: 0,
+          qty: 0, countPerBox: defC,
           pricePounds: p.doleLastPricePence ? (p.doleLastPricePence / 100).toFixed(2) : '',
           supplier: 'dole',
           status: p.doleLastPricePence ? getDealStatus(p.doleLastPricePence, p.junAvgBoxPricePence) : null,
           saving: false,
         })
         n.set(`${p.id}:${hIdx}`, {
-          qty: 0,
+          qty: 0, countPerBox: defC,
           pricePounds: p.hollandLastPricePence ? (p.hollandLastPricePence / 100).toFixed(2) : '',
           supplier: 'holland',
           status: p.hollandLastPricePence ? getDealStatus(p.hollandLastPricePence, p.junAvgBoxPricePence) : null,
@@ -373,11 +391,11 @@ export default function MarketBuyClient({ session, products, existingItems, supp
       const boxSpend = row.qty * pp
       spend += boxSpend
 
-      // Revenue: actual retail × units per box (including retailUnitsPerBox estimates)
+      // Revenue: use actual count per box from row (user may have overridden the default)
       const unitsPerBox: number | null =
-        product.caseSize > 1    ? product.caseSize
-        : cfg.unitType === 'count' ? cfg.typicalBoxCount
-        : cfg.retailUnitsPerBox  ?? null
+        product.caseSize > 1 ? product.caseSize
+        : (cfg.unitType === 'count' || cfg.retailUnitsPerBox) ? row.countPerBox
+        : null
 
       if (unitsPerBox && product.retailPricePence > 0) {
         revenue += row.qty * unitsPerBox * product.retailPricePence
@@ -946,6 +964,9 @@ function ProductCard({ product, doleRow, hollandRow, onUpdate, onShiftBalance, i
   }, [isNew, onScrolled])
 
   const config    = CONFIG[product.name]!
+  const defaultCount = product.caseSize > 1 ? product.caseSize
+    : config.unitType === 'count' ? config.typicalBoxCount
+    : config.retailUnitsPerBox ?? config.typicalBoxCount
   const anyBought = doleRow.qty > 0 || hollandRow.qty > 0
   const anySaving = doleRow.saving || hollandRow.saving
 
@@ -983,6 +1004,7 @@ function ProductCard({ product, doleRow, hollandRow, onUpdate, onShiftBalance, i
           row={doleRow}
           product={product}
           isRecommended={doleRec}
+          defaultCount={defaultCount}
           onUpdate={patch => onUpdate(product.id, batchNumber * 2, patch, product)}
         />
 
@@ -1003,6 +1025,7 @@ function ProductCard({ product, doleRow, hollandRow, onUpdate, onShiftBalance, i
           row={hollandRow}
           product={product}
           isRecommended={hollandRec}
+          defaultCount={defaultCount}
           onUpdate={patch => onUpdate(product.id, batchNumber * 2 + 1, patch, product)}
         />
       </div>
@@ -1035,18 +1058,25 @@ function ProductCard({ product, doleRow, hollandRow, onUpdate, onShiftBalance, i
 
 // ── Supplier column ───────────────────────────────────────────────────────────
 
-function SupplierColumn({ label, lastPrice, lastDate, row, product, isRecommended, onUpdate }: {
+function SupplierColumn({ label, lastPrice, lastDate, row, product, isRecommended, defaultCount, onUpdate }: {
   label:         string
   lastPrice:     number | null
   lastDate:      string | null
   row:           RowState
   product:       MarketProduct
   isRecommended: boolean
+  defaultCount:  number
   onUpdate:      (patch: Partial<Omit<RowState, 'supplier'>>) => void
 }) {
-  const entered = Math.round(parseFloat(row.pricePounds) * 100) || 0
-  const overMax = entered > 0 && product.maxBoxPricePence && entered > product.maxBoxPricePence
-  const calc    = calcPricing(row.pricePounds, product)
+  const cfg          = CONFIG[product.name]
+  const showCount    = cfg && (cfg.unitType === 'count' || !!cfg.retailUnitsPerBox)
+  const countChanged = row.countPerBox !== defaultCount
+
+  const entered   = Math.round(parseFloat(row.pricePounds) * 100) || 0
+  // Recalculate max box price from the actual count per box
+  const effectiveMax = cfg ? Math.round(cfg.maxPayPerUnitPence * row.countPerBox) : product.maxBoxPricePence
+  const overMax   = entered > 0 && effectiveMax && entered > effectiveMax
+  const calc      = calcPricing(row.pricePounds, product, row.countPerBox)
 
   return (
     <div className={`flex-1 min-w-0 rounded-lg p-2 border transition-colors ${
@@ -1083,6 +1113,25 @@ function SupplierColumn({ label, lastPrice, lastDate, row, product, isRecommende
         />
         <span className="text-[9px] text-gray-400">/box</span>
       </div>
+
+      {/* Count per box — only for count/piece items; pre-filled, override if different format */}
+      {showCount && (
+        <div className="flex items-center gap-1 mb-1">
+          <span className="text-[9px] text-gray-400 shrink-0">×</span>
+          <input
+            type="number" inputMode="numeric" min="1"
+            value={row.countPerBox}
+            onChange={e => {
+              const v = parseInt(e.target.value)
+              if (v > 0) onUpdate({ countPerBox: v })
+            }}
+            className={`w-12 px-1.5 py-1 rounded-lg text-xs font-mono border text-gray-900 bg-white outline-none focus:ring-2 focus:ring-gray-900
+              [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none
+              ${countChanged ? 'border-amber-400 bg-amber-50' : 'border-gray-200'}`}
+          />
+          <span className="text-[9px] text-gray-400">in box</span>
+        </div>
+      )}
       {/* Last purchase price on its own line — clear reference */}
       <p className="text-[9px] text-gray-400 mb-0.5">
         {lastPrice

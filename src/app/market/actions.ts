@@ -4,26 +4,28 @@ import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 
 export async function upsertMarketItem(data: {
-  sessionId:   string
-  productId:   string
-  entryIndex:  number
-  supplierId:  string | null
-  qtyBoxes:    number
-  pricePence:  number
-  dealStatus:  'green' | 'amber' | 'red' | null
+  sessionId:    string
+  productId:    string
+  entryIndex:   number
+  supplierId:   string | null
+  qtyBoxes:     number
+  pricePence:   number
+  dealStatus:   'green' | 'amber' | 'red' | null
+  unitsPerCase: number
 }) {
   const supabase = await createClient()
   const { error } = await supabase
     .from('market_session_items')
     .upsert(
       {
-        session_id:  data.sessionId,
-        product_id:  data.productId,
-        entry_index: data.entryIndex,
-        supplier_id: data.supplierId,
-        qty_boxes:   data.qtyBoxes,
-        price_pence: data.pricePence,
-        deal_status: data.dealStatus,
+        session_id:    data.sessionId,
+        product_id:    data.productId,
+        entry_index:   data.entryIndex,
+        supplier_id:   data.supplierId,
+        qty_boxes:     data.qtyBoxes,
+        price_pence:   data.pricePence,
+        deal_status:   data.dealStatus,
+        units_per_case: data.unitsPerCase,
       },
       { onConflict: 'session_id,product_id,entry_index' }
     )

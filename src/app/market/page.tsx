@@ -46,6 +46,7 @@ export type MarketSessionItem = {
   qty_boxes: number
   price_pence: number | null
   deal_status: 'green' | 'amber' | 'red' | null
+  units_per_case: number | null
 }
 
 const SUPPLIER_IDS = {
@@ -191,7 +192,7 @@ export default async function MarketPage() {
   const { data: existingItems } = session
     ? await supabase
         .from('market_session_items')
-        .select('id, product_id, entry_index, supplier_id, qty_boxes, price_pence, deal_status')
+        .select('id, product_id, entry_index, supplier_id, qty_boxes, price_pence, deal_status, units_per_case')
         .eq('session_id', session.id)
     : { data: [] }
 
