@@ -535,7 +535,9 @@ export default function MarketBuyClient({ session, products, existingItems, supp
       <div className="flex items-center justify-between mb-4">
         <div>
           <h1 className="text-xl font-bold text-gray-900">Market Buy</h1>
-          <p className="text-xs text-gray-500">{today} · {session.status === 'open' ? 'Session open' : 'Session closed'}</p>
+          <p className="text-xs text-gray-500">
+            {today}{session.trip_number > 1 ? ` · Purchase ${session.trip_number}` : ''} · {session.status === 'open' ? 'Session open' : 'Session closed'}
+          </p>
         </div>
         <div className="flex items-center gap-2">
           {summary && <p className="text-sm font-bold text-gray-900">{summary.totalBoxes} boxes</p>}
@@ -549,7 +551,7 @@ export default function MarketBuyClient({ session, products, existingItems, supp
             <button
               onClick={async () => { await startNewTrip() }}
               className="text-xs font-semibold text-white bg-gray-900 px-3 py-1.5 rounded-lg active:bg-gray-700">
-              New trip
+              New purchase
             </button>
           )}
           {summary && session.status === 'open' && !confirmReset && (

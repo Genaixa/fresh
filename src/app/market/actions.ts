@@ -65,8 +65,15 @@ export async function closeMarketSession(sessionId: string) {
 export async function startNewTrip() {
   const supabase = await createClient()
   const today = new Date().toISOString().split('T')[0]
+  const { data: existing } = await supabase
+    .from('market_sessions')
+    .select('trip_number')
+    .eq('session_date', today)
+    .order('trip_number', { ascending: false })
+    .limit(1)
+  const nextTrip = (existing?.[0]?.trip_number ?? 0) + 1
   await supabase
     .from('market_sessions')
-    .insert({ session_date: today, status: 'open' })
+    .insert({ session_date: today, status: 'open', trip_number: nextTrip })
   revalidatePath('/market')
 }

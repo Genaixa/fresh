@@ -35,6 +35,7 @@ export type MarketSession = {
   roots_batches: number
   veg_batches:   number
   fruit_batches: number
+  trip_number:   number
 }
 
 export type MarketSessionItem = {
@@ -68,9 +69,9 @@ export default async function MarketPage() {
   // ── Session — most recent for today (multiple trips per day allowed) ────────
   const { data: sessions } = await supabase
     .from('market_sessions')
-    .select('id, session_date, status, roots_batches, veg_batches, fruit_batches')
+    .select('id, session_date, status, roots_batches, veg_batches, fruit_batches, trip_number')
     .eq('session_date', today)
-    .order('created_at', { ascending: false })
+    .order('opened_at', { ascending: false })
     .limit(1)
 
   let session = sessions?.[0] ?? null
@@ -79,7 +80,7 @@ export default async function MarketPage() {
     const { data } = await supabase
       .from('market_sessions')
       .insert({ session_date: today, status: 'open' })
-      .select('id, session_date, status, roots_batches, veg_batches, fruit_batches')
+      .select('id, session_date, status, roots_batches, veg_batches, fruit_batches, trip_number')
       .single()
     session = data
   }
