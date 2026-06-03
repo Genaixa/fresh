@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import type { CfoData, CfoProduct } from './page'
 
 const fmt  = (p: number) => `£${(p / 100).toFixed(2)}`
@@ -128,7 +129,29 @@ export default function CfoClient({ data }: { data: CfoData }) {
         </div>
       )}
 
-      <p className="text-[9px] text-gray-400 text-center">* estimated — assumes everything sold at current retail price</p>
+      <p className="text-[9px] text-gray-400 text-center mb-4">* estimated — assumes everything sold at current retail price</p>
+
+      {/* Customer drill-downs */}
+      {data.customers && data.customers.length > 0 && (
+        <div className="mb-4">
+          <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Customer P&L</p>
+          <div className="rounded-xl border border-gray-200 overflow-hidden">
+            {data.customers.map((c, i) => (
+              <Link
+                key={c.id}
+                href={`/cfo/customer/${c.id}`}
+                className={`flex items-center justify-between px-3 py-3 active:bg-gray-50 ${i > 0 ? 'border-t border-gray-100' : ''}`}
+              >
+                <div>
+                  <p className="text-sm font-semibold text-gray-900">{c.name}</p>
+                  <p className="text-[9px] text-gray-400">{c.orderCount} orders · {fmt(c.revenue)} revenue</p>
+                </div>
+                <span className="text-gray-300 text-lg">›</span>
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   )
 }

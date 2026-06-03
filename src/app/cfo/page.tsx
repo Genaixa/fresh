@@ -27,6 +27,13 @@ export type CfoProduct = {
   costPerUnit:   number        // pence
 }
 
+export type CfoCustomer = {
+  id:         string
+  name:       string
+  revenue:    number
+  orderCount: number
+}
+
 export type CfoData = {
   weekLabel:      string
   thisWeekSpend:  number
@@ -38,6 +45,7 @@ export type CfoData = {
   products:       CfoProduct[]
   lastProducts:   CfoProduct[]
   briefing:       string | null
+  customers:      CfoCustomer[]
 }
 
 export default async function CfoPage() {
@@ -158,6 +166,48 @@ export default async function CfoPage() {
       })),
   })
 
+  // 6. Wholesale customer summary (last 12 weeks)
+  const twelveWeeksAgo = new Date(Date.now() - 84 * 86400000).toISOString().split('T')[0]
+  const { data: wsOrders } = await supabase
+    .from('wholesale_orders')
+    .select('id, customer_id')
+    .gte('order_date', twelveWeeksAgo)
+    .in('status', ['confirmed', 'dispatched'])
+
+  const { data: wsCustomers } = await supabase
+    .from('wholesale_customers')
+    .select('id, name')
+    .eq('is_active', true)
+    .eq('is_internal', false)
+
+  const wsOrderIds = (wsOrders ?? []).map(o => o.id)
+  let wsRevByCustomer = new Map<string, number>()
+  let wsOrderCountByCustomer = new Map<string, number>()
+
+  if (wsOrderIds.length > 0) {
+    const { data: wsItems } = await supabase
+      .from('wholesale_order_items')
+      .select('order_id, quantity, unit_price')
+      .in('order_id', wsOrderIds)
+
+    const orderCustomerMap = new Map((wsOrders ?? []).map(o => [o.id, o.customer_id]))
+    for (const item of wsItems ?? []) {
+      const custId = orderCustomerMap.get(item.order_id)
+      if (!custId) continue
+      wsRevByCustomer.set(custId, (wsRevByCustomer.get(custId) ?? 0) + Number(item.quantity) * item.unit_price)
+      wsOrderCountByCustomer.set(custId, (wsOrderCountByCustomer.get(custId) ?? 0) + 1)
+    }
+  }
+
+  const customers: CfoCustomer[] = (wsCustomers ?? [])
+    .map(c => ({
+      id:         c.id,
+      name:       c.name,
+      revenue:    Math.round(wsRevByCustomer.get(c.id) ?? 0),
+      orderCount: wsOrderCountByCustomer.get(c.id) ?? 0,
+    }))
+    .sort((a, b) => b.revenue - a.revenue)
+
   const cfoData: CfoData = {
     weekLabel,
     thisWeekSpend,
@@ -169,6 +219,7 @@ export default async function CfoPage() {
     products:  thisProducts,
     lastProducts,
     briefing,
+    customers,
   }
 
   return (
