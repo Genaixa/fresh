@@ -5,10 +5,10 @@ import { usePathname } from 'next/navigation'
 
 const NAV_ITEMS = [
   { href: '/dashboard',        label: 'Home',      icon: '🏠' },
-  { href: '/pricing',          label: 'Prices',    icon: '💰' },
+  { href: '/order',            label: 'Order',     icon: '📋' },
+  { href: '/market',           label: 'Market',    icon: '🛒' },
   { href: '/wholesale',        label: 'Wholesale', icon: '📦' },
   { href: '/cfo',              label: 'CFO',       icon: '🧠' },
-  { href: '/products',         label: 'Products',  icon: '🥦' },
 ]
 
 export function NavBar() {
