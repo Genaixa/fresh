@@ -20,6 +20,15 @@ export type CustomerProduct = {
   hasCostData:   boolean
 }
 
+export type BillingAlert = {
+  date:        string
+  productName: string
+  charged:     number  // pence per box
+  typical:     number  // pence per box (customer's own average)
+  shortfall:   number  // pence total
+  note?:       string  // manual note if set
+}
+
 export type CustomerSummary = {
   id:            string
   name:          string
@@ -30,6 +39,7 @@ export type CustomerSummary = {
   coveredRevenue: number  // revenue on products where we have cost data
   uncoveredRevenue: number
   products:      CustomerProduct[]
+  billingAlerts: BillingAlert[]
   periodLabel:   string
 }
 
@@ -63,12 +73,14 @@ export default async function CustomerCfoPage({
   // 1. Customer revenue — what they paid per product
   const { data: orders } = await supabase
     .from('wholesale_orders')
-    .select('id')
+    .select('id, order_date, notes')
     .eq('customer_id', id)
     .gte('order_date', fromDate)
     .in('status', ['confirmed', 'dispatched'])
+    .order('order_date', { ascending: true })
 
-  const orderIds = (orders ?? []).map(o => o.id)
+  const orderIds  = (orders ?? []).map(o => o.id)
+  const orderMeta = new Map((orders ?? []).map(o => [o.id, { date: o.order_date as string, notes: o.notes as string | null }]))
 
   type RawItem = { product_id: string; quantity: number; unit_price: number; unit_type: string; order_id: string }
   let orderItems: RawItem[] = []
@@ -182,7 +194,69 @@ export default async function CustomerCfoPage({
 
   customerProducts.sort((a, b) => b.totalRevenue - a.totalRevenue)
 
-  // 5. Totals
+  // 5. Billing anomaly detection
+  // Per-product: track every order's price. Flag if any single order is <50% of that product's average.
+  type OrderPrice = { orderId: string; date: string; pricePerBox: number; qty: number }
+  const pricesByProduct = new Map<string, OrderPrice[]>()
+
+  for (const item of orderItems) {
+    const prod = prodMap.get(item.product_id)
+    if (!prod) continue
+    const cfg  = CONFIG[prod.name]
+    const unitsPerBox = prod.case_size > 1 ? prod.case_size
+                      : cfg?.unitType === 'count' ? cfg.typicalBoxCount
+                      : cfg?.retailUnitsPerBox ?? cfg?.typicalBoxCount ?? 1
+    const pricePerBox = item.unit_type === 'box'
+      ? item.unit_price
+      : item.unit_price * unitsPerBox
+    const meta = orderMeta.get(item.order_id)
+    if (!meta) continue
+    const list = pricesByProduct.get(item.product_id) ?? []
+    list.push({ orderId: item.order_id, date: meta.date, pricePerBox, qty: Number(item.quantity) })
+    pricesByProduct.set(item.product_id, list)
+  }
+
+  const billingAlerts: BillingAlert[] = []
+
+  for (const [productId, prices] of pricesByProduct) {
+    if (prices.length < 2) continue  // need at least 2 orders to compare
+    const avg = prices.reduce((s, p) => s + p.pricePerBox, 0) / prices.length
+    for (const p of prices) {
+      if (p.pricePerBox < avg * 0.5 && p.pricePerBox > 0) {
+        const prod  = prodMap.get(productId)
+        const meta  = orderMeta.get(p.orderId)
+        const shortfall = Math.round((avg - p.pricePerBox) * p.qty)
+        billingAlerts.push({
+          date:        p.date,
+          productName: prod?.name ?? 'Unknown',
+          charged:     p.pricePerBox,
+          typical:     Math.round(avg),
+          shortfall,
+          note:        meta?.notes ?? undefined,
+        })
+      }
+    }
+  }
+
+  // Also include manual notes even if anomaly threshold not met
+  for (const [orderId, meta] of orderMeta) {
+    if (!meta.notes) continue
+    const alreadyFlagged = billingAlerts.some(a => a.date === meta.date && a.note === meta.notes)
+    if (!alreadyFlagged) {
+      billingAlerts.push({
+        date:        meta.date,
+        productName: '',
+        charged:     0,
+        typical:     0,
+        shortfall:   0,
+        note:        meta.notes,
+      })
+    }
+  }
+
+  billingAlerts.sort((a, b) => a.date.localeCompare(b.date))
+
+  // 6. Totals
   const totalRevenue  = customerProducts.reduce((s, p) => s + p.totalRevenue, 0)
   const withCost      = customerProducts.filter(p => p.hasCostData)
   const coveredRev    = withCost.reduce((s, p) => s + p.totalRevenue, 0)
@@ -200,6 +274,7 @@ export default async function CustomerCfoPage({
     coveredRevenue:  coveredRev,
     uncoveredRevenue: totalRevenue - coveredRev,
     products:        customerProducts,
+    billingAlerts,
     periodLabel,
   }
 

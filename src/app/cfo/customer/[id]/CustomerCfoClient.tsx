@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import type { CustomerSummary } from './page'
+import type { CustomerSummary, BillingAlert } from './page'
 
 const fmt = (p: number) => `£${(p / 100).toFixed(2)}`
 const pct = (n: number) => `${Math.round(n * 100)}%`
@@ -30,6 +30,7 @@ export default function CustomerCfoClient({
   const router = useRouter()
   const { name, totalRevenue, totalProfit, margin, coveredRevenue, uncoveredRevenue, products, periodLabel } = summary
 
+  const { billingAlerts } = summary
   const losing   = products.filter(p => p.margin !== null && p.margin < 0)
   const marginal = products.filter(p => p.margin !== null && p.margin >= 0 && p.margin < 0.20)
   const noCost   = products.filter(p => !p.hasCostData)
@@ -128,6 +129,29 @@ export default function CustomerCfoClient({
               <span className="text-[10px] text-amber-600">
                 {pct(p.margin!)} · sell {fmt(p.avgSellPerBox)}/box · cost {fmt(p.avgBuyPerBox!)}/box
               </span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Billing alerts */}
+      {billingAlerts.length > 0 && (
+        <div className="mb-4 rounded-xl border border-orange-200 bg-orange-50 px-3 py-2.5">
+          <p className="text-xs font-bold text-orange-700 mb-2">💬 Possible undercharges — check before chasing</p>
+          {billingAlerts.map((a, i) => (
+            <div key={i} className={`py-1.5 ${i > 0 ? 'border-t border-orange-100' : ''}`}>
+              {a.note ? (
+                <p className="text-xs text-orange-800">{a.note}</p>
+              ) : (
+                <>
+                  <p className="text-xs font-semibold text-orange-800">
+                    {a.productName} · {new Date(a.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
+                  </p>
+                  <p className="text-[10px] text-orange-700">
+                    Charged {fmt(a.charged)}/box — usual {fmt(a.typical)}/box — shortfall ~{fmt(a.shortfall)}
+                  </p>
+                </>
+              )}
             </div>
           ))}
         </div>
