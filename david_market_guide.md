@@ -136,10 +136,10 @@ This is the most complicated category in your shop. Six or more varieties, two o
 
 - **Spain 16×250G (Frez Luz, Driscoll, Cuna):** £12.80–20.80/box = 80p–£1.30 per 250G punnet. This is your everyday strawberry.
 - **Spain 1KG loose:** £3.50–7.20/KG depending on season. Cheapest option.
-- **Belgium 8×500G (Hoogstraten, Driscoll Gold, REO):** £27.50–32/box = £3.44–4 per 500G punnet. Premium product.
+- **Belgium 8×500G (Hoogstraten, Driscoll Gold, REO):** £18–32/box = £2.25–4 per 500G punnet. Premium product. **June 2026 update: Hoogstraten dropped to £18/8-pack = £2.25/punnet — the cheapest Belgium strawberry in three years of data.**
 - **UK 20×400G (Nationwide):** £54/box = £2.70 per 400G punnet. Peak UK season only (May–June).
 
-**The maths on Belgium:** You sell Belgium at £3.60/500G punnet. Cost is £3.44–4. **You are making 4p margin or running at a loss on Belgium strawberries.** This is your single biggest pricing error.
+**The maths on Belgium:** You sell Belgium at £3.60/500G punnet. At the old cost of £3.44–4, that was break-even or a loss. At today's £18/8-pack = £2.25/punnet, you now make £1.35 gross profit at £3.60 (37%) — but you should still be charging **£4.99**. The cost drop is your profit, not your customer's discount. At £4.99 and £2.25 cost = **55% margin**.
 
 **What you should charge:**
 - Belgium Hoogstraten punnet: **£4.99–5.49.** Ocado charges £4 for a worse product. You're selling the real thing below cost.
@@ -158,17 +158,22 @@ This is the most complicated category in your shop. Six or more varieties, two o
 
 **What the invoices say:** Spain 10×500G (5KG prepacked) season runs April–June. First appearance: late April (25 Apr 2024, 25 Apr 2025). Peak volume: May–June.
 
-- Nectarine Spain 10×500G: **£14–18/box** = £1.40–1.80 per 500G punnet
+- Nectarine Spain 10×500G prepacked: **£14–18/box** = £1.40–1.80 per 500G punnet (May pricing)
+- Nectarine Spain 10×1KG (Lison, 10KG): **£15/box** = £1.50/kg = **75p per 500G** — new June 2026 format, 25% cheaper per kg than the 5KG format
 - Peach Spain 10×500G: **£15–17/box** = £1.50–1.70 per 500G punnet
-- Peach Donut Spain 10×500G: **£18/box** = £1.80 per 500G (flat peach premium)
+- Peach Spain 10×1KG (Lison, 10KG): **£15/box** = £1.50/kg — same large format, confirmed June 2026
+- Peach Donut Spain 10×500G prepacked (Distinet): **£10–18/box** = £1.00–1.80 per 500G punnet. **June 2026: dropped to £10** = biggest price drop of the year
+- Peach Donut Spain 5KG loose (AA Poupart): £14/box = £2.80/kg — more expensive format, less good value
 
 **What you should charge:**
-- Nectarine Punnet 500G: £2.50 (you do this — gives 28–44% margin ✅)
+- Nectarine Punnet 500G: **£2.50** (at £0.75/500G June cost = 70% margin ✅)
 - Peach Punnet 500G: £2.50 ✅
-- Donut Peach: £2.99–3.49 (premium flat peach, 39–49% margin)
+- Donut Peach: **£2.99** (at £1.00/500G June cost = 67% margin ✅)
 - Loose nectarine/peach per piece: **75p minimum** (currently 45p = running at loss)
 
-**Critical error — Nectarine Punnet 1kg LARGE at £2.99:** Two 500G punnets cost £3.10 (at £1.55 each). You are selling a 1KG nectarine tray at £2.99 and **losing 11p on every sale.** Either relabel it as 500G or price at £3.99.
+**Always buy prepacked Distinet format for Donut Peach** — it costs less per kg than the loose box and is ready to display. If only loose is available, £14 is acceptable; above £14 walk away.
+
+**Critical error — Nectarine Punnet 1kg LARGE at £2.99:** At old May costs (£1.55/500G), two punnets = £3.10 cost vs £2.99 sell = loss. At June cost (£0.75/500G), two punnets = £1.50 cost vs £2.99 sell = 50% margin. The 1KG entry is fine at June prices — but check monthly as costs change.
 
 **The seasonal trick:** Holland also sells nectarines (X24–X30 per box, 28-count at £4–6/box in June–July = 14–21p each!). These are loose single nectarines, not punnets. At 14p cost and 75p retail price = 81% margin. If David can source these loose boxes in July, that's the best stone fruit margin of the year.
 
@@ -186,14 +191,18 @@ This is the most complicated category in your shop. Six or more varieties, two o
 | Africa Delight (SA) | March–April | £14 | End-of-season SA plum |
 | Ruby Star/Ruby Sun (SA) | Jan–April | £12–18 | 5.25KG boxes |
 | Songold (SA yellow) | March | £12–13.50 | Yellow plum, first appeared 2026 |
-| Angelino (SA/Spain) | April–June | £9.50 | More value-oriented |
+| Angelino (SA/Spain) | April–June | £9.50–10 | More value-oriented; prepacked 10×500G |
+| Red Beauty (Spain) | June | £16/5KG loose | Premium June Spanish plum — **must sell at £2.99/500G, not £1.99** |
 | September Italy | March only | £10 | Cold-store stock, rare |
 | Parisienne (France) | June | £12–14 | Holiday plum, brief season |
 
-**The maths on Angelino:** £9.50/10×500G = 95p per 500G punnet. Selling at £1.99 punnet = 52% margin ✅. But your "Plum 4 for £1" and "Punnet Plum at £1" price points are near break-even or loss-making.
+**The maths on Angelino:** £9.50–10/10×500G = 95p–£1 per 500G punnet. Selling at £1.99 punnet = 50–52% margin ✅.
+
+**The maths on Red Beauty Spain:** £16/5KG loose = £3.20/kg. A 500G punnet of Red Beauty costs **£1.60 — not 95p.** Selling at £1.99 = only 20% margin. **Red Beauty must sell at £2.99/500G** = 47% margin. It's a premium variety and customers will pay the difference.
 
 **What you should charge:**
-- Punnet Plum (500G): **£1.99** ✅ (keep this)
+- Angelino Punnet (500G): **£1.99** ✅ (keep this)
+- Red Beauty Punnet (500G): **£2.99** (never £1.99 — that's barely above cost)
 - Plum 4 for £1: Drop this pricing. 4 Angelino plums (~500G) costs you 95p. Selling for £1 = 5p margin. Make it **3 for £1** or price individually at **35p each**.
 - "Punnet Plum at £1" — delete this EPOS entry and replace with the £1.99 version only.
 
@@ -490,13 +499,13 @@ Either way it's good. **But the £3.80 single courgette would be outrageous to c
 
 ### AUBERGINES
 
-**What the invoices say:** Dole NL 5KG: £8.00–9.00 (£1.60–1.80/kg). Holland Dutch: £6–11 depending on season. Graffiti aubergines (striped) at £9.50/5KG.
+**What the invoices say:** Dole NL 5KG: £8.00–9.00 (£1.60–1.80/kg). Holland Dutch: £5.50–11 depending on season. Graffiti aubergines (striped) at £9.50/5KG.
 
-**Cheapest ever:** Dole Spain 5KG at £5 (April 2024). Less than half the Dutch price.
+**Recent prices:** Holland Dutch £5.80 (01 Jun 2026) → £5.50 (02 Jun 2026) = currently at the bottom of the 2026 range. Cheapest ever remains Dole Spain 5KG at £5 (April 2024).
 
-**Your EPOS:** Aubergine at £3.80. As discussed, this needs to be confirmed as per kg.
+**Your EPOS:** Aubergine at £3.80/kg — confirmed correct.
 
-**The maths at £1.60/kg cost, £3.80/kg sell:** 58% margin ✅. Good.
+**The maths at £1.10/kg cost (June 2026), £3.80/kg sell:** **71% margin** ✅. One of the best margins in the veg section right now.
 
 **The Spain opportunity:** When Dole has Spain aubergine (much rarer — appeared April 2024 at £5/5KG = £1/kg), your margin jumps to 74%. Watch for Spain vs Netherlands origin.
 
@@ -609,11 +618,11 @@ Kohlrabi is a niche product but the margin is outstanding. Holland carries it al
 
 ### BUTTERNUT SQUASH
 
-**What the invoices say:** Holland Agropaco brand 3/box at £9.50 (August 2023). Dole SA 10KG at £9 (March 2026).
+**What the invoices say:** Holland Agropaco brand 3/box at £9.50 (August 2023). Dole SA 10KG at £9 (March 2026). **June 2026 update: Dole SA 10KG dropped to £7.20** — best butternut cost of 2026.
 
-**The maths:** SA 10KG at £9 = 90p/kg. A 1.5KG squash costs £1.35. EPOS at £2.60 = **48% margin ✅**
+**The maths:** SA 10KG at £7.20 = 72p/kg. A 1.5KG squash costs £1.08. EPOS at £2.60 = **58% margin**, and closer to **72% margin** if squash weighs ~1KG. Either way this is now excellent margin.
 
-Good product, good margin. In autumn (September–November) butternut squash is heavily bought — make sure supply is secured early. Holland had it in August, which is the right time to start.
+Good product, excellent June price. In autumn (September–November) butternut squash is heavily bought — stock earlier in the summer when price is low.
 
 ---
 
@@ -736,16 +745,17 @@ This is the month-by-month playbook for what to buy, what to avoid, and what to 
 These need attention before David's next market visit.
 
 **Immediate losses to stop:**
-1. Belgium Strawberry at £3.60 — raise to £4.99 today
-2. Lychees at £5.90–6.00 — raise to £9.99–12.99 for the bag, or stop buying them for retail
-3. "Lychees 5 for £1" — immediate loss. Stop this or price at 5 for £1.99
-4. "Passion Fruit 3 for £1" — loss when Colombia is above £10/2KG. Stop.
-5. Pomegranate 2 for £1 — selling 2 pomegranates at £0.50 each when SA costs £1.25 each
-6. Star Fruit at £1 and Crambola at £1.50 — both below cost
-7. Nectarine Punnet 1kg LARGE at £2.99 — two 500G punnets cost £3.10. Loss every time.
+1. **Kiwi at £0.45** — cost jumped to £0.48/each (£13/27-count in June 2026). Selling at 45p = loss. **Change EPOS to £0.65 immediately.** Walk away if price stays high at market.
+2. Belgium Strawberry at £3.60 — raise to £4.99. Cost is now £2.25/punnet (June 2026 = great opportunity). At £3.60 you're making 37%; at £4.99 you make 55%. Hold the price.
+3. Lychees at £5.90–6.00 — raise to £9.99–12.99 for the bag, or stop buying them for retail
+4. "Lychees 5 for £1" — immediate loss. Stop this or price at 5 for £1.99
+5. "Passion Fruit 3 for £1" — loss when Colombia is above £10/2KG. Stop.
+6. Pomegranate 2 for £1 — Egypt cost (June 2026) is now 87p each. Still a loss at 50p. Raise to £1.89 individual.
+7. Star Fruit at £1 and Crambola at £1.50 — both below cost
+8. Red Beauty Plum at £1.99 — Red Beauty Spain at £16/5KG = £1.60/500G cost. Must sell at **£2.99**.
 
 **Near-break-even to fix when possible:**
-- Cucumber from 69p to 79p (adds 10p per cucumber, no customer rebellion)
+- Cucumber from 69p to 79p (Holland X14 at £7.20 = 51p cost; 79p = 35% margin)
 - Passion Fruit from 39p to 59p each
 - Grapefruit from 69p to 89p
 - Sharon fruit from 49p to 79p
@@ -753,20 +763,20 @@ These need attention before David's next market visit.
 - Lemon from 40p to 49p
 
 **Wholesale prices to set (currently £0 — you're giving these away):**
-Check each carefully but broad guidance:
+Check each carefully but broad guidance using current June 2026 costs:
 - Mushroom Tray 2.27KG: cost £5.20, sell at £7.99
-- Aubergine box 5KG: cost £8.00, sell at £11.99
-- Pepper Red box 5KG: cost £11, sell at £15.99
+- Aubergine box 5KG: cost **£5.50** (June 2026), sell at **£9.99**
+- Pepper Red box 5KG: cost £9 (Holland), sell at £13.99
 - Lemon box: cost £8, sell at £11.99
-- Pomegranate box: cost £10, sell at £13.99
+- Pomegranate box: cost **£7.00** (Egypt, June 2026), sell at **£11.99**
 
 **Wholesale MP boxes priced below cost — fix urgently:**
 - Grapefruit Red (66) at £19 — costs ~£38. Should be £50+
 - Orange Large (60) at £22 — costs ~£26.67. Should be £35
 - Orange Small (60) at £14 — costs ~£6 (small = good margin). Actually ok.
-- Pomegranate (8) at £8.50 — costs £10 at ZA price. Should be £14.99
+- Pomegranate (8) at £8.50 — Egypt cost now £7. Still only 21% margin at £8.50. Should be £11.99
 - Tangerine 10KG at £13.50 — costs £17. Should be £22
-- Donut Peach Box (25) at £6 — costs ~£9. Should be £12-14
+- Donut Peach Box (25) at £6 — costs ~£5 (prepacked Distinet £10/5KG = 20p/peach × 25). Should be £12
 
 ---
 
@@ -781,4 +791,4 @@ The seasonal data shows there are real buying opportunities — certain weeks wh
 
 ---
 
-*All cost data from Dole Wholesale Gateshead and JR Holland delivery notes, April 2023 – May 2026. Retail prices from EPOS Now export, June 2026.*
+*All cost data from Dole Wholesale Gateshead and JR Holland delivery notes, April 2023 – June 2026. Retail prices from EPOS Now export, June 2026.*
