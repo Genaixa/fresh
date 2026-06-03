@@ -48,13 +48,11 @@ export default async function OrderPage({ params }: { params: Promise<{ customer
     .eq('is_active', true)
     .order('name')
 
-  // Order history for this customer (last 12 weeks)
-  const twelveWeeksAgo = new Date(Date.now() - 84 * 86400000).toISOString().split('T')[0]
+  // Order history for this customer (all time — drives favourites sort)
   const { data: pastOrders } = await supabase
     .from('wholesale_orders')
     .select('id, order_date')
     .eq('customer_id', customerId)
-    .gte('order_date', twelveWeeksAgo)
     .in('status', ['confirmed', 'dispatched'])
     .order('order_date', { ascending: false })
 
@@ -133,9 +131,8 @@ export default async function OrderPage({ params }: { params: Promise<{ customer
   }
 
   const orderProducts: OrderProduct[] = (products ?? [])
-    .filter(p => CONFIG[p.name])
     .map(p => {
-      const cfg  = CONFIG[p.name]!
+      const cfg  = CONFIG[p.name]
       const hist = historyMap.get(p.id)
       return {
         id:                 p.id,
@@ -143,8 +140,8 @@ export default async function OrderPage({ params }: { params: Promise<{ customer
         category:           p.category as 'veg' | 'fruit',
         retailPrice:        p.retail_price,
         caseSize:           p.case_size ?? 1,
-        unitLabel:          cfg.unitLabel,
-        typicalBoxCount:    cfg.typicalBoxCount,
+        unitLabel:          cfg?.unitLabel ?? 'unit',
+        typicalBoxCount:    cfg?.typicalBoxCount ?? (p.case_size ?? 1),
         orderCount:         hist?.count ?? 0,
         avgQty:             hist ? Math.round(hist.totalQty / hist.count) : 0,
         avgUnitType:        hist?.unitType ?? (customer.is_internal ? 'box' : 'retail_unit'),

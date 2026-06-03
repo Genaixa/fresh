@@ -49,11 +49,62 @@ Compiled during system build — send as one list when ready.
 
 ---
 
+## Ness (Jul–Sep 2025)
+
+29. **"mixed pepper" on 27/08/25** — mapped to Red Pepper for now (same as BCR Sem). Does David sell a specific mixed pepper product, or is it just whichever peppers he has?
+
+30. **"red skin pot" on 11/07/25 at £16.50/box** — mapped to Potato (Soraya) since that's Ness's product. Is this the same Soraya variety, or a different red-skinned potato? (Note: by Nov 2025 Soraya dropped to £12/sack.)
+
+---
+
+## BCR Sem (Dec 2025)
+
+27. **"fruit" on 08/12/25 — £22** — same issue as in March 2026 data: "fruit" is too generic to map. What product is this? (Tangerine box? Mixed citrus?)
+
+28. **"tangerine" appears twice on 01/12/25** — two separate line items, both "1 × £22". Is this genuinely two boxes of tangerines, or a duplicate entry?
+
+---
+
+## Baer (Sep 2025)
+
+22. **What does BAER stand for?** — email is ras@baer.org.uk / kitchen@baer.org.uk, no full organisation name on the invoice.
+
+23. **Potato types — confirm our mapping:**
+    - "pot kugel" / "kugel pot" → standard potato sack (Maris Piper type). Correct?
+    - "pot roast" / "roast pot" → Baker potatoes (large floury). Correct?
+    - "pot mash" / "mash pot" → Potato Mids (small potatoes). Correct?
+
+24. **"mini pot" at £4.99 each** — bought 10–12 at a time. Are these individual retail bags of baby/mini potatoes? What size bag?
+
+25. **"prepack pot" £11.20 (08/09)** — one-off entry. What product is this exactly?
+
+26. **"pot" (16/09) at £14.50** — just says "pot", no type. Kugel or roast?
+
+---
+
+## JTTC (Feb 2026)
+
+18. **What does JTTC stand for?** — email is office@jttc.org.uk, no full name on the invoice.
+
+19. **26/02 pears — blank price (£0)** — 4 boxes of pears entered with no price. Should these be removed, or is there a price we should fill in?
+
+20. **25/02 "sweet potato on shop"** — single sweet potato at £10 entered as a JTTC charge. Was this taken from the shop and charged to them, or a mistake?
+
+21. **Ready peeled garlic (kg) 19/02** — 6 × £6 charged as garlic. Is this the same product as the garlic bags (£6/bag), or is it loose peeled garlic sold by the kg at £6/kg? If it's a different product, let us know and we'll create a separate entry.
+
+---
+
+## Yeshiva Ketana (Feb 2026)
+
+16. **24/02 leeks (£5.13) and single apple (£0.41)** — these look like EPOS/retail counter items that ended up on the Yeshiva Ketana wholesale statement. Are these real charges to them, or should they be removed?
+
+17. **Feb pears — Conference or Forelle?** — mapped to Pear Conference for now. If they were Forelle, let us know and we'll correct it.
+
+---
+
 ## Data to Get
 
 14. **More Holland invoices** — beyond the Sep–Apr gap, even current Holland invoices would improve cost data for all the veg products (aubergine, cucumber, peppers, leek etc.).
-
-15. **Embellish April–May 2026 orders** — we only have March. Do you have more recent invoices to add so the CFO shows current picture?
 
 ---
 *Last updated: 3 Jun 2026*
