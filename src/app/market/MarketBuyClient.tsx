@@ -900,7 +900,7 @@ const DOT: Record<'green' | 'amber' | 'red', string> = {
 const fmt = (p: number) => `£${(p / 100).toFixed(2)}`
 
 // Format a per-unit cost: use pence if under £1, pounds if £1+
-const fmtUnit = (p: number) => p < 100 ? `${Math.round(p)}p` : fmt(p)
+const fmtUnit = (p: number) => fmt(p)
 
 function PricingLine({ calc, retailPricePence, unitLabel }: {
   calc:             PricingCalc | null
@@ -1074,7 +1074,13 @@ function SupplierColumn({ label, lastPrice, lastDate, row, product, isRecommende
 
   const entered   = Math.round(parseFloat(row.pricePounds) * 100) || 0
   // Recalculate max box price from the actual count per box
-  const effectiveMax = cfg ? Math.round(cfg.maxPayPerUnitPence * row.countPerBox) : product.maxBoxPricePence
+  // For COUNT items: max = maxPayPerUnitPence × actual count (supports box-format overrides e.g. watermelon 4s vs 9s)
+  // For WEIGHT items: max = maxPayPerUnitPence × kg-per-box (typicalBoxCount) — countPerBox is pieces, not kg
+  const effectiveMax = cfg
+    ? cfg.unitType === 'count'
+      ? Math.round(cfg.maxPayPerUnitPence * row.countPerBox)
+      : product.maxBoxPricePence          // weight items: always kg-based max
+    : product.maxBoxPricePence
   const overMax   = entered > 0 && effectiveMax && entered > effectiveMax
   const calc      = calcPricing(row.pricePounds, product, row.countPerBox)
 
