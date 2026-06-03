@@ -1106,7 +1106,7 @@ function getGolemAdvice(
   otherLabel:     string,
   junAvg:         number | null,
 ): GolemAdvice | null {
-  if (!entered) return null
+  if (!entered || entered <= 0) return null
 
   const f   = (p: number) => `£${(p / 100).toFixed(2)}`
   const age = daysAgo(otherLastDate)
