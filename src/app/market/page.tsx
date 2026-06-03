@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { NavBar } from '@/components/ui/NavBar'
 import MarketBuyClient from './MarketBuyClient'
 import { CONFIG } from './config'
+import { generateMarketInsights } from './marketGolem'
 
 export const dynamic = 'force-dynamic'
 
@@ -26,6 +27,8 @@ export type MarketProduct = {
   wholesaleQtyBoxes: number
   // per-customer breakdown of those wholesale orders (retail units)
   wholesaleBreakdown: { customerName: string; qty: number }[]
+  // AI-generated tip from Market Golem
+  tip?: string
 }
 
 export type MarketSession = {
@@ -234,13 +237,22 @@ export default async function MarketPage() {
       }
     })
 
+  // ── Market Golem — AI tips + briefing ────────────────────────────────────
+  const golem = await generateMarketInsights(marketProducts)
+
+  const productsWithTips: MarketProduct[] = marketProducts.map(p => ({
+    ...p,
+    tip: golem.tips[p.name] ?? undefined,
+  }))
+
   return (
     <div className="max-w-lg mx-auto px-4 py-4 pb-52 bg-white min-h-screen">
       <MarketBuyClient
         session={session as MarketSession}
-        products={marketProducts}
+        products={productsWithTips}
         existingItems={(existingItems ?? []) as MarketSessionItem[]}
         supplierIds={SUPPLIER_IDS}
+        briefing={golem.briefing}
       />
       <NavBar />
     </div>

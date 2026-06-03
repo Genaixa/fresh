@@ -92,11 +92,12 @@ type Props = {
   products:      MarketProduct[]
   existingItems: MarketSessionItem[]
   supplierIds:   SupplierIds
+  briefing?:     string | null
 }
 
 // ── Main component ────────────────────────────────────────────────────────────
 
-export default function MarketBuyClient({ session, products, existingItems, supplierIds }: Props) {
+export default function MarketBuyClient({ session, products, existingItems, supplierIds, briefing }: Props) {
 
   const defaultCountPerBox = (p: MarketProduct): number => {
     const cfg = CONFIG[p.name]
@@ -174,8 +175,9 @@ export default function MarketBuyClient({ session, products, existingItems, supp
   const [activeRare, setActiveRare]   = useState<Set<string>>(() => new Set())
   const [showAdd, setShowAdd]         = useState<string | null>(null)
   const [justAdded, setJustAdded]     = useState<string | null>(null)
-  const [confirmReset, setConfirmReset] = useState(false)
-  const [showSummary, setShowSummary]   = useState(session.status === 'closed')
+  const [confirmReset, setConfirmReset]   = useState(false)
+  const [showSummary, setShowSummary]     = useState(session.status === 'closed')
+  const [showBriefing, setShowBriefing]   = useState(true)
   const [closing, setClosing]           = useState(false)
   // How many batches completed per section (0 = not started)
   const [batchesDone, setBatchesDone] = useState({
@@ -372,7 +374,7 @@ export default function MarketBuyClient({ session, products, existingItems, supp
   const summary = useMemo(() => {
     let spend = 0, revenue = 0, totalBoxes = 0, hasEstimate = false
     const bargainSet   = new Set<string>()
-    const alertMap     = new Map<string, { rrpMin: number; currentRetail: number }>()
+    const alertMap     = new Map<string, { rrpMin: number; currentRetail: number; margin: number }>()
     const aboveMaxSet  = new Set<string>()
     const aboveMaxList: { name: string; paid: number; max: number }[] = []
 
@@ -409,7 +411,7 @@ export default function MarketBuyClient({ session, products, existingItems, supp
       // Pricing alert: margin below floor for this purchase price
       const calc = calcPricing(row.pricePounds, product)
       if (calc?.status === 'raise' && calc.rrpMin && !alertMap.has(product.name)) {
-        alertMap.set(product.name, { rrpMin: calc.rrpMin, currentRetail: product.retailPricePence })
+        alertMap.set(product.name, { rrpMin: calc.rrpMin, currentRetail: product.retailPricePence, margin: calc.margin ?? 0 })
       }
 
       // Above max: paid more than the configured max box price
@@ -511,7 +513,7 @@ export default function MarketBuyClient({ session, products, existingItems, supp
                             onClick={() => { setActiveRare(prev => new Set([...prev, p.id])); setShowAdd(null); setJustAdded(p.id) }}
                             className="w-full text-left px-3 py-2.5 text-sm text-gray-800 border-b border-gray-100 last:border-0 active:bg-gray-50 flex items-baseline gap-2">
                             <span>{p.name}</span>
-                            {CONFIG[p.name]?.tip && <span className="text-[10px] text-gray-400 truncate">{CONFIG[p.name]!.tip}</span>}
+                            {p.tip && <span className="text-[10px] text-green-700 truncate">{p.tip}</span>}
                           </button>
                         ))}
                         <button onClick={() => setShowAdd(null)}
@@ -560,12 +562,6 @@ export default function MarketBuyClient({ session, products, existingItems, supp
         <div className="flex items-center gap-2">
           {summary && <p className="text-sm font-bold text-gray-900">{summary.totalBoxes} boxes</p>}
           {session.status === 'closed' && (
-            <button onClick={() => setShowSummary(true)}
-              className="text-xs font-semibold text-gray-600 border border-gray-300 px-3 py-1.5 rounded-lg active:bg-gray-50">
-              Summary
-            </button>
-          )}
-          {session.status === 'closed' && (
             <button
               onClick={async () => { await startNewTrip() }}
               className="text-xs font-semibold text-white bg-gray-900 px-3 py-1.5 rounded-lg active:bg-gray-700">
@@ -586,6 +582,15 @@ export default function MarketBuyClient({ session, products, existingItems, supp
           )}
         </div>
       </div>
+
+      {/* Market Golem briefing */}
+      {briefing && showBriefing && (
+        <div className="mb-4 rounded-xl border border-green-800 bg-[#0F1A0F] px-3 py-2.5 flex gap-2 items-start">
+          <span className="text-[10px] font-bold text-green-400 mt-0.5 shrink-0">AI</span>
+          <p className="text-xs text-green-100 flex-1 leading-relaxed">{briefing}</p>
+          <button onClick={() => setShowBriefing(false)} className="text-green-600 text-xs shrink-0 mt-0.5">✕</button>
+        </div>
+      )}
 
       {/* Legend */}
       <div className="flex gap-4 mb-4 text-xs text-gray-500">
@@ -668,13 +673,13 @@ export default function MarketBuyClient({ session, products, existingItems, supp
                 <p className="text-gray-600 text-xs mb-1">=</p>
                 <div className="text-center">
                   <p className="text-[9px] text-gray-500 uppercase tracking-wide mb-0.5">Profit</p>
-                  <p className={`text-sm font-bold ${summary.margin >= 0.20 ? 'text-green-400' : 'text-amber-400'}`}>
+                  <p className={`text-sm font-bold ${summary.margin >= 0.20 ? 'text-green-400' : summary.margin < 0 ? 'text-red-400' : 'text-amber-400'}`}>
                     {fmt(summary.profit)}
                   </p>
                 </div>
                 <div className="text-center">
                   <p className="text-[9px] text-gray-500 uppercase tracking-wide mb-0.5">Margin</p>
-                  <p className={`text-lg font-bold leading-none ${summary.margin >= 0.20 ? 'text-green-400' : 'text-amber-400'}`}>
+                  <p className={`text-lg font-bold leading-none ${summary.margin >= 0.20 ? 'text-green-400' : summary.margin < 0 ? 'text-red-400' : 'text-amber-400'}`}>
                     {Math.round(summary.margin * 100)}%
                   </p>
                 </div>
@@ -682,15 +687,27 @@ export default function MarketBuyClient({ session, products, existingItems, supp
 
               {/* Pricing alerts — retail prices that need raising */}
               {summary.pricingAlerts.length > 0 && (
-                <div className="border-t border-gray-800 pt-1.5 mt-1">
-                  <p className="text-[9px] text-amber-400 font-semibold mb-1">
-                    ⚠ Raise these prices when you get back:
-                  </p>
-                  {summary.pricingAlerts.map(a => (
-                    <p key={a.name} className="text-[9px] text-amber-300">
-                      {a.name} — sell at min {fmt(a.rrpMin)} (currently {fmt(a.currentRetail)})
-                    </p>
-                  ))}
+                <div className="border-t border-gray-800 pt-1.5 mt-1 space-y-0.5">
+                  {summary.pricingAlerts.filter(a => a.margin < 0).length > 0 && (
+                    <>
+                      <p className="text-[9px] text-red-400 font-semibold">🔴 Losing money — fix prices today:</p>
+                      {summary.pricingAlerts.filter(a => a.margin < 0).map(a => (
+                        <p key={a.name} className="text-[9px] text-red-300">
+                          {a.name} — min {fmt(a.rrpMin)} (selling {fmt(a.currentRetail)}, margin {Math.round(a.margin * 100)}%)
+                        </p>
+                      ))}
+                    </>
+                  )}
+                  {summary.pricingAlerts.filter(a => a.margin >= 0).length > 0 && (
+                    <>
+                      <p className="text-[9px] text-amber-400 font-semibold mt-1">⚠ Raise when back:</p>
+                      {summary.pricingAlerts.filter(a => a.margin >= 0).map(a => (
+                        <p key={a.name} className="text-[9px] text-amber-300">
+                          {a.name} — min {fmt(a.rrpMin)} (currently {fmt(a.currentRetail)})
+                        </p>
+                      ))}
+                    </>
+                  )}
                 </div>
               )}
 
@@ -723,7 +740,7 @@ type SummaryLine = { name: string; qty: number; pricePence: number }
 function SessionSummary({ date, lines, financials, onClose }: {
   date:       string
   lines:      { dole: SummaryLine[]; holland: SummaryLine[] }
-  financials: { spend: number; revenue: number; profit: number; margin: number; bargains: string[]; pricingAlerts: { name: string; rrpMin: number; currentRetail: number }[]; aboveMax: { name: string; paid: number; max: number }[]; hasEstimate: boolean } | null
+  financials: { spend: number; revenue: number; profit: number; margin: number; bargains: string[]; pricingAlerts: { name: string; rrpMin: number; currentRetail: number; margin: number }[]; aboveMax: { name: string; paid: number; max: number }[]; hasEstimate: boolean } | null
   onClose:    () => void
 }) {
   const doleTotal    = lines.dole.reduce((s, l) => s + l.qty * l.pricePence, 0)
@@ -991,8 +1008,8 @@ function ProductCard({ product, doleRow, hollandRow, onUpdate, onShiftBalance, i
         <span className="text-[10px] text-gray-400">({refText})</span>
         {anySaving && <span className="text-[9px] text-gray-400 ml-auto">saving…</span>}
       </div>
-      {config.tip && (
-        <p className="text-[10px] text-gray-500 mb-2 pl-4">{config.tip}</p>
+      {product.tip && (
+        <p className="text-[10px] text-green-700 mb-2 pl-4">{product.tip}</p>
       )}
 
       {/* Two supplier columns with shift button in between */}
@@ -1001,6 +1018,9 @@ function ProductCard({ product, doleRow, hollandRow, onUpdate, onShiftBalance, i
           label="Dole"
           lastPrice={product.doleLastPricePence}
           lastDate={product.doleLastDate}
+          otherLastPrice={product.hollandLastPricePence}
+          otherLastDate={product.hollandLastDate}
+          otherLabel="Holland"
           row={doleRow}
           product={product}
           isRecommended={doleRec}
@@ -1022,6 +1042,9 @@ function ProductCard({ product, doleRow, hollandRow, onUpdate, onShiftBalance, i
           label="JR Holland"
           lastPrice={product.hollandLastPricePence}
           lastDate={product.hollandLastDate}
+          otherLastPrice={product.doleLastPricePence}
+          otherLastDate={product.doleLastDate}
+          otherLabel="Dole"
           row={hollandRow}
           product={product}
           isRecommended={hollandRec}
@@ -1058,15 +1081,93 @@ function ProductCard({ product, doleRow, hollandRow, onUpdate, onShiftBalance, i
 
 // ── Supplier column ───────────────────────────────────────────────────────────
 
-function SupplierColumn({ label, lastPrice, lastDate, row, product, isRecommended, defaultCount, onUpdate }: {
-  label:         string
-  lastPrice:     number | null
-  lastDate:      string | null
-  row:           RowState
-  product:       MarketProduct
-  isRecommended: boolean
-  defaultCount:  number
-  onUpdate:      (patch: Partial<Omit<RowState, 'supplier'>>) => void
+// ── Golem inline advice ───────────────────────────────────────────────────────
+
+type GolemAdvice = { text: string; tone: 'warn' | 'good' | 'info' }
+
+const MONTHS: Record<string, number> = { Jan:0,Feb:1,Mar:2,Apr:3,May:4,Jun:5,Jul:6,Aug:7,Sep:8,Oct:9,Nov:10,Dec:11 }
+
+function daysAgo(dateStr: string | null): number | null {
+  if (!dateStr) return null
+  const [d, m] = dateStr.split(' ')
+  if (!d || !m || MONTHS[m] === undefined) return null
+  const now  = new Date()
+  const date = new Date(now.getFullYear(), MONTHS[m], parseInt(d))
+  if (date > now) date.setFullYear(now.getFullYear() - 1)
+  return Math.floor((now.getTime() - date.getTime()) / 86_400_000)
+}
+
+function getGolemAdvice(
+  entered:        number,
+  effectiveMax:   number | null,
+  lastPrice:      number | null,
+  otherLastPrice: number | null,
+  otherLastDate:  string | null,
+  otherLabel:     string,
+  junAvg:         number | null,
+): GolemAdvice | null {
+  if (!entered) return null
+
+  const f   = (p: number) => `£${(p / 100).toFixed(2)}`
+  const age = daysAgo(otherLastDate)
+  const staleRef = age !== null && age > 14 ? ` (${otherLastDate})` : ''
+
+  // 1. Above max
+  if (effectiveMax && entered > effectiveMax) {
+    const over = entered - effectiveMax
+    if (otherLastPrice && otherLastPrice < entered) {
+      const within = otherLastPrice <= effectiveMax
+      return {
+        text: within
+          ? `${f(over)} above max — ${otherLabel} was ${f(otherLastPrice)}${staleRef} last time, try them`
+          : `${f(over)} above max — ${otherLabel} was ${f(otherLastPrice)}${staleRef} last time`,
+        tone: 'warn',
+      }
+    }
+    return { text: `${f(over)} above max — negotiate or skip`, tone: 'warn' }
+  }
+
+  // 2. Price changed significantly vs last visit from this supplier
+  if (lastPrice && lastPrice > 0) {
+    const change = entered - lastPrice
+    const pct = Math.abs(change) / lastPrice
+    if (pct >= 0.10) {
+      if (change > 0) return { text: `Up ${f(change)} from last time (was ${f(lastPrice)})`, tone: 'warn' }
+      return { text: `Down ${f(Math.abs(change))} from last time — good`, tone: 'good' }
+    }
+  }
+
+  // 3. This supplier meaningfully more expensive than the other
+  if (otherLastPrice && otherLastPrice > 0) {
+    const diff = entered - otherLastPrice
+    const pct = diff / otherLastPrice
+    if (pct > 0.15) {
+      return { text: `${Math.round(pct * 100)}% more than ${otherLabel}'s last price of ${f(otherLastPrice)}${staleRef}`, tone: 'info' }
+    }
+  }
+
+  // 4. vs seasonal average
+  if (junAvg && junAvg > 0) {
+    const pct = (entered - junAvg) / junAvg
+    if (pct < -0.15) return { text: `${Math.round(Math.abs(pct) * 100)}% below June avg — buy more than usual`, tone: 'good' }
+    if (pct > 0.20)  return { text: `${Math.round(pct * 100)}% above June avg — buy less than usual`, tone: 'warn' }
+  }
+
+  return null
+}
+
+function SupplierColumn({ label, lastPrice, lastDate, otherLastPrice, otherLastDate, otherLabel, row, product, isRecommended, defaultCount, onUpdate }: {
+  label:          string
+  lastPrice:      number | null
+  lastDate:       string | null
+  otherLastPrice: number | null
+  otherLastDate:  string | null
+  otherLabel:     string
+  row:            RowState
+  product:        MarketProduct
+  isRecommended:  boolean
+  defaultCount:   number
+  onUpdate:       (patch: Partial<Omit<RowState, 'supplier'>>) => void
 }) {
   const cfg          = CONFIG[product.name]
   const showCount    = cfg && (cfg.unitType === 'count' || !!cfg.retailUnitsPerBox)
@@ -1081,8 +1182,8 @@ function SupplierColumn({ label, lastPrice, lastDate, row, product, isRecommende
       ? Math.round(cfg.maxPayPerUnitPence * row.countPerBox)
       : product.maxBoxPricePence          // weight items: always kg-based max
     : product.maxBoxPricePence
-  const overMax   = entered > 0 && effectiveMax && entered > effectiveMax
-  const calc      = calcPricing(row.pricePounds, product, row.countPerBox)
+  const calc    = calcPricing(row.pricePounds, product, row.countPerBox)
+  const advice  = getGolemAdvice(entered, effectiveMax, lastPrice, otherLastPrice, otherLastDate, otherLabel, product.junAvgBoxPricePence)
 
   return (
     <div className={`flex-1 min-w-0 rounded-lg p-2 border transition-colors ${
@@ -1112,7 +1213,7 @@ function SupplierColumn({ label, lastPrice, lastDate, row, product, isRecommende
           placeholder="0.00"
           className={`w-16 px-1.5 py-1.5 rounded-lg text-xs font-mono border-2 text-gray-900 bg-white outline-none focus:ring-2 focus:ring-gray-900
             [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none
-            ${overMax || row.status === 'red'   ? 'border-red-400'
+            ${(advice?.tone === 'warn') || row.status === 'red' ? 'border-red-400'
             : row.status === 'amber'            ? 'border-amber-400'
             : row.status === 'green'            ? 'border-green-500'
             : 'border-gray-200'}`}
@@ -1156,8 +1257,12 @@ function SupplierColumn({ label, lastPrice, lastDate, row, product, isRecommende
         <p className="text-[9px] text-green-600 font-semibold mt-1">🎯 bargain</p>
       )}
 
-      {overMax && (
-        <p className="text-[10px] text-red-600 mt-1 font-medium">Above max</p>
+      {advice && (
+        <p className={`text-[10px] mt-1 font-medium leading-tight ${
+          advice.tone === 'warn' ? 'text-red-600'
+          : advice.tone === 'good' ? 'text-green-700'
+          : 'text-gray-500'
+        }`}>{advice.text}</p>
       )}
     </div>
   )
