@@ -35,6 +35,11 @@ export async function updateSession(request: NextRequest) {
     return supabaseResponse
   }
 
+  // Webhook endpoints — no session, secured by token in query string
+  if (pathname.startsWith('/api/delivery-note')) {
+    return supabaseResponse
+  }
+
   // Not logged in — redirect to login
   if (!user) {
     const url = request.nextUrl.clone()

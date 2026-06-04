@@ -1,5 +1,5 @@
 # FRESH & FRUITY — MARKET BUYING GUIDE
-## Last updated: 02 June 2026 · Team Valley Trading Estate
+## Last updated: 04 June 2026 · Team Valley Trading Estate
 
 > **SUPPLIER KEY**  DOLE = Dole Wholesale (21/24 Fruit & Veg Market)  |  HOLLAND = JR Holland (79–84 NEWM)
 >
@@ -67,7 +67,7 @@
 | Apple Royal Gala | £12/12-pack UK (**yesterday**) | **£14/box** | £2.99/kg | **DOLE UK** (cheapest) | UK at £12 vs Chile at £22. UK wins unless Chile is fresher |
 | Apricot | £10/5KG (**yesterday**) | **£12/5KG** | £2.50/500G punnet | DOLE (Spain) | ⚡ DOWN from £14. Buy 3–4 boxes. Sell punnet at £2.50 = 60% margin |
 | Avocado | £8/10KG (May 26) | **£8/10KG or £15/18-count** | £1.49 each | DOLE | Never above £15/18-count. If SA Hass jumble under £8/10KG = buy |
-| Banana | £18.50/18KG Chiquita (01 Jun) | **£19/18KG** | £1.49/bunch | **DOLE always** | Always ask for the **18KG Chiquita** box. On 02 Jun Dole sent 13KG boxes at same price = £1.42/kg vs £1.03/kg on 18KG. Push back for the bigger box. |
+| Banana | £19.00/18KG (04 Jun ⚠️ UP) | **£19.50/18KG** | £1.49/bunch | **DOLE always** | ⚠️ Price rose 50p to £19.00 — first increase all year. Still order 18KG Chiquita only. Margin now 28.9% — acceptable but watch for further rises. |
 | Blueberry | £14.40/12×125G (May 26) | **£15/12×125G** | £1.99/125G | DOLE (Spain) | June = good. Ask if Chile bulk tray (42×150G) available — if under £13 = 85% margin |
 | Cherry | £32/5KG (Holland, Jun 23) | **£35/5KG** | £16/kg or £1.60/100G | **HOLLAND** | June = only time you get fresh local cherries. Holland is the source. Pay up to £35/5KG. Sell at premium |
 | Date Medjool | £30/5KG (Apr 26) | **£32/5KG** | £14.80/kg loose | DOLE (Egypt/Jordan) | 59% margin. Never discount. Always in stock |
@@ -85,9 +85,9 @@
 | Melon Galia | £5–9/6-count | **£9/6-count** | £2.50 each | DOLE | Good June melon. Ask price at market today |
 | Melon Honeydew | £14/8/10KG (**yesterday**, Spain) | **£9/6-count Spanish** | Large: £3.99. Small: £2.80 | DOLE (Spain **NOT** Brazil) | Yesterday's box = £1.75/melon. Sell at £3.99. If buying today: demand small Spanish format (6/5KG at ~£6 = £1/melon = much better). **Never buy Brazil large honeydew** |
 | Melon Piel de Sapo | £17/9/15KG (May 26) | **£18/9-count** | £2.99 each | DOLE | Thin margin. Sell at £2.99 not £2.50 |
-| Melon Watermelon | £21/9/20KG (01+02 Jun 26, Spain Mario) | **£22/9-count** | £4.50–5.50 each | DOLE (Spain) | ⚡ Best watermelon cost in dataset at £2.33/melon. Confirmed same price over 2 days. Sell at £5.50 = **57% margin**. |
-| Nectarine (punnet) | £15/10KG Lison (02 Jun 26) = £1.50/kg | **£16/10KG** | £2.50–2.99/500G | DOLE (Spain Lison) | ⚡ Buy the **10KG box** — 75p/500G cost = **70% margin** at £2.50 sell. 25% cheaper per kg than yesterday's 5KG format. 9 boxes stocked. |
-| Nectarine (loose) | £15/10KG Lison (02 Jun 26) = £1.50/kg | **£16/10KG** | £0.75 each | DOLE (Spain) | Each fruit ~170g = 25p cost at £1.50/kg. At 75p sell = 67% margin. Display loose with handwritten sign. |
+| Melon Watermelon | £21/4×16KG Spain Poupart (04 Jun) = £5.25 each ⚠️ | **DO NOT BUY 4-count at above £16** | £7.50 each | DOLE | ⚠️ FORMAT MATTERS. **4-count box at £21 = £5.25/melon** — loss at £5.50 EPOS, loss at £4.00. Ask specifically for **9-count or 5-count Brazil** (~£2.33/melon). If only 4-count Spain available, only buy if EPOS updated to £7.50 first. |
+| Nectarine (punnet) | £7.00/10KG Spain PP (04 Jun ⚡ SEASON LOW) | **£12/10KG** | £2.50–2.99/500G | DOLE (Spain) | ⚡⚡ MASSIVE DROP — was £15 on 02 Jun, now £7.00 = **70p/500G cost = 76% margin at £2.99**. Full Spanish season now underway. Buy freely. Push hard. |
+| Nectarine (loose) | £7.00/10KG (04 Jun 26) = £0.70/kg | **£12/10KG** | £0.75 each | DOLE (Spain) | Each fruit ~150g = 10p cost at 70p/kg. At 75p sell = 86% margin. Best loose stone fruit margin of the year. |
 | Orange | £20/48/15KG (**yesterday**, Spain) | **£22/48-count** | £0.69 large | DOLE (Spain) | Standard. Also ask for Morocco at £14 if available — cheaper origin |
 | Papaya | £9.50/4/10KG (Mar 26) | **£10/4-count** | £3.99 each | DOLE (Brazil) | Good exotic. Ask Dole if in today |
 | Passion Fruit | £14/2KG (May 26) | **£10/2KG max** | £0.59 each | DOLE (Colombia) | **Walk away above £10/2KG.** At £14, cost is 35p = only 40% margin at 59p. Acceptable but tight |
@@ -107,25 +107,25 @@
 
 ---
 
-## ⚡ TOP 5 BUYS — Updated 02 June 2026
+## ⚡ TOP 5 BUYS — Updated 04 June 2026
 
-1. **Belgium Strawberry Hoogstraten** — £18/8-pack (was £27.50 in May). Cost £2.25/punnet. Sell at **£4.99 — do not drop the retail price**. That's 55% margin vs near break-even last month.
-2. **Butternut Squash SA** — £7.20/10KG (was £9 in March). Best butternut of 2026. 72% margin per piece. Stock up freely.
-3. **Peach Donut Spain prepacked** — £10/5KG Distinet (was £18 in May). Ask specifically for **prepacked**. 66% margin at £2.99/500G.
-4. **Nectarine + Peach Spain 10KG Lison** — £15/10KG = £1.50/kg. 70% margin at £2.50/500G punnet. Buy 10KG boxes only.
-5. **Pomegranate Egypt** — £7.00/8-pack (was £10 SA in May). Buy 2–3 boxes. Sell £1.89 each = 54% margin.
+1. **Nectarine Spain 10×500G** — £7.00/box (was £15 on 02 Jun, £18 in May). **70p/punnet cost = 76% margin at £2.99**. Full season is here. This is the biggest opportunity in the shop right now. Buy 10+ boxes.
+2. **Belgium Strawberry Hoogstraten** — £18/8-pack. Cost £2.25/punnet. Sell at **£4.99 — do not drop the retail price**. 55% margin. Hold it.
+3. **Mango Brazil** — £5.00/8-count. 63p each. At £1.50 sell = 58% margin. Glut pricing. Buy freely.
+4. **Butternut Squash SA** — £7.20/10KG. Best butternut of 2026. 72% margin. Stock up.
+5. **Pomegranate Egypt** — £7.00/8-pack = 87p each. At £1.89 sell = 54% margin.
 
 ---
 
 ## 🚫 DON'T BUY / WATCH OUT
 
-- **⚠️ Kiwi above £10/27-count** — today £13 (was £8.50 in May). At 45p sell = **loss**. Walk away until price drops back below £10.
-- **Banana 13KG Dole box** — same price as 18KG Chiquita but 28% less fruit. Always ask for the 18KG box.
-- **Red Beauty Plum at £1.99/punnet** — at £16/5KG = £1.60 cost. Must be £2.99. If your EPOS has Plum at £1.99, that entry is for Angelino only.
-- **Lychee** — out of season, cost too high
-- **CR watermelon above £15/4-count** — Spain is £2.33/melon right now
+- **⚠️ Kiwi above £10/27-count** — still £13 (was £8.50 in May). At 45p sell = **loss**. Walk away. Change EPOS to **65p** before buying any more.
+- **⚠️ Watermelon 4-count Spain box** — £21/4-count = £5.25/melon. At £5.50 EPOS = 5% margin, at £4.00 = -31% LOSS. Only buy if EPOS raised to £7.50 first. Ask for 9-count Brazil instead.
+- **Banana 13KG Dole box** — same price as 18KG but 28% less fruit. Always 18KG Chiquita only.
+- **Red Beauty Plum at £1.99/punnet** — £1.60 cost. Must be £2.99. Angelino only at £1.99.
+- **Lychee** — out of season
 - **Brazil large honeydew (7/15KG at £21)** — £3/melon, sell at £2.80 = loss
-- **Passion fruit above £10/2KG** — too thin
+- **Passion fruit above £10/2KG** — 35p cost at £14/2kg. Selling at 39p = only 13% margin. Stop the 3-for-£1 deal immediately.
 
 ---
 
@@ -133,17 +133,17 @@
 
 | Priority | Product | Current EPOS | Change to | Why |
 |---|---|---|---|---|
-| 🔴 NOW | **Kiwi** | £0.45 | **£0.65** | Costs 48p — selling at 45p = loss |
-| 🔴 NOW | **Belgium strawberry** | £3.60 | **£4.99** | Cost £2.25. At £3.60 you make 37% — but £4.99 = 55%. Don't lower it. |
-| 🔴 NOW | **Red Beauty Plum** | £1.99 | **£2.99** | Red Beauty costs £1.60/punnet. £1.99 = only 20% margin |
-| 🟡 SOON | Grapefruit | £0.69 | **£0.89** | SA cost is 57p. 17% at 69p → 36% at 89p |
-| 🟡 SOON | Cucumber | £0.69 | **£0.79** | 51p cost. 25% at 69p → 35% at 79p |
-| 🟡 SOON | Nectarine/Peach loose | £0.45 | **£0.75** | 25p cost. 44% at 45p → 67% at 75p |
-| 🟡 SOON | Sharon fruit | £0.49 | **£0.79** | 42p cost. 14% at 49p → 47% at 79p |
-| 🟡 SOON | Lemon | £0.40 | **£0.49** | 25p cost. 37% at 40p → 49% at 49p |
+| 🔴 NOW | **Watermelon (both)** | £4.00 / £5.50 | **£7.50** | Cost £5.25/melon. 4s = 5% margin, 6s = -31% LOSS |
+| 🔴 NOW | **Kiwi** | £0.45 | **£0.65** | Cost 48p — selling at 45p = loss |
+| 🔴 NOW | **Belgium strawberry** | £3.60 | **£4.99** | Cost £2.25. At £4.99 = 55%. The cost fell, the price should not. |
+| 🔴 NOW | **Red Beauty Plum** | £1.99 | **£2.99** | Cost £1.60/punnet. Angelino is £1.99, Red Beauty is not Angelino. |
+| 🟡 SOON | Grapefruit | £0.69 | **£0.89** | Cost 57p. 17% margin at 69p → 36% at 89p |
+| 🟡 SOON | Passion fruit | £0.39 | **£0.59** | Cost 34p. 3-for-£1 deal = loss. Stop it. 59p = 42% |
+| 🟡 SOON | Carrot (loose, per kg) | £1.00 | **£1.25** | Cost 85p/kg. 15% at £1.00 → 32% at £1.25 |
+| 🟡 SOON | Cucumber | £0.69 | **£0.79** | Cost 50p. 28% at 69p → 37% at 79p |
+| 🟡 SOON | Nectarine/Peach loose | £0.45 | **£0.75** | Cost now 10p/fruit. Selling at 45p is technically fine but leaving money on table |
+| 🟡 SOON | Lemon | £0.40 | **£0.49** | Cost 25p. 37% at 40p → 49% at 49p |
 | 🟡 SOON | White cabbage | £1.00 | **£1.49** | 80p cost. 20% at £1.00 → 46% at £1.49 |
-| 🟡 SOON | Apricot loose | £0.20 | **£0.35** | 11p cost. At 20p = ok now but leaving money on table |
-| 🟡 SOON | Passion fruit | £0.39 | **£0.59** | 35p cost. 3-for-£1 is a loss. 59p = 41% |
 
 ---
 

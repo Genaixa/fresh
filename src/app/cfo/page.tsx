@@ -34,6 +34,20 @@ export type CfoCustomer = {
   orderCount: number
 }
 
+export type ReportAlert = {
+  name:            string
+  margin:          number
+  purchase_cost:   number
+  retail_price:    number
+  suggested_price: number
+}
+
+export type ReportWinner = {
+  name:         string
+  margin:       number
+  retail_price: number
+}
+
 export type CfoData = {
   weekLabel:      string
   thisWeekSpend:  number
@@ -46,6 +60,8 @@ export type CfoData = {
   lastProducts:   CfoProduct[]
   briefing:       string | null
   customers:      CfoCustomer[]
+  reportAlerts:   ReportAlert[]
+  reportWinners:  ReportWinner[]
 }
 
 export default async function CfoPage() {
@@ -85,7 +101,7 @@ export default async function CfoPage() {
 
   const { data: products } = await supabase
     .from('products')
-    .select('id, name, retail_price, case_size')
+    .select('id, name, retail_price, case_size, purchase_cost, margin_floor')
     .eq('is_active', true)
 
   const prodMap = new Map((products ?? []).map(p => [p.id, p]))
@@ -208,6 +224,40 @@ export default async function CfoPage() {
     }))
     .sort((a, b) => b.revenue - a.revenue)
 
+  // 7. Report tab — alerts and winners from confirmed product costs
+  function roundToNearestFivePence(pence: number): number {
+    return Math.ceil(pence / 5) * 5
+  }
+
+  const reportAlerts: ReportAlert[] = (products ?? [])
+    .filter(p => p.purchase_cost > 0 && p.retail_price > 0)
+    .map(p => {
+      const floor  = p.margin_floor ?? 0.20
+      const margin = (p.retail_price - p.purchase_cost) / p.retail_price
+      return {
+        name:            p.name,
+        margin,
+        purchase_cost:   p.purchase_cost,
+        retail_price:    p.retail_price,
+        suggested_price: roundToNearestFivePence(Math.ceil(p.purchase_cost / (1 - floor))),
+        _floor:          floor,
+      }
+    })
+    .filter(p => p.margin < p._floor)
+    .map(({ _floor: _, ...rest }) => rest)
+    .sort((a, b) => a.margin - b.margin)
+
+  const reportWinners: ReportWinner[] = (products ?? [])
+    .filter(p => p.purchase_cost > 0 && p.retail_price > 0)
+    .map(p => ({
+      name:         p.name,
+      margin:       (p.retail_price - p.purchase_cost) / p.retail_price,
+      retail_price: p.retail_price,
+    }))
+    .filter(p => p.margin >= 0.40 && p.margin <= 0.90)
+    .sort((a, b) => b.margin - a.margin)
+    .slice(0, 5)
+
   const cfoData: CfoData = {
     weekLabel,
     thisWeekSpend,
@@ -220,6 +270,8 @@ export default async function CfoPage() {
     lastProducts,
     briefing,
     customers,
+    reportAlerts,
+    reportWinners,
   }
 
   return (

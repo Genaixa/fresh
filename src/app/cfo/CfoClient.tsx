@@ -4,9 +4,9 @@ import { useState } from 'react'
 import Link from 'next/link'
 import type { CfoData } from './page'
 
-const fmt  = (p: number) => `£${(p / 100).toFixed(2)}`
+const fmt  = (p: number) => p < 100 ? `${p}p` : `£${(p / 100).toFixed(2)}`
 const pct  = (n: number) => `${Math.round(n * 100)}%`
-const fmtK = (p: number) => p >= 100000 ? `£${(p / 100000).toFixed(1)}k` : fmt(p)
+const fmtK = (p: number) => p >= 100000 ? `£${(p / 100000).toFixed(1)}k` : `£${(p / 100).toFixed(2)}`
 
 function MarginBadge({ margin }: { margin: number | null }) {
   if (margin === null) return <span className="text-gray-300 text-xs">—</span>
@@ -28,20 +28,21 @@ function Delta({ this_, last, format }: { this_: number; last: number; format?: 
   )
 }
 
-type Tab = 'overview' | 'products' | 'customers'
+type Tab = 'overview' | 'products' | 'customers' | 'margins'
 
 export default function CfoClient({ data }: { data: CfoData }) {
   const [tab, setTab] = useState<Tab>('overview')
-  const { weekLabel, thisWeekSpend, lastWeekSpend, thisWeekRev, thisWeekMargin, lastWeekMargin, products, briefing } = data
+  const { weekLabel, thisWeekSpend, lastWeekSpend, thisWeekRev, thisWeekMargin, lastWeekMargin, products, briefing, reportAlerts, reportWinners } = data
 
   const losing   = products.filter(p => p.margin !== null && p.margin < 0)
   const marginal = products.filter(p => p.margin !== null && p.margin >= 0 && p.margin < 0.20)
   const healthy  = products.filter(p => p.margin !== null && p.margin >= 0.20)
 
   const tabs: { id: Tab; label: string }[] = [
-    { id: 'overview',   label: 'Overview'  },
-    { id: 'products',   label: 'Products'  },
-    { id: 'customers',  label: 'Customers' },
+    { id: 'overview',  label: 'Overview'  },
+    { id: 'products',  label: 'Products'  },
+    { id: 'customers', label: 'Customers' },
+    { id: 'margins',   label: 'Margins'   },
   ]
 
   return (
@@ -157,6 +158,65 @@ export default function CfoClient({ data }: { data: CfoData }) {
 
           {healthy.length > 0 && (
             <p className="text-xs text-green-700">✓ {healthy.length} products at healthy margin</p>
+          )}
+        </>
+      )}
+
+      {/* Margins tab */}
+      {tab === 'margins' && (
+        <>
+          {/* Alerts */}
+          {reportAlerts.length === 0 ? (
+            <div className="card text-center py-8 mb-4">
+              <p className="text-3xl mb-2">✓</p>
+              <p className="text-sm font-semibold text-green-700">All prices above margin floor</p>
+            </div>
+          ) : (
+            <div className="mb-5">
+              <p className="text-xs font-bold text-red-700 uppercase tracking-wide mb-2">
+                ⚠ Price fixes needed ({reportAlerts.length})
+              </p>
+              <div className="rounded-xl border border-red-200 overflow-hidden">
+                {reportAlerts.map((a, i) => (
+                  <div key={a.name} className={`px-3 py-2.5 ${i > 0 ? 'border-t border-red-100' : ''} ${a.margin < 0 ? 'bg-red-50' : 'bg-amber-50'}`}>
+                    <div className="flex items-baseline justify-between mb-0.5">
+                      <span className="text-sm font-semibold text-gray-900">{a.name}</span>
+                      <span className={`text-xs font-bold ${a.margin < 0 ? 'text-red-600' : 'text-amber-700'}`}>
+                        {pct(a.margin)}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] text-gray-500">
+                        cost {fmt(a.purchase_cost)} · sell {fmt(a.retail_price)}
+                      </span>
+                      <span className="text-[10px] font-semibold text-green-700">
+                        → raise to {fmt(a.suggested_price)}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Winners */}
+          {reportWinners.length > 0 && (
+            <div>
+              <p className="text-xs font-bold text-green-700 uppercase tracking-wide mb-2">
+                🏆 Top margin products
+              </p>
+              <div className="rounded-xl border border-green-200 overflow-hidden">
+                {reportWinners.map((w, i) => (
+                  <div key={w.name} className={`flex items-center justify-between px-3 py-2.5 bg-green-50 ${i > 0 ? 'border-t border-green-100' : ''}`}>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[9px] text-green-400 w-4 text-right">{i + 1}</span>
+                      <span className="text-sm text-gray-900">{w.name}</span>
+                    </div>
+                    <span className="text-xs font-bold text-green-700">{pct(w.margin)}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
           )}
         </>
       )}

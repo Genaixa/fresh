@@ -23,14 +23,20 @@ export default async function DashboardPage() {
     .select('*', { count: 'exact', head: true })
     .eq('status', 'pending')
 
+  const { count: pendingDeliveryCount } = await supabase
+    .from('purchase_invoices')
+    .select('*', { count: 'exact', head: true })
+    .eq('status', 'uploaded')
+
   const now = new Date()
   const hour = now.getHours()
   const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening'
   const dateStr = now.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })
   const displayName = profile?.full_name?.split(' ')[0] ?? 'David'
 
-  const hasPending  = (pendingCount ?? 0) > 0
-  const hasUnmapped = (unmappedCount ?? 0) > 0
+  const hasPending         = (pendingCount ?? 0) > 0
+  const hasUnmapped        = (unmappedCount ?? 0) > 0
+  const hasPendingDelivery = (pendingDeliveryCount ?? 0) > 0
 
   return (
     <div className="page pb-24">
@@ -93,6 +99,28 @@ export default async function DashboardPage() {
               <span className="bg-status-red text-white text-sm font-bold
                                rounded-full w-8 h-8 flex items-center justify-center flex-shrink-0 ml-3">
                 {unmappedCount}
+              </span>
+            </div>
+          </div>
+        </Link>
+      )}
+
+      {/* Pending delivery notes banner */}
+      {hasPendingDelivery && (
+        <Link href="/invoices" className="block mb-4">
+          <div className="card border border-status-amber/40 bg-status-amber/5">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="font-semibold text-sm">
+                  {pendingDeliveryCount} delivery {pendingDeliveryCount === 1 ? 'note' : 'notes'} to confirm
+                </p>
+                <p className="text-xs text-[var(--text-muted)] mt-0.5">
+                  Tap to review costs →
+                </p>
+              </div>
+              <span className="bg-status-amber text-white text-sm font-bold
+                               rounded-full w-8 h-8 flex items-center justify-center flex-shrink-0 ml-3">
+                {pendingDeliveryCount}
               </span>
             </div>
           </div>

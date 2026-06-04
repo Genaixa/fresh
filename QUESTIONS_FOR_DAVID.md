@@ -107,4 +107,20 @@ Compiled during system build — send as one list when ready.
 14. **More Holland invoices** — beyond the Sep–Apr gap, even current Holland invoices would improve cost data for all the veg products (aubergine, cucumber, peppers, leek etc.).
 
 ---
-*Last updated: 3 Jun 2026*
+
+## From 4 Jun 2026 Invoices
+
+### Questions
+
+31. **"Chilean Size 1" at £12.00/box** (Holland ticket #2742030, 04/06/26) — what product is this exactly? We couldn't identify it from the description.
+
+32. **Pears Conference Belgium 12KG at £1.00** (Dole #11217003, 04/06/26) — every single Dole delivery since March has had this at £19.00. Was this a credit note for a returned or damaged case? If so, can we get a copy of the credit note to match against the invoice?
+
+### Remarks (pricing alerts)
+
+33. **Watermelon prices are now £5.25/melon** (Spain 4×16KG Poupart, up from £19.50–20 in May). The Watermelon 6s EPOS price of £4.00 is now a **-31% loss**, and Watermelon 4s at £5.50 is only 5% margin. Both need raising to £7.50 before the next delivery.
+
+34. **Banana up to £19.00/box** (Dole #11217003) — first price increase from the consistent £18.50 we've seen all year. Not critical yet but worth keeping an eye on.
+
+---
+*Last updated: 4 Jun 2026*
