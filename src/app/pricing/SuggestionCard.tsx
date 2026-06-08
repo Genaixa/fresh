@@ -114,7 +114,7 @@ export function SuggestionCard({
               <p className="font-medium">{productName}</p>
               {isHeld && (
                 <span className="text-xs bg-status-amber/15 text-status-amber px-1.5 py-0.5 rounded-md">
-                  waiting
+                  held
                 </span>
               )}
             </div>
