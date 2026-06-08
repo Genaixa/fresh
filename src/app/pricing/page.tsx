@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { NavBar } from '@/components/ui/NavBar'
 import { approveAll, rejectAll, recalculateSuggestions } from './actions'
@@ -102,8 +103,9 @@ export default async function PricingSuggestionsPage({
 
   return (
     <div className="page pb-24">
-      <div className="flex items-center justify-between mb-4">
-        <h1 className="text-xl font-bold">Price Suggestions</h1>
+      <div className="flex items-center gap-3 mb-4">
+        <Link href="/dashboard" className="text-brand-accent min-h-[48px] min-w-[48px] flex items-center justify-center text-xl">←</Link>
+        <h1 className="text-xl font-bold flex-1">Price Suggestions</h1>
       </div>
 
       {pending.length === 0 ? (
