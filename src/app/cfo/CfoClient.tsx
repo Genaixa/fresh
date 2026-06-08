@@ -94,6 +94,21 @@ export default function CfoClient({ data }: { data: CfoData }) {
             </div>
           </div>
 
+          {/* Buying guide shortcut */}
+          <Link href="/cfo/buying-guide"
+            className="block mb-4 rounded-xl bg-green-50 border border-green-200 px-4 py-3
+                       active:scale-[0.99] transition-transform">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="font-bold text-green-800 text-sm">Where to put your money</p>
+                <p className="text-xs text-green-600 mt-0.5">
+                  Which products are making you money — in plain English
+                </p>
+              </div>
+              <span className="text-green-700 text-xl ml-3">→</span>
+            </div>
+          </Link>
+
           {/* AI briefing */}
           {briefing && (
             <div className="mb-4 rounded-xl border border-green-800 bg-[#0F1A0F] px-3 py-3 flex gap-2 items-start">
