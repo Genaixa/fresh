@@ -10,18 +10,24 @@ export interface EposMonthlyRow {
   revenue_pence: number
 }
 
-/** Generate a CSV string of all active products for EPOS Now import */
+/** Generate a CSV string of all active products for EPOS Now import.
+ *  Includes cost price so EPOS Now margin reports match our system.
+ *  SKU uses epos_now_id (the actual EPOS product ID) for exact matching.
+ *  Only exports products that have a cost set — zero-cost products would
+ *  overwrite EPOS costs with 0, which is worse than leaving them alone.
+ */
 export function generateEposCsv(products: Product[]): string {
-  const header = 'Name,SKU,Retail Price (£),Wholesale Price (£)'
+  const header = 'Name,SKU,Cost Price (£),Retail Price (£),Wholesale Price (£)'
   const rows = products
-    .filter(p => p.is_active)
+    .filter(p => p.is_active && p.retail_price > 0)
     .map(p => {
-      const retail = (p.retail_price / 100).toFixed(2)
+      const cost     = p.purchase_cost > 0 ? (p.purchase_cost / 100).toFixed(2) : ''
+      const retail   = (p.retail_price / 100).toFixed(2)
       const wholesale = p.wholesale_price > 0
         ? (p.wholesale_price / 100).toFixed(2)
         : ''
-      const sku = p.epos_now_id ?? p.id.slice(0, 8)
-      return `"${p.name}","${sku}",${retail},${wholesale}`
+      const sku = p.epos_now_id ?? ''
+      return `"${p.name}","${sku}",${cost},${retail},${wholesale}`
     })
   return [header, ...rows].join('\n')
 }
