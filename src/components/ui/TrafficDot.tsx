@@ -13,12 +13,22 @@ export function TrafficDot({ status }: { status: Status }) {
   )
 }
 
-/** Derive a traffic-light status from a margin percentage vs floor */
-export function marginStatus(margin: number, floor: number): Status {
+/** Derive a traffic-light status from retail, cost, margin, and floor */
+export function marginStatus(
+  margin: number,
+  floor: number,
+  retail?: number,
+  cost?: number,
+): Status {
+  if (retail === 0 && (cost ?? 0) === 0) return 'grey'  // no data
+  if (retail === 0 && (cost ?? 0) > 0)  return 'grey'  // unpriced
+  if ((cost ?? 0) > (retail ?? 0))      return 'red'   // at a loss
   if (margin >= floor * 1.1) return 'green'
-  if (margin >= floor) return 'amber'
+  if (margin >= floor)       return 'amber'
   return 'red'
 }
+
+export type { Status }
 
 /** Derive a traffic-light status for purchase cost vs rolling average */
 export function costStatus(current: number, avg: number): Status {

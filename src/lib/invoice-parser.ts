@@ -244,6 +244,16 @@ export async function saveMapping(
  * Fuzzy-match a raw product name against the catalogue.
  * Returns the best matching product_id or null.
  */
+// Vendor abbreviations that don't match catalogue names directly
+const PRODUCE_SYNONYMS: [RegExp, string][] = [
+  [/\bmelon water\b/g, 'watermelon'],
+  [/\bmel water\b/g,   'watermelon'],
+  [/\bmel wat\b/g,     'watermelon'],
+]
+
+// Descriptor words that appear in catalogue names but not invoice lines
+const FILLER_TOKENS = new Set(['loose', 'prepack', 'punnet', 'bag', 'pack', 'box'])
+
 export function fuzzyMatchProduct(
   rawName: string,
   catalogue: Array<{ id: string; name: string }>
@@ -251,19 +261,23 @@ export function fuzzyMatchProduct(
   const normalise = (s: string) =>
     s.toLowerCase().replace(/[^a-z0-9 ]/g, '').trim()
 
-  const needle = normalise(rawName)
+  let needle = normalise(rawName)
+  for (const [pattern, replacement] of PRODUCE_SYNONYMS) {
+    needle = needle.replace(pattern, replacement)
+  }
 
   let bestId: string | null = null
   let bestScore = 0
 
   for (const product of catalogue) {
     const haystack = normalise(product.name)
-    // Score by how many of the SHORT catalogue name tokens appear in the
-    // LONG invoice name — not the other way around. Invoice names carry
-    // extra country/size/packaging tokens that shouldn't dilute the score.
+    // Score by how many catalogue name tokens appear in the invoice name.
+    // Exclude filler words (loose, punnet, etc.) — suppliers never print them.
     const catalogueTokens = haystack.split(/\s+/).filter(t => t.length > 1)
-    const matched = catalogueTokens.filter(t => needle.includes(t))
-    const score = matched.length / catalogueTokens.length
+    const significantTokens = catalogueTokens.filter(t => !FILLER_TOKENS.has(t))
+    const tokensToMatch = significantTokens.length > 0 ? significantTokens : catalogueTokens
+    const matched = tokensToMatch.filter(t => needle.includes(t))
+    const score = matched.length / tokensToMatch.length
 
     if (score > bestScore && score >= 0.6) {
       bestScore = score

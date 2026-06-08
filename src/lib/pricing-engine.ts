@@ -55,12 +55,11 @@ export async function getWeightedAvgCostBatch(
  *   If omitted, falls back to product.purchase_cost / case_size (legacy behaviour).
  */
 export function calculateSuggestedPrice(product: Product, weightedUnitCost?: number): PricingResult {
-  const { id, purchase_cost, case_size, price_multiplier, market_ceiling, margin_floor } = product
+  const { id, purchase_cost, price_multiplier, market_ceiling, margin_floor } = product
 
-  // Prefer weighted avg cost (per retail unit); fall back to static per-box cost ÷ case_size
-  const unit_cost = weightedUnitCost != null
-    ? weightedUnitCost
-    : (case_size > 1 ? purchase_cost / case_size : purchase_cost)
+  // purchase_cost is always per-retail-unit (kept in sync by invoice confirmation).
+  // Weighted avg is preferred when available (more current than the stored snapshot).
+  const unit_cost = weightedUnitCost ?? purchase_cost
   const raw_price = Math.round(unit_cost * price_multiplier)
 
   let suggested_price = raw_price

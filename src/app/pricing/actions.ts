@@ -82,11 +82,24 @@ export async function recalculateSuggestions() {
   const toInsert = []
 
   for (const p of products) {
-    const unit_cost = p.case_size > 1 ? p.purchase_cost / p.case_size : p.purchase_cost
+    const unit_cost = p.purchase_cost
     const suggested = Math.round(unit_cost * p.price_multiplier)
     const capped    = p.market_ceiling ? Math.min(suggested, p.market_ceiling) : suggested
 
-    // Only suggest a change if the gap is more than 5p
+    // Never suggest a price at or below cost
+    if (capped <= unit_cost) continue
+
+    const currentMargin = p.retail_price > 0
+      ? (p.retail_price - unit_cost) / p.retail_price
+      : -1
+    const isUnpriced   = p.retail_price === 0
+    const isBelowFloor = currentMargin < p.margin_floor
+    const isAboveCeiling = p.market_ceiling !== null && p.retail_price > p.market_ceiling
+
+    // Only suggest when there's actually a problem — not just because multiplier differs
+    if (!isUnpriced && !isBelowFloor && !isAboveCeiling) continue
+
+    // Skip if already at the right price (within 5p)
     if (Math.abs(capped - p.retail_price) <= 5) continue
 
     const margin = capped > 0 ? (capped - unit_cost) / capped : 0

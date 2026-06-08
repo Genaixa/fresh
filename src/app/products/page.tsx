@@ -73,7 +73,10 @@ export default async function ProductsPage({
           const margin = p.retail_price > 0
             ? (p.retail_price - p.purchase_cost) / p.retail_price
             : 0
-          const dot = marginStatus(margin, p.margin_floor)
+          const dot = marginStatus(margin, p.margin_floor, p.retail_price, p.purchase_cost)
+
+          const atLoss   = p.retail_price > 0 && p.purchase_cost > p.retail_price
+          const unpriced = p.retail_price === 0 && p.purchase_cost > 0
 
           return (
             <Link
@@ -87,13 +90,17 @@ export default async function ProductsPage({
                 <div>
                   <p className="font-medium">{p.name}</p>
                   <p className="text-xs text-[var(--text-muted)] capitalize">
-                    {p.category} · {p.unit}
+                    {atLoss   ? <span className="text-status-red font-semibold">at a loss</span>
+                    : unpriced ? <span className="text-status-amber">unpriced</span>
+                    : <>{p.category} · {p.unit}</>}
                   </p>
                 </div>
               </div>
               <div className="text-right">
-                <p className="font-semibold">{formatPrice(p.retail_price)}</p>
-                <p className="text-xs text-[var(--text-muted)]">retail</p>
+                <p className="font-semibold">{p.retail_price > 0 ? formatPrice(p.retail_price) : '—'}</p>
+                <p className="text-xs text-[var(--text-muted)]">
+                  {p.purchase_cost > 0 ? `cost ${formatPrice(p.purchase_cost)}` : 'no cost'}
+                </p>
               </div>
             </Link>
           )

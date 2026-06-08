@@ -121,12 +121,35 @@ export async function confirmInvoiceAndGeneratePrices(invoiceId: string) {
     }
   })
 
-  // Only insert suggestions where price actually changes
-  const changingSuggestions = suggestions.filter(
-    s => s.suggested_retail_price !== s.current_retail_price
-  )
+  // Only generate suggestions where there is actually a problem
+  const changingSuggestions = suggestions.filter(s => {
+    const cost = weightedCosts.get(s.product_id) ?? 0
+
+    // Never suggest at or below cost
+    if (s.suggested_retail_price <= cost) return false
+
+    const product = (products as Product[]).find(p => p.id === s.product_id)
+    const floor = product?.margin_floor ?? 0.20
+    const ceiling = product?.market_ceiling ?? null
+
+    const isUnpriced    = s.current_retail_price === 0
+    const currentMargin = s.current_retail_price > 0
+      ? (s.current_retail_price - cost) / s.current_retail_price
+      : -1
+    const isBelowFloor   = currentMargin < floor
+    const isAboveCeiling = ceiling !== null && s.current_retail_price > ceiling
+
+    return isUnpriced || isBelowFloor || isAboveCeiling
+  })
 
   if (changingSuggestions.length > 0) {
+    // Remove any existing pending suggestions for these products before inserting
+    await supabase
+      .from('price_suggestions')
+      .delete()
+      .eq('status', 'pending')
+      .in('product_id', changingSuggestions.map(s => s.product_id))
+
     const { error: insertErr } = await supabase
       .from('price_suggestions')
       .insert(changingSuggestions)

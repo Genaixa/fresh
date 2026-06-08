@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { NavBar } from '@/components/ui/NavBar'
 import Link from 'next/link'
 import { logout } from '@/app/login/actions'
+import { getProductHealthIssues } from '@/lib/data-health'
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -32,6 +33,11 @@ export default async function DashboardPage() {
     .from('wholesale_orders')
     .select('*', { count: 'exact', head: true })
     .eq('status', 'confirmed')
+
+  const healthIssues  = await getProductHealthIssues(supabase)
+  const atLossCount   = healthIssues.filter(i => i.type === 'at_loss').length
+  const unpricedCount = healthIssues.filter(i => i.type === 'unpriced').length
+  const spikeCount    = healthIssues.filter(i => i.type === 'cost_spike').length
 
   const now = new Date()
   const hour = now.getHours()
@@ -127,6 +133,66 @@ export default async function DashboardPage() {
               <span className="bg-status-amber text-white text-sm font-bold
                                rounded-full w-8 h-8 flex items-center justify-center flex-shrink-0 ml-3">
                 {pendingDeliveryCount}
+              </span>
+            </div>
+          </div>
+        </Link>
+      )}
+
+      {/* Selling at a loss — highest urgency */}
+      {atLossCount > 0 && (
+        <Link href="/price-monitor" className="block mb-4">
+          <div className="card border border-status-red/60 bg-status-red/10">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="font-bold text-sm text-status-red">
+                  {atLossCount} {atLossCount === 1 ? 'product' : 'products'} selling at a loss
+                </p>
+                <p className="text-xs text-[var(--text-muted)] mt-0.5">Cost exceeds retail price →</p>
+              </div>
+              <span className="bg-status-red text-white text-sm font-bold
+                               rounded-full w-8 h-8 flex items-center justify-center flex-shrink-0 ml-3">
+                {atLossCount}
+              </span>
+            </div>
+          </div>
+        </Link>
+      )}
+
+      {/* Cost spikes */}
+      {spikeCount > 0 && (
+        <Link href="/price-monitor" className="block mb-4">
+          <div className="card border border-status-amber/40 bg-status-amber/5">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="font-semibold text-sm">
+                  {spikeCount} {spikeCount === 1 ? 'product' : 'products'} with rising costs
+                </p>
+                <p className="text-xs text-[var(--text-muted)] mt-0.5">Prices may need adjusting →</p>
+              </div>
+              <span className="bg-status-amber text-white text-sm font-bold
+                               rounded-full w-8 h-8 flex items-center justify-center flex-shrink-0 ml-3">
+                {spikeCount}
+              </span>
+            </div>
+          </div>
+        </Link>
+      )}
+
+      {/* Unpriced products */}
+      {unpricedCount > 0 && (
+        <Link href="/price-monitor" className="block mb-4">
+          <div className="card border border-white/20">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="font-semibold text-sm">
+                  {unpricedCount} {unpricedCount === 1 ? 'product' : 'products'} not yet priced
+                </p>
+                <p className="text-xs text-[var(--text-muted)] mt-0.5">Known cost, no retail price set →</p>
+              </div>
+              <span className="bg-white/20 text-sm font-bold
+                               rounded-full w-8 h-8 flex items-center justify-center flex-shrink-0 ml-3">
+                {unpricedCount}
               </span>
             </div>
           </div>

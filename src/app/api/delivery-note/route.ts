@@ -69,6 +69,21 @@ export async function POST(request: NextRequest) {
 
       if (existing) continue
 
+      // Store original PDF in Supabase storage
+      let pdfStoragePath: string | null = null
+      try {
+        const pdfBytes = Buffer.from(pdf.Content, 'base64')
+        const safeName = supplierName.toLowerCase().replace(/\s+/g, '-')
+        pdfStoragePath = `${safeName}/${parsed.invoice_date}/${body.MessageID}.pdf`
+        await supabase.storage.from('invoices').upload(pdfStoragePath, pdfBytes, {
+          contentType: 'application/pdf',
+          upsert: true,
+        })
+      } catch (uploadErr) {
+        console.error('PDF storage upload failed:', uploadErr)
+        pdfStoragePath = null
+      }
+
       // Create invoice as 'uploaded' — requires David's confirmation
       const { data: invoice, error: invErr } = await supabase
         .from('purchase_invoices')
@@ -77,6 +92,7 @@ export async function POST(request: NextRequest) {
           invoice_date:  parsed.invoice_date,
           total_amount:  parsed.raw_total ?? null,
           status:        'uploaded',
+          pdf_url:       pdfStoragePath,
         })
         .select()
         .single()
