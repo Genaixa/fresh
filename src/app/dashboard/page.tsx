@@ -219,29 +219,19 @@ export default async function DashboardPage() {
       {/* Quick actions grid */}
       <p className="section-title">Quick Actions</p>
       <div className="grid grid-cols-2 gap-3 mb-8">
-        <QuickAction href="/waste"           icon="⚠️" label="Log Waste" />
-        <QuickAction href="/margins"         icon="📊" label="Margins" />
-        <QuickAction href="/price-history"   icon="🔍" label="Price History" />
-        <QuickAction href="/pricing"         icon="💰" label="Pricing" />
+        <QuickAction href="/waste"            icon="⚠️" label="Log Waste" />
+        <QuickAction href="/margins"          icon="📊" label="Margins" />
+        <QuickAction href="/price-history"    icon="🔍" label="Price History" />
+        <QuickAction href="/pricing"          icon="💰" label="Pricing" />
+        <QuickAction href="/products"         icon="🥦" label="Products" />
+        <QuickAction href="/sync"             icon="🔄" label="EPOS Sync" />
+        <QuickAction href="/epos-compare"     icon="📈" label="Price Check" />
+        <QuickAction href="/margins/sim"      icon="🧮" label="Simulator" />
+        <QuickAction href="/price-monitor"    icon="🤖" label="AI Monitor" />
+        <QuickAction href="/invoices"         icon="📋" label="Invoices" />
+        <QuickAction href="/suppliers"        icon="🏪" label="Suppliers" />
+        <QuickAction href="/wholesale-lookup" icon="👤" label="Wholesale" />
       </div>
-
-      {/* More section */}
-      <details className="group">
-        <summary className="section-title cursor-pointer list-none flex items-center gap-1">
-          More
-          <span className="text-xs group-open:rotate-180 transition-transform inline-block">▼</span>
-        </summary>
-        <div className="grid grid-cols-2 gap-3 mt-3">
-          <QuickAction href="/products"       icon="🥦" label="Products" />
-          <QuickAction href="/sync"           icon="🔄" label="EPOS Sync" />
-          <QuickAction href="/epos-compare"  icon="📈" label="Price Check" />
-          <QuickAction href="/margins/sim"    icon="🧮" label="Simulator" />
-          <QuickAction href="/price-monitor"  icon="🤖" label="AI Monitor" />
-          <QuickAction href="/invoices"       icon="📋" label="Invoices" />
-          <QuickAction href="/suppliers"      icon="🏪" label="Suppliers" />
-          <QuickAction href="/wholesale-lookup" icon="👤" label="Wholesale" />
-        </div>
-      </details>
     </div>
   )
 }
