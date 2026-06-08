@@ -91,11 +91,13 @@ export function SuggestionCard({
   async function handleHold() {
     setPending(true)
     await holdSuggestion(id)
+    setPending(false)
   }
 
   async function handleUnhold() {
     setPending(true)
     await unholdSuggestion(id)
+    setPending(false)
   }
 
   return (
