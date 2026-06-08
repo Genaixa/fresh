@@ -22,11 +22,15 @@ export default async function PricingSuggestionsPage({
 
   const { data: suggestions } = await supabase
     .from('price_suggestions')
-    .select('*, product:products(name, margin_floor, purchase_cost, category)')
+    .select('*, product:products(name, margin_floor, purchase_cost, category), invoice:purchase_invoices(id, invoice_date, supplier_name)')
     .in('status', ['pending', 'on_hold'])
     .order('created_at', { ascending: false })
 
-  type S = PriceSuggestion & { product: { name: string; margin_floor: number; purchase_cost: number; category: string }; status: SuggestionStatus }
+  type S = PriceSuggestion & {
+    product: { name: string; margin_floor: number; purchase_cost: number; category: string }
+    invoice: { id: string; invoice_date: string; supplier_name: string } | null
+    status: SuggestionStatus
+  }
 
   const pending = (suggestions ?? []) as S[]
   const pendingCount = pending.filter(s => s.status === 'pending').length
@@ -163,6 +167,9 @@ export default async function PricingSuggestionsPage({
                 marginWarning={s.margin_warning}
                 marginFloor={s.product?.margin_floor ?? 0.2}
                 isHeld={s.status === 'on_hold'}
+                invoiceId={s.invoice?.id ?? null}
+                invoiceDate={s.invoice?.invoice_date ?? null}
+                supplierName={s.invoice?.supplier_name ?? null}
               />
             ))}
           </div>

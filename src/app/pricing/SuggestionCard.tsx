@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useCallback } from 'react'
+import Link from 'next/link'
 import { amendAndApproveSuggestion, rejectSuggestion, holdSuggestion, unholdSuggestion } from './actions'
 import { formatPrice } from '@/lib/pricing-engine'
 
@@ -13,6 +14,9 @@ interface Props {
   marginWarning: boolean
   marginFloor: number  // 0–1
   isHeld?: boolean
+  invoiceId: string | null
+  invoiceDate: string | null
+  supplierName: string | null
 }
 
 function calcMargin(pricePence: number, costPence: number): number {
@@ -34,6 +38,9 @@ export function SuggestionCard({
   marginWarning,
   marginFloor,
   isHeld = false,
+  invoiceId,
+  invoiceDate,
+  supplierName,
 }: Props) {
   const [pricePounds, setPricePounds] = useState(
     (suggestedRetailPrice / 100).toFixed(2)
@@ -116,6 +123,14 @@ export function SuggestionCard({
               {' · '}cost {formatPrice(costPence)}
               {' · '}floor {Math.round(marginFloor * 100)}%
             </p>
+            {invoiceId && invoiceDate && (
+              <Link
+                href={`/invoices/${invoiceId}/review`}
+                className="text-xs text-brand-accent/70 underline underline-offset-2"
+              >
+                {supplierName} · {new Date(invoiceDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
+              </Link>
+            )}
           </div>
         </div>
         <div className="flex gap-2">
