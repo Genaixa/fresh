@@ -2,7 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { NavBar } from '@/components/ui/NavBar'
 import { approveAll, rejectAll, recalculateSuggestions } from './actions'
 import { SuggestionCard } from './SuggestionCard'
-import type { PriceSuggestion } from '@/types'
+import type { PriceSuggestion, SuggestionStatus } from '@/types'
 
 type Tab  = 'floor' | 'fruit' | 'veg' | 'other' | 'all'
 type Sort = 'name' | 'price' | 'margin'
@@ -23,12 +23,13 @@ export default async function PricingSuggestionsPage({
   const { data: suggestions } = await supabase
     .from('price_suggestions')
     .select('*, product:products(name, margin_floor, purchase_cost, category)')
-    .eq('status', 'pending')
+    .in('status', ['pending', 'on_hold'])
     .order('created_at', { ascending: false })
 
-  type S = PriceSuggestion & { product: { name: string; margin_floor: number; purchase_cost: number; category: string } }
+  type S = PriceSuggestion & { product: { name: string; margin_floor: number; purchase_cost: number; category: string }; status: SuggestionStatus }
 
   const pending = (suggestions ?? []) as S[]
+  const pendingCount = pending.filter(s => s.status === 'pending').length
 
   function isCurrentlyBelowFloor(s: S): boolean {
     const cost  = s.product?.purchase_cost ?? 0
@@ -161,6 +162,7 @@ export default async function PricingSuggestionsPage({
                 costPence={s.product?.purchase_cost ?? 0}
                 marginWarning={s.margin_warning}
                 marginFloor={s.product?.margin_floor ?? 0.2}
+                isHeld={s.status === 'on_hold'}
               />
             ))}
           </div>
@@ -168,20 +170,25 @@ export default async function PricingSuggestionsPage({
           {/* Bulk actions */}
           <div className="flex gap-3 mt-6">
             <form action={approveAll} className="flex-1">
-              <button className="btn-primary w-full py-3 text-sm">
-                ✓ Approve All
+              <button
+                className="btn-primary w-full py-3 text-sm disabled:opacity-40"
+                disabled={pendingCount === 0}
+              >
+                ✓ Approve All{pendingCount > 0 ? ` (${pendingCount})` : ''}
               </button>
             </form>
             <form action={rejectAll} className="flex-1">
-              <button className="w-full py-3 rounded-xl border border-status-red/40
-                                 text-status-red text-sm active:bg-status-red/10 transition-colors">
+              <button
+                className="w-full py-3 rounded-xl border border-status-red/40 text-status-red text-sm active:bg-status-red/10 transition-colors disabled:opacity-40"
+                disabled={pendingCount === 0}
+              >
                 ✗ Reject All
               </button>
             </form>
           </div>
 
           <p className="text-center text-xs text-[var(--text-muted)] mt-4">
-            {displayed.length} shown · {pending.length} pending · {floorCount} below floor
+            {displayed.length} shown · {pendingCount} ready · {pending.length - pendingCount} on hold · {floorCount} below floor
           </p>
         </>
       )}

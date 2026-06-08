@@ -40,6 +40,18 @@ export async function rejectSuggestion(id: string) {
   revalidatePath('/pricing')
 }
 
+export async function holdSuggestion(id: string) {
+  const supabase = await createClient()
+  await supabase.from('price_suggestions').update({ status: 'on_hold' }).eq('id', id)
+  revalidatePath('/pricing')
+}
+
+export async function unholdSuggestion(id: string) {
+  const supabase = await createClient()
+  await supabase.from('price_suggestions').update({ status: 'pending' }).eq('id', id)
+  revalidatePath('/pricing')
+}
+
 export async function approveAll() {
   const supabase = await createClient()
   const { data: pending } = await supabase

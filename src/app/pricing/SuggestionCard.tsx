@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useCallback } from 'react'
-import { amendAndApproveSuggestion, rejectSuggestion, approveSuggestion } from './actions'
+import { amendAndApproveSuggestion, rejectSuggestion, holdSuggestion, unholdSuggestion } from './actions'
 import { formatPrice } from '@/lib/pricing-engine'
 
 interface Props {
@@ -12,6 +12,7 @@ interface Props {
   costPence: number  // pence — weighted avg or purchase_cost
   marginWarning: boolean
   marginFloor: number  // 0–1
+  isHeld?: boolean
 }
 
 function calcMargin(pricePence: number, costPence: number): number {
@@ -32,6 +33,7 @@ export function SuggestionCard({
   costPence,
   marginWarning,
   marginFloor,
+  isHeld = false,
 }: Props) {
   const [pricePounds, setPricePounds] = useState(
     (suggestedRetailPrice / 100).toFixed(2)
@@ -79,14 +81,36 @@ export function SuggestionCard({
     await rejectSuggestion(id)
   }
 
+  async function handleHold() {
+    setPending(true)
+    await holdSuggestion(id)
+  }
+
+  async function handleUnhold() {
+    setPending(true)
+    await unholdSuggestion(id)
+  }
+
   return (
-    <div className={`card border ${marginWarning ? 'border-status-amber/40' : 'border-white/5'} ${pending ? 'opacity-40 pointer-events-none' : ''}`}>
+    <div className={`card border ${
+      isHeld ? 'border-status-amber/40 opacity-60' :
+      marginWarning ? 'border-status-amber/40' : 'border-white/5'
+    } ${pending ? 'opacity-40 pointer-events-none' : ''}`}>
       {/* Header row */}
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
-          <span className={`font-bold text-lg ${dirColour}`}>{direction}</span>
+          <span className={`font-bold text-lg ${isHeld ? 'text-status-amber' : dirColour}`}>
+            {isHeld ? '⏸' : direction}
+          </span>
           <div>
-            <p className="font-medium">{productName}</p>
+            <div className="flex items-center gap-2">
+              <p className="font-medium">{productName}</p>
+              {isHeld && (
+                <span className="text-xs bg-status-amber/15 text-status-amber px-1.5 py-0.5 rounded-md">
+                  waiting
+                </span>
+              )}
+            </div>
             <p className="text-xs text-[var(--text-muted)]">
               was {formatPrice(currentRetailPrice)}
               {' · '}cost {formatPrice(costPence)}
@@ -95,6 +119,23 @@ export function SuggestionCard({
           </div>
         </div>
         <div className="flex gap-2">
+          {isHeld ? (
+            <button
+              onClick={handleUnhold}
+              className="min-h-[44px] min-w-[44px] rounded-xl bg-status-amber/20 text-status-amber font-bold text-lg flex items-center justify-center active:scale-95 transition-transform"
+              title="Resume — move back to pending"
+            >
+              ▶
+            </button>
+          ) : (
+            <button
+              onClick={handleHold}
+              className="min-h-[44px] min-w-[44px] rounded-xl bg-white/5 text-[var(--text-muted)] font-bold text-base flex items-center justify-center active:scale-95 transition-transform"
+              title="Hold — skip in Approve All"
+            >
+              ⏸
+            </button>
+          )}
           <button
             onClick={handleApprove}
             className="min-h-[44px] min-w-[44px] rounded-xl bg-status-green/20 text-status-green font-bold text-lg flex items-center justify-center active:scale-95 transition-transform"
