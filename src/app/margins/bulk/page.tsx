@@ -136,6 +136,8 @@ function BulkRow({
 export default function BulkMarginPage() {
   const [rows, setRows] = useState<RowState[]>([])
   const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [savedCount, setSavedCount] = useState<number | null>(null)
   const [weeklyUnits, setWeeklyUnits] = useState(50)
   const [activeTab, setActiveTab] = useState<'overview' | 'edit'>('overview')
   const [endDate, setEndDate] = useState(() => {
@@ -175,6 +177,30 @@ export default function BulkMarginPage() {
       const capped = r.product.market_ceiling ? Math.min(p, r.product.market_ceiling) : p
       return { ...r, newPrice: capped }
     }))
+  }
+
+  async function saveChanges() {
+    const changed = rows.filter(r => r.newPrice > 0 && r.newPrice !== r.product.retail_price)
+    if (!changed.length) return
+    setSaving(true)
+    setSavedCount(null)
+    await Promise.all(
+      changed.map(r =>
+        fetch(`/api/products/${r.product.id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ retail_price: r.newPrice }),
+        })
+      )
+    )
+    // Commit new prices into product baseline so deltas reset to zero
+    setRows(prev => prev.map(r => ({
+      ...r,
+      product: { ...r.product, retail_price: r.newPrice > 0 ? r.newPrice : r.product.retail_price },
+    })))
+    setSaving(false)
+    setSavedCount(changed.length)
+    setTimeout(() => setSavedCount(null), 3000)
   }
 
   const summary = useMemo(() => {
@@ -347,6 +373,31 @@ export default function BulkMarginPage() {
               ))}
             </div>
           </div>
+
+          {/* Save button */}
+          {(() => {
+            const changedCount = rows.filter(r => r.newPrice > 0 && r.newPrice !== r.product.retail_price).length
+            return (
+              <button
+                onClick={saveChanges}
+                disabled={saving || changedCount === 0}
+                className={`w-full rounded-xl py-3.5 text-sm font-bold min-h-[52px] mb-4 transition-colors
+                  ${savedCount !== null
+                    ? 'bg-status-green/20 text-status-green'
+                    : changedCount > 0
+                      ? 'bg-brand-accent text-white'
+                      : 'bg-white/5 text-[var(--text-muted)] cursor-not-allowed'}`}
+              >
+                {saving
+                  ? 'Saving…'
+                  : savedCount !== null
+                    ? `✓ Saved ${savedCount} price${savedCount !== 1 ? 's' : ''}`
+                    : changedCount > 0
+                      ? `Save ${changedCount} price change${changedCount !== 1 ? 's' : ''}`
+                      : 'No changes'}
+              </button>
+            )
+          })()}
 
           {/* Column headers */}
           <div className="grid grid-cols-[1fr_40px_58px_58px_36px] gap-x-1.5 px-2.5 mb-1">

@@ -163,14 +163,14 @@ export default async function OrderPage({ params }: { params: Promise<{ customer
     isInternal: customer.is_internal ?? false,
   }
 
-  const tomorrow = new Date(Date.now() + 86400000).toISOString().split('T')[0]
+  const todayStr = new Date().toISOString().split('T')[0]
 
   return (
     <div className="max-w-lg mx-auto px-4 py-4 pb-24 bg-white min-h-screen">
       <OrderClient
         customer={orderCustomer}
         products={orderProducts}
-        defaultDeliveryDate={draftOrder?.delivery_date ?? tomorrow}
+        defaultDeliveryDate={draftOrder?.delivery_date ?? todayStr}
         draftItems={Object.fromEntries(draftItems)}
         draftOrderId={draftOrder?.id ?? null}
       />

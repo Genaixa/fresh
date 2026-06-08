@@ -165,14 +165,14 @@ export default function UploadInvoicePage() {
               <p className="font-medium text-brand-accent">{file.name}</p>
             ) : (
               <>
-                <p className="font-medium">Tap to choose PDF</p>
+                <p className="font-medium">Tap to choose PDF or photo</p>
                 <p className="text-sm text-[var(--text-muted)] mt-1">or drop here</p>
               </>
             )}
             <input
               id="pdf-input"
               type="file"
-              accept="application/pdf"
+              accept="application/pdf,image/jpeg,image/png,image/heic,image/heif,image/webp"
               className="hidden"
               onChange={e => setFile(e.target.files?.[0] ?? null)}
             />

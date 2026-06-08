@@ -14,16 +14,22 @@ export async function POST(request: NextRequest) {
     const force        = form.get('force') as string | null   // 'identical' | 'replace'
     const replace_id   = form.get('replace_id') as string | null
 
-    if (!pdf) return NextResponse.json({ error: 'No PDF provided' }, { status: 400 })
+    if (!pdf) return NextResponse.json({ error: 'No file provided' }, { status: 400 })
 
-    // Convert PDF to base64
+    const allowedTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/heic', 'image/heif', 'image/webp']
+    const mimeType = pdf.type || 'application/pdf'
+    if (!allowedTypes.some(t => mimeType.startsWith(t.split('/')[0]) || mimeType === t)) {
+      return NextResponse.json({ error: 'Please upload a PDF or photo (JPEG, PNG, HEIC)' }, { status: 400 })
+    }
+
+    // Convert to base64
     const bytes = await pdf.arrayBuffer()
     const base64 = Buffer.from(bytes).toString('base64')
 
-    // ── 1. Parse the PDF first (supplier + date come from the invoice itself) ──
+    // ── 1. Parse the invoice (supplier + date come from the document itself) ──
     let parsed
     try {
-      parsed = await parseInvoicePdf(base64)
+      parsed = await parseInvoicePdf(base64, mimeType)
     } catch (err) {
       console.error('Invoice parsing error:', err)
       return NextResponse.json(

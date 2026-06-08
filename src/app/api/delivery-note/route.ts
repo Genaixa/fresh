@@ -19,7 +19,7 @@ interface PostmarkInbound {
 function normaliseSupplier(raw: string): string {
   const lower = raw.toLowerCase()
   if (lower.includes('holland') || lower.includes('devorah')) return 'JR Holland'
-  if (lower.includes('dole') || lower.includes('redbridge') || lower.includes('gateshead')) return 'Dole Wholesale Gateshead'
+  if (lower.includes('dole') || lower.includes('redbridge') || lower.includes('gateshead') || lower.includes('total produce')) return 'Total Produce'
   return raw
 }
 

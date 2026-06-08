@@ -63,6 +63,53 @@ export async function rejectAll() {
   revalidatePath('/pricing')
 }
 
+export async function recalculateSuggestions() {
+  const supabase = await createClient()
+
+  // Load all active products with a cost set
+  const { data: products } = await supabase
+    .from('products')
+    .select('id, purchase_cost, retail_price, price_multiplier, market_ceiling, margin_floor, case_size')
+    .eq('is_active', true)
+    .gt('purchase_cost', 0)
+
+  if (!products?.length) { revalidatePath('/pricing'); return }
+
+  // Clear existing pending suggestions so we start fresh
+  await supabase.from('price_suggestions').delete().eq('status', 'pending')
+
+  const now = new Date().toISOString()
+  const toInsert = []
+
+  for (const p of products) {
+    const unit_cost = p.case_size > 1 ? p.purchase_cost / p.case_size : p.purchase_cost
+    const suggested = Math.round(unit_cost * p.price_multiplier)
+    const capped    = p.market_ceiling ? Math.min(suggested, p.market_ceiling) : suggested
+
+    // Only suggest a change if the gap is more than 5p
+    if (Math.abs(capped - p.retail_price) <= 5) continue
+
+    const margin = capped > 0 ? (capped - unit_cost) / capped : 0
+
+    toInsert.push({
+      product_id:             p.id,
+      current_retail_price:   p.retail_price,
+      suggested_retail_price: capped,
+      rule_applied:           p.market_ceiling && suggested > p.market_ceiling ? 'ceiling' : margin < p.margin_floor ? 'floor' : 'multiplier',
+      margin_percentage:      margin,
+      margin_warning:         margin < p.margin_floor,
+      status:                 'pending',
+      created_at:             now,
+    })
+  }
+
+  if (toInsert.length) {
+    await supabase.from('price_suggestions').insert(toInsert)
+  }
+
+  revalidatePath('/pricing')
+}
+
 export async function amendAndApproveSuggestion(id: string, formData: FormData) {
   const raw = formData.get('price_pounds') as string
   const customPrice = Math.round(parseFloat(raw) * 100)

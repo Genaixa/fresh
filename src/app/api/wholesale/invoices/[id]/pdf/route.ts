@@ -69,7 +69,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
 <div class="header">
   <div>
     <div class="brand">Fresh &amp; Fruity</div>
-    <div class="brand-sub">193 Coatsworth Road, Bensham<br>Gateshead NE8 1SR<br>Tel: 0191 XXX XXXX</div>
+    <div class="brand-sub">193 Coatsworth Road, Bensham<br>Gateshead NE8 1SR<br>Tel: 0191 478 4444</div>
   </div>
   <div class="inv-meta">
     <div class="inv-number">${inv.invoice_number}</div>

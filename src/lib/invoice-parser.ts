@@ -76,10 +76,11 @@ Box spec rules — read BOTH Product Description AND Brand column:
 - If you cannot determine box spec, set unit_type="count", units_per_case=1, box_weight_kg=null`
 
 /**
- * Parse a market invoice PDF using OpenRouter.
- * base64Pdf: the PDF as a base64-encoded string.
+ * Parse a market invoice PDF or photo using OpenRouter vision.
+ * base64Content: the file as a base64-encoded string.
+ * mimeType: the file MIME type (default: application/pdf).
  */
-export async function parseInvoicePdf(base64Pdf: string): Promise<ParsedInvoice> {
+export async function parseInvoicePdf(base64Content: string, mimeType = 'application/pdf'): Promise<ParsedInvoice> {
   const model = process.env.OPENROUTER_MODEL ?? DEFAULT_MODEL
 
   const response = await getClient().chat.completions.create({
@@ -92,7 +93,7 @@ export async function parseInvoicePdf(base64Pdf: string): Promise<ParsedInvoice>
           {
             type: 'image_url',
             image_url: {
-              url: `data:application/pdf;base64,${base64Pdf}`,
+              url: `data:${mimeType};base64,${base64Content}`,
             },
           },
           {

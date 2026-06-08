@@ -24,6 +24,15 @@ export default async function ReviewInvoicePage({
 
   if (!invoice) notFound()
 
+  // Generate a short-lived signed URL for the original PDF if one was stored
+  let pdfSignedUrl: string | null = null
+  if (invoice.pdf_url) {
+    const { data: signed } = await supabase.storage
+      .from('invoices')
+      .createSignedUrl(invoice.pdf_url, 3600)
+    pdfSignedUrl = signed?.signedUrl ?? null
+  }
+
   const { data: items } = await supabase
     .from('purchase_invoice_items')
     .select('*, product:products(id,name)')
@@ -52,10 +61,26 @@ export default async function ReviewInvoicePage({
                                            flex items-center justify-center text-xl">
           ←
         </Link>
-        <div>
+        <div className="flex-1 min-w-0">
           <h1 className="text-xl font-bold">Review Invoice</h1>
-          <p className="text-xs text-[var(--text-muted)]">{invoice.supplier_name}</p>
+          <p className="text-xs text-[var(--text-muted)]">
+            {invoice.supplier_name} · {new Date(invoice.invoice_date).toLocaleDateString('en-GB', {
+              day: '2-digit', month: 'short', year: 'numeric',
+            })}
+          </p>
         </div>
+        {pdfSignedUrl && (
+          <a
+            href={pdfSignedUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex flex-col items-center justify-center min-w-[48px] min-h-[48px]
+                       text-brand-accent text-xs gap-0.5 shrink-0"
+          >
+            <span className="text-xl leading-none">📄</span>
+            <span>PDF</span>
+          </a>
+        )}
       </div>
 
       {/* Summary — tap to filter */}

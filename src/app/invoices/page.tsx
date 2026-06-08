@@ -3,16 +3,6 @@ import Link from 'next/link'
 import { InvoicesClient } from './InvoicesClient'
 import { createClient } from '@/lib/supabase/server'
 
-export interface ArchiveInvoice {
-  id: number
-  supplier: string
-  doc_type: string
-  date: string | null
-  invoice_number: string | null
-  reference: string | null
-  filename: string
-}
-
 export interface PendingInvoice {
   id: string
   supplier_name: string
@@ -20,25 +10,48 @@ export interface PendingInvoice {
   created_at: string
 }
 
+export interface ConfirmedInvoice {
+  id: string
+  supplier_name: string
+  invoice_date: string
+  status: string
+  item_count: number
+}
+
 export default async function InvoicesPage() {
-  let invoices: ArchiveInvoice[] = []
-
-  try {
-    const res = await fetch('http://localhost:8000/invoices?limit=1000', {
-      cache: 'no-store',
-    })
-    const data = await res.json()
-    invoices = data.results ?? []
-  } catch {
-    // API unreachable — show empty state
-  }
-
   const supabase = await createClient()
+
   const { data: pending } = await supabase
     .from('purchase_invoices')
     .select('id, supplier_name, invoice_date, created_at')
     .eq('status', 'uploaded')
     .order('created_at', { ascending: false })
+
+  const { data: confirmedRaw } = await supabase
+    .from('purchase_invoices')
+    .select('id, supplier_name, invoice_date, status')
+    .in('status', ['confirmed', 'processed'])
+    .order('invoice_date', { ascending: false })
+    .limit(60)
+
+  // Get item counts in a second pass (avoids complex aggregate query)
+  const confirmedIds = (confirmedRaw ?? []).map(i => i.id)
+  const { data: itemCounts } = confirmedIds.length
+    ? await supabase
+        .from('purchase_invoice_items')
+        .select('invoice_id')
+        .in('invoice_id', confirmedIds)
+    : { data: [] }
+
+  const countMap = new Map<string, number>()
+  for (const row of itemCounts ?? []) {
+    countMap.set(row.invoice_id, (countMap.get(row.invoice_id) ?? 0) + 1)
+  }
+
+  const confirmed: ConfirmedInvoice[] = (confirmedRaw ?? []).map(i => ({
+    ...i,
+    item_count: countMap.get(i.id) ?? 0,
+  }))
 
   const pendingInvoices: PendingInvoice[] = pending ?? []
 
@@ -77,7 +90,7 @@ export default async function InvoicesPage() {
         </div>
       )}
 
-      <InvoicesClient invoices={invoices} />
+      <InvoicesClient confirmed={confirmed} />
       <NavBar />
     </div>
   )

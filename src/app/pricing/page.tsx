@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { NavBar } from '@/components/ui/NavBar'
 import { formatPrice, formatMargin } from '@/lib/pricing-engine'
-import { approveAll, rejectAll, approveSuggestion, rejectSuggestion, amendAndApproveSuggestion } from './actions'
+import { approveAll, rejectAll, approveSuggestion, rejectSuggestion, amendAndApproveSuggestion, recalculateSuggestions } from './actions'
 import type { PriceSuggestion } from '@/types'
 
 export default async function PricingSuggestionsPage({
@@ -60,9 +60,14 @@ export default async function PricingSuggestionsPage({
         <div className="card text-center py-12">
           <p className="text-4xl mb-3">✓</p>
           <p className="font-semibold">All prices up to date</p>
-          <p className="text-sm text-[var(--text-muted)] mt-1">
+          <p className="text-sm text-[var(--text-muted)] mt-1 mb-6">
             Upload an invoice to get new suggestions
           </p>
+          <form action={recalculateSuggestions}>
+            <button className="btn-primary px-6 py-2.5 text-sm">
+              Recalculate from current costs
+            </button>
+          </form>
         </div>
       ) : (
         <>
