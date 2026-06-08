@@ -13,6 +13,7 @@ export default async function InvoiceMappingPage() {
     .from('supplier_product_mappings')
     .select('id, raw_description, supplier_name, status, product_id, unit_type, units_per_case, box_weight_kg, last_price_p, appearances')
     .order('appearances', { ascending: false })
+    .range(0, 9999)
 
   const { data: products } = await supabase
     .from('products')
