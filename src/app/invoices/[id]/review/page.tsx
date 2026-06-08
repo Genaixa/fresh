@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
-import { confirmInvoiceAndGeneratePrices, rematchInvoiceItems } from './actions'
+import { confirmInvoiceAndGeneratePrices, rematchInvoiceItems, saveInvoiceNumber } from './actions'
 import type { PurchaseInvoiceItem, Product } from '@/types'
 import { formatPrice } from '@/lib/pricing-engine'
 import { getInvoiceAnomalies } from '@/lib/data-health'
@@ -96,7 +96,7 @@ export default async function ReviewInvoicePage({
   return (
     <div className="page pb-24">
       {/* Header */}
-      <div className="flex items-center gap-3 mb-6">
+      <div className="flex items-center gap-3 mb-4">
         <Link href="/invoices" className="text-brand-accent min-h-[48px] min-w-[48px]
                                            flex items-center justify-center text-xl">
           ←
@@ -118,6 +118,23 @@ export default async function ReviewInvoicePage({
           </a>
         )}
       </div>
+
+      {/* Invoice number */}
+      <form
+        action={saveInvoiceNumber.bind(null, id)}
+        className="card flex items-center gap-3 mb-4 py-2.5 px-3"
+      >
+        <span className="text-xs text-[var(--text-muted)] shrink-0">Invoice ref</span>
+        <input
+          name="invoice_number"
+          defaultValue={invoice.invoice_number ?? ''}
+          placeholder="e.g. DN-123456"
+          className="flex-1 bg-transparent text-sm font-mono font-semibold outline-none placeholder:text-white/20"
+        />
+        <button type="submit" className="text-xs text-brand-accent shrink-0 px-2 py-1 rounded-lg border border-brand-accent/30">
+          Save
+        </button>
+      </form>
 
       {/* Matched / Unmatched summary */}
       <div className="card mb-4 flex gap-4">

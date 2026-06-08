@@ -7,6 +7,13 @@ import { calculateSuggestedPrice, getWeightedAvgCostBatch } from '@/lib/pricing-
 import { fuzzyMatchProduct, saveMapping } from '@/lib/invoice-parser'
 import type { Product } from '@/types'
 
+export async function saveInvoiceNumber(invoiceId: string, formData: FormData) {
+  const number = (formData.get('invoice_number') as string ?? '').trim()
+  const supabase = await createClient()
+  await supabase.from('purchase_invoices').update({ invoice_number: number || null }).eq('id', invoiceId)
+  revalidatePath(`/invoices/${invoiceId}/review`)
+}
+
 export async function rematchInvoiceItems(invoiceId: string) {
   const supabase = await createClient()
 
