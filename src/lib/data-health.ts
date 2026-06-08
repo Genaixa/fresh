@@ -92,8 +92,10 @@ export async function getProductHealthIssues(
       continue
     }
 
-    // Cost spike: weighted 7-day avg is >40% above stored purchase_cost baseline
-    if (weighted && cost > 0 && weighted > cost * 1.4) {
+    // Cost spike: weighted 7-day avg is 40%–200% above purchase_cost baseline.
+    // Ratios above 3x are almost always a unit mismatch in invoice data (case
+    // price vs per-unit price), not a genuine price movement — suppress them.
+    if (weighted && cost > 0 && weighted > cost * 1.4 && weighted < cost * 3) {
       issues.push({ ...base, severity: 'info', type: 'cost_spike',
         detail: `Cost rose to ${fmt(weighted)} (was ${fmt(cost)}, +${Math.round((weighted/cost-1)*100)}%)` })
     }
