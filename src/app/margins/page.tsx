@@ -26,15 +26,15 @@ export default async function MarginsPage() {
     (sum: number, w: { total_cost: number }) => sum + w.total_cost, 0
   )
 
-  // Per-product margins
-  const productMargins = (products ?? []).map((p: Product) => {
-    const gross = p.retail_price > 0
-      ? (p.retail_price - p.purchase_cost) / p.retail_price
-      : 0
-    return { product: p, margin: gross }
-  })
+  // Per-product margins — only include products where we know both cost and retail
+  const productMargins = (products ?? [])
+    .filter((p: Product) => p.retail_price > 0 && p.purchase_cost > 0)
+    .map((p: Product) => {
+      const gross = (p.retail_price - p.purchase_cost) / p.retail_price
+      return { product: p, margin: gross }
+    })
 
-  // Overall blended margin (simple average, waste-adjusted notionally)
+  // Overall blended margin (simple average of products with known cost)
   const avgMargin = productMargins.length
     ? productMargins.reduce((sum: number, pm: { margin: number }) => sum + pm.margin, 0) /
       productMargins.length
