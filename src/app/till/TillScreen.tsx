@@ -13,6 +13,47 @@ type TillProduct = {
   retail_price: number
 }
 
+// Ordered longest-match-first to avoid partial collisions (e.g. grapefruit before grape)
+const EMOJI_MAP: [string, string][] = [
+  ['watermelon',   '🍉'],
+  ['sweet potato', '🍠'],
+  ['grapefruit',   ''],    // no good emoji — would confuse with orange
+  ['blueberr',     '🫐'],
+  ['strawberr',    '🍓'],
+  ['aubergine',    '🍆'],
+  ['pineapple',    '🍍'],
+  ['broccoli',     '🥦'],
+  ['avocado',      '🥑'],
+  ['coconut',      '🥥'],
+  ['cucumber',     '🥒'],
+  ['mushroom',     '🍄'],
+  ['banana',       '🍌'],
+  ['garlic',       '🧄'],
+  ['grape',        '🍇'],
+  ['lemon',        '🍋'],
+  ['mango',        '🥭'],
+  ['melon',        '🍈'],
+  ['onion',        '🧅'],
+  ['orange',       '🍊'],
+  ['peach',        '🍑'],
+  ['pepper',       '🫑'],
+  ['tomato',       '🍅'],
+  ['potato',       '🥔'],
+  ['carrot',       '🥕'],
+  ['cherry',       '🍒'],
+  ['kiwi',         '🥝'],
+  ['pear',         '🍐'],
+  ['apple',        '🍎'],
+]
+
+function getEmoji(name: string): string {
+  const lower = name.toLowerCase()
+  for (const [keyword, emoji] of EMOJI_MAP) {
+    if (lower.includes(keyword)) return emoji
+  }
+  return ''
+}
+
 type BasketItem = {
   key: string
   product_id: string
@@ -245,18 +286,24 @@ export function TillScreen({ products }: { products: TillProduct[] }) {
 
           <div className="flex-1 overflow-y-auto px-2 pb-2">
             <div className="grid grid-cols-3 gap-1.5">
-              {filtered.map(p => (
-                <button
-                  key={p.id}
-                  onPointerDown={() => tapProduct(p)}
-                  className="card p-2.5 text-left active:scale-95 active:bg-white/10 transition-transform min-h-[68px] flex flex-col justify-between"
-                >
-                  <span className="text-xs font-medium leading-snug">{p.name}</span>
-                  <span className="text-xs text-brand-accent font-semibold">
-                    {formatPrice(p.retail_price)}{p.unit === 'kg' ? '/kg' : ''}
-                  </span>
-                </button>
-              ))}
+              {filtered.map(p => {
+                const emoji = getEmoji(p.name)
+                return (
+                  <button
+                    key={p.id}
+                    onPointerDown={() => tapProduct(p)}
+                    className="card p-2.5 text-left active:scale-95 active:bg-white/10 transition-transform min-h-[68px] flex flex-col justify-between"
+                  >
+                    <div>
+                      {emoji && <span className="text-2xl leading-none">{emoji}</span>}
+                      <p className="text-xs font-medium leading-snug mt-0.5">{p.name}</p>
+                    </div>
+                    <span className="text-xs text-brand-accent font-semibold">
+                      {formatPrice(p.retail_price)}{p.unit === 'kg' ? '/kg' : ''}
+                    </span>
+                  </button>
+                )
+              })}
               {filtered.length === 0 && (
                 <p className="col-span-3 text-center text-sm text-[var(--text-muted)] py-8">No products</p>
               )}
