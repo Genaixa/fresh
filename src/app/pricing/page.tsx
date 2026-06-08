@@ -22,18 +22,38 @@ export default async function PricingSuggestionsPage({
 
   const { data: suggestions } = await supabase
     .from('price_suggestions')
-    .select('*, product:products(name, margin_floor, purchase_cost, category), invoice:purchase_invoices(id, invoice_date, supplier_name)')
+    .select('*, product:products(name, margin_floor, purchase_cost, category)')
     .in('status', ['pending', 'on_hold'])
     .order('created_at', { ascending: false })
 
   type S = PriceSuggestion & {
     product: { name: string; margin_floor: number; purchase_cost: number; category: string }
-    invoice: { id: string; invoice_date: string; supplier_name: string } | null
     status: SuggestionStatus
   }
 
   const pending = (suggestions ?? []) as S[]
   const pendingCount = pending.filter(s => s.status === 'pending').length
+
+  // Look up most recent confirmed invoice per product (suggestions don't store invoice_id)
+  const productIds = pending.map(s => s.product_id).filter(Boolean)
+  type InvoiceRef = { id: string; invoice_date: string; supplier_name: string; pdf_url: string | null }
+  const invoiceByProduct: Record<string, InvoiceRef> = {}
+
+  if (productIds.length > 0) {
+    const { data: invoiceItems } = await supabase
+      .from('purchase_invoice_items')
+      .select('product_id, invoice:purchase_invoices!inner(id, invoice_date, supplier_name, pdf_url)')
+      .in('product_id', productIds)
+      .eq('invoice.status', 'processed')
+      .order('invoice(invoice_date)', { ascending: false })
+
+    for (const row of invoiceItems ?? []) {
+      if (!invoiceByProduct[row.product_id]) {
+        const inv = row.invoice as unknown as InvoiceRef
+        invoiceByProduct[row.product_id] = inv
+      }
+    }
+  }
 
   function isCurrentlyBelowFloor(s: S): boolean {
     const cost  = s.product?.purchase_cost ?? 0
@@ -156,22 +176,25 @@ export default async function PricingSuggestionsPage({
           </div>
 
           <div className="space-y-2">
-            {displayed.map((s: S) => (
-              <SuggestionCard
-                key={s.id}
-                id={s.id}
-                productName={s.product?.name ?? ''}
-                currentRetailPrice={s.current_retail_price}
-                suggestedRetailPrice={s.suggested_retail_price}
-                costPence={s.product?.purchase_cost ?? 0}
-                marginWarning={s.margin_warning}
-                marginFloor={s.product?.margin_floor ?? 0.2}
-                isHeld={s.status === 'on_hold'}
-                invoiceId={s.invoice?.id ?? null}
-                invoiceDate={s.invoice?.invoice_date ?? null}
-                supplierName={s.invoice?.supplier_name ?? null}
-              />
-            ))}
+            {displayed.map((s: S) => {
+              const inv = invoiceByProduct[s.product_id] ?? null
+              return (
+                <SuggestionCard
+                  key={s.id}
+                  id={s.id}
+                  productName={s.product?.name ?? ''}
+                  currentRetailPrice={s.current_retail_price}
+                  suggestedRetailPrice={s.suggested_retail_price}
+                  costPence={s.product?.purchase_cost ?? 0}
+                  marginWarning={s.margin_warning}
+                  marginFloor={s.product?.margin_floor ?? 0.2}
+                  isHeld={s.status === 'on_hold'}
+                  invoiceId={inv?.id ?? null}
+                  invoiceDate={inv?.invoice_date ?? null}
+                  supplierName={inv?.supplier_name ?? null}
+                />
+              )
+            })}
           </div>
 
           {/* Bulk actions */}

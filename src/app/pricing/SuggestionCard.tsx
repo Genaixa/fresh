@@ -126,9 +126,9 @@ export function SuggestionCard({
             {invoiceId && invoiceDate && (
               <Link
                 href={`/invoices/${invoiceId}/review`}
-                className="text-xs text-brand-accent/70 underline underline-offset-2"
+                className="inline-flex items-center gap-1 text-xs bg-white/5 border border-white/10 px-2 py-1 rounded-lg text-[var(--text-muted)] active:bg-white/10 mt-0.5"
               >
-                {supplierName} · {new Date(invoiceDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
+                📄 {supplierName} · {new Date(invoiceDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
               </Link>
             )}
           </div>
@@ -137,18 +137,16 @@ export function SuggestionCard({
           {isHeld ? (
             <button
               onClick={handleUnhold}
-              className="min-h-[44px] min-w-[44px] rounded-xl bg-status-amber/20 text-status-amber font-bold text-lg flex items-center justify-center active:scale-95 transition-transform"
-              title="Resume — move back to pending"
+              className="min-h-[44px] px-3 rounded-xl bg-status-amber/20 text-status-amber text-xs font-semibold flex items-center justify-center active:scale-95 transition-transform"
             >
-              ▶
+              Resume
             </button>
           ) : (
             <button
               onClick={handleHold}
-              className="min-h-[44px] min-w-[44px] rounded-xl bg-white/5 text-[var(--text-muted)] font-bold text-base flex items-center justify-center active:scale-95 transition-transform"
-              title="Hold — skip in Approve All"
+              className="min-h-[44px] px-3 rounded-xl bg-white/5 text-[var(--text-muted)] text-xs font-semibold flex items-center justify-center active:scale-95 transition-transform"
             >
-              ⏸
+              Hold
             </button>
           )}
           <button
