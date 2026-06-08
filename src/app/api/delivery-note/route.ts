@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/service'
 import { parseInvoicePdf, fuzzyMatchProduct, lookupMapping, saveMapping, type BoxSpec } from '@/lib/invoice-parser'
+import { autoConfirmInvoice } from '@/lib/confirm-invoice'
 
 interface PostmarkAttachment {
   Name: string
@@ -84,7 +85,6 @@ export async function POST(request: NextRequest) {
         pdfStoragePath = null
       }
 
-      // Create invoice as 'uploaded' — requires David's confirmation
       const { data: invoice, error: invErr } = await supabase
         .from('purchase_invoices')
         .insert({
@@ -148,6 +148,9 @@ export async function POST(request: NextRequest) {
       if (itemsToInsert.length > 0) {
         await supabase.from('purchase_invoice_items').insert(itemsToInsert)
       }
+
+      // Auto-confirm: update costs and generate price suggestions immediately
+      await autoConfirmInvoice(supabase, invoice.id)
 
       processed++
     } catch (err) {

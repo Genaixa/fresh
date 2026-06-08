@@ -1,59 +1,33 @@
 import { NavBar } from '@/components/ui/NavBar'
 import Link from 'next/link'
-import { InvoicesClient } from './InvoicesClient'
 import { createClient } from '@/lib/supabase/server'
-
-export interface PendingInvoice {
-  id: string
-  supplier_name: string
-  invoice_date: string
-  created_at: string
-}
-
-export interface ConfirmedInvoice {
-  id: string
-  supplier_name: string
-  invoice_date: string
-  status: string
-  item_count: number
-}
 
 export default async function InvoicesPage() {
   const supabase = await createClient()
 
-  const { data: pending } = await supabase
-    .from('purchase_invoices')
-    .select('id, supplier_name, invoice_date, created_at')
-    .eq('status', 'uploaded')
-    .order('created_at', { ascending: false })
-
-  const { data: confirmedRaw } = await supabase
+  const { data: invoices } = await supabase
     .from('purchase_invoices')
     .select('id, supplier_name, invoice_date, status')
-    .in('status', ['confirmed', 'processed'])
+    .in('status', ['uploaded', 'confirmed', 'processed'])
     .order('invoice_date', { ascending: false })
     .limit(60)
 
-  // Get item counts in a second pass (avoids complex aggregate query)
-  const confirmedIds = (confirmedRaw ?? []).map(i => i.id)
-  const { data: itemCounts } = confirmedIds.length
+  const ids = (invoices ?? []).map(i => i.id)
+
+  const { data: itemRows } = ids.length
     ? await supabase
         .from('purchase_invoice_items')
-        .select('invoice_id')
-        .in('invoice_id', confirmedIds)
+        .select('invoice_id, is_matched')
+        .in('invoice_id', ids)
     : { data: [] }
 
-  const countMap = new Map<string, number>()
-  for (const row of itemCounts ?? []) {
-    countMap.set(row.invoice_id, (countMap.get(row.invoice_id) ?? 0) + 1)
+  const stats = new Map<string, { total: number; unmatched: number }>()
+  for (const row of itemRows ?? []) {
+    const s = stats.get(row.invoice_id) ?? { total: 0, unmatched: 0 }
+    s.total++
+    if (!row.is_matched) s.unmatched++
+    stats.set(row.invoice_id, s)
   }
-
-  const confirmed: ConfirmedInvoice[] = (confirmedRaw ?? []).map(i => ({
-    ...i,
-    item_count: countMap.get(i.id) ?? 0,
-  }))
-
-  const pendingInvoices: PendingInvoice[] = pending ?? []
 
   return (
     <div className="page pb-24">
@@ -64,33 +38,38 @@ export default async function InvoicesPage() {
         </Link>
       </div>
 
-      {pendingInvoices.length > 0 && (
-        <div className="mb-6">
-          <p className="section-title text-status-amber">Needs confirming</p>
-          <div className="space-y-2">
-            {pendingInvoices.map(inv => (
-              <Link
-                key={inv.id}
-                href={`/invoices/${inv.id}/review`}
-                className="card flex items-center justify-between border border-status-amber/30
-                           min-h-[64px] active:scale-[0.99] transition-transform"
-              >
-                <div>
-                  <p className="font-semibold text-sm">{inv.supplier_name}</p>
-                  <p className="text-xs text-[var(--text-muted)] mt-0.5">
-                    {new Date(inv.invoice_date).toLocaleDateString('en-GB', {
-                      day: '2-digit', month: 'short', year: 'numeric',
-                    })}
-                  </p>
-                </div>
-                <span className="text-status-amber font-bold ml-4">Review →</span>
-              </Link>
-            ))}
-          </div>
-        </div>
-      )}
+      <div className="space-y-2">
+        {(invoices ?? []).map(inv => {
+          const s = stats.get(inv.id)
+          const hasUnmatched = (s?.unmatched ?? 0) > 0
+          return (
+            <Link
+              key={inv.id}
+              href={`/invoices/${inv.id}/review`}
+              className="card flex items-center justify-between min-h-[64px] active:scale-[0.99] transition-transform"
+            >
+              <div>
+                <p className="font-semibold text-sm">{inv.supplier_name}</p>
+                <p className="text-xs text-[var(--text-muted)] mt-0.5">
+                  {new Date(inv.invoice_date).toLocaleDateString('en-GB', {
+                    day: '2-digit', month: 'short', year: 'numeric',
+                  })}
+                  {s && <span className="ml-2 opacity-60">· {s.total} items</span>}
+                </p>
+              </div>
+              <div className="flex items-center gap-2 ml-4 shrink-0">
+                {hasUnmatched && (
+                  <span className="text-xs bg-status-amber/15 text-status-amber px-2 py-0.5 rounded-full">
+                    {s!.unmatched} unmatched
+                  </span>
+                )}
+                <span className="text-[var(--text-muted)] font-bold">→</span>
+              </div>
+            </Link>
+          )
+        })}
+      </div>
 
-      <InvoicesClient confirmed={confirmed} />
       <NavBar />
     </div>
   )
