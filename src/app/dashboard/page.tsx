@@ -50,18 +50,22 @@ export default async function DashboardPage() {
     .order('created_at', { ascending: false })
     .limit(20)
 
-  // Only alert if the dangerous value is actually the current cost right now
+  // Only alert if the dangerous value is in the DB now AND it's not an intentional loss leader
   const blockedProductIds = [...new Set((blockedAudit ?? []).map(a => a.product_id).filter(Boolean))]
-  let blockedCosts: typeof blockedAudit = []
+  let blockedCosts: (NonNullable<typeof blockedAudit>[0] & { product_id: string })[] = []
   if (blockedProductIds.length > 0) {
     const { data: currentCosts } = await supabase
       .from('products')
-      .select('id, purchase_cost')
+      .select('id, purchase_cost, margin_floor')
       .in('id', blockedProductIds)
-    const costMap = new Map((currentCosts ?? []).map(p => [p.id, p.purchase_cost]))
-    blockedCosts = (blockedAudit ?? []).filter(a =>
-      a.product_id && costMap.get(a.product_id) === a.proposed_cost
-    )
+    const productMap = new Map((currentCosts ?? []).map(p => [p.id, p]))
+    blockedCosts = (blockedAudit ?? []).filter((a): a is typeof a & { product_id: string } => {
+      if (!a.product_id) return false
+      const p = productMap.get(a.product_id)
+      if (!p) return false
+      if (p.margin_floor < 0) return false          // intentional loss leader — not a bug
+      return p.purchase_cost === a.proposed_cost    // bad value actually got in
+    })
   }
   const blockedCostCount = blockedCosts.length
 
@@ -166,23 +170,21 @@ export default async function DashboardPage() {
       )}
 
       {/* Blocked cost — bad value actually got into the DB (rare/emergency) */}
-      {blockedCostCount > 0 && (
-        <Link href="/products" className="block mb-4">
+      {blockedCostCount > 0 && blockedCosts.map(b => (
+        <Link key={b.product_id} href={`/products/${b.product_id}`} className="block mb-4">
           <div className="card border-2 border-status-red bg-status-red/10">
             <div className="flex items-center justify-between">
               <div>
-                <p className="font-bold text-status-red text-sm">
-                  Wrong cost detected — fix now
-                </p>
+                <p className="font-bold text-status-red text-sm">Wrong cost — fix now</p>
                 <p className="text-xs text-[var(--text-muted)] mt-0.5">
-                  {blockedCosts?.map(b => b.product_name).join(', ')} →
+                  {b.product_name} → tap to fix
                 </p>
               </div>
               <span className="text-2xl flex-shrink-0 ml-3">🛡</span>
             </div>
           </div>
         </Link>
-      )}
+      ))}
 
       {/* Combined price health — all health issues in one card */}
       {(atLossCount > 0 || spikeCount > 0 || unpricedCount > 0) && (() => {

@@ -13,6 +13,8 @@ export default async function ProductsPage({
   const { category, q } = await searchParams
   const supabase = await createClient()
 
+  const showIssues = category === 'issues'
+
   let query = supabase
     .from('products')
     .select('*')
@@ -20,14 +22,29 @@ export default async function ProductsPage({
     .order('category')
     .order('name')
 
-  if (category && category !== 'all') {
-    query = query.eq('category', category)
-  }
-  if (q) {
-    query = query.ilike('name', `%${q}%`)
+  if (!showIssues) {
+    if (category && category !== 'all') {
+      query = query.eq('category', category)
+    }
+    if (q) {
+      query = query.ilike('name', `%${q}%`)
+    }
   }
 
-  const { data: products } = await query
+  const { data: allProducts } = await query
+
+  // Issues tab: at-loss (non-intentional) + below margin floor
+  const products = showIssues
+    ? (allProducts ?? []).filter((p: Product) => {
+        if (p.margin_floor < 0) return false  // intentional loss leaders excluded
+        if (p.retail_price > 0 && p.purchase_cost > p.retail_price) return true  // at a loss
+        if (p.retail_price > 0 && p.purchase_cost > 0) {
+          const margin = (p.retail_price - p.purchase_cost) / p.retail_price
+          if (margin < p.margin_floor) return true  // below floor
+        }
+        return false
+      })
+    : (allProducts ?? [])
 
   return (
     <div className="page pb-24">
@@ -65,6 +82,33 @@ export default async function ProductsPage({
             {cat.charAt(0).toUpperCase() + cat.slice(1)}
           </Link>
         ))}
+        {(() => {
+          const issueCount = (allProducts ?? []).filter((p: Product) => {
+            if (p.margin_floor < 0) return false
+            if (p.retail_price > 0 && p.purchase_cost > p.retail_price) return true
+            if (p.retail_price > 0 && p.purchase_cost > 0) {
+              return (p.retail_price - p.purchase_cost) / p.retail_price < p.margin_floor
+            }
+            return false
+          }).length
+          if (issueCount === 0) return null
+          return (
+            <Link
+              href="/products?category=issues"
+              className={`rounded-full px-4 py-1.5 text-sm font-medium whitespace-nowrap min-h-[36px]
+                          flex items-center gap-1.5
+                          ${showIssues
+                            ? 'bg-status-red text-white'
+                            : 'bg-status-red/15 text-status-red'}`}
+            >
+              ⚠ Issues
+              <span className={`rounded-full text-xs px-1.5 py-0.5 font-bold
+                ${showIssues ? 'bg-white/20' : 'bg-status-red/20'}`}>
+                {issueCount}
+              </span>
+            </Link>
+          )
+        })()}
       </div>
 
       {/* Product list */}
