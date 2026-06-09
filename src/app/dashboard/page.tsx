@@ -39,21 +39,31 @@ export default async function DashboardPage() {
   const unpricedCount = healthIssues.filter(i => i.type === 'unpriced').length
   const spikeCount    = healthIssues.filter(i => i.type === 'cost_spike').length
 
-  // Cost audit alerts from the last 7 days
+  // Blocked cost writes where the bad value actually got into the DB
+  // (trigger correctly protected = current cost stayed at old_cost = nothing to fix)
   const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
-  const { data: allCostAlerts } = await supabase
+  const { data: blockedAudit } = await supabase
     .from('cost_change_audit')
-    .select('product_name, old_cost, proposed_cost, reason, blocked, source, created_at')
+    .select('product_id, product_name, old_cost, proposed_cost')
+    .eq('blocked', true)
     .gte('created_at', sevenDaysAgo)
     .order('created_at', { ascending: false })
-    .limit(10)
+    .limit(20)
 
-  // Blocked = data was protected (red — needs fixing)
-  const blockedCosts      = (allCostAlerts ?? []).filter(a => a.blocked)
-  const blockedCostCount  = blockedCosts.length
-  // Warnings = cron flagged genuine cost rises (amber — consider repricing)
-  const cronSpikes        = (allCostAlerts ?? []).filter(a => !a.blocked && a.source === 'cron')
-  const cronSpikeCount    = cronSpikes.length
+  // Only alert if the dangerous value is actually the current cost right now
+  const blockedProductIds = [...new Set((blockedAudit ?? []).map(a => a.product_id).filter(Boolean))]
+  let blockedCosts: typeof blockedAudit = []
+  if (blockedProductIds.length > 0) {
+    const { data: currentCosts } = await supabase
+      .from('products')
+      .select('id, purchase_cost')
+      .in('id', blockedProductIds)
+    const costMap = new Map((currentCosts ?? []).map(p => [p.id, p.purchase_cost]))
+    blockedCosts = (blockedAudit ?? []).filter(a =>
+      a.product_id && costMap.get(a.product_id) === a.proposed_cost
+    )
+  }
+  const blockedCostCount = blockedCosts.length
 
   const now = new Date()
   const hour = now.getHours()
@@ -184,35 +194,6 @@ export default async function DashboardPage() {
         </div>
       )}
 
-      {/* Cron cost spike warnings — genuine price rises to act on */}
-      {cronSpikeCount > 0 && (
-        <div className="card border border-status-amber/40 bg-status-amber/5 mb-4">
-          <div className="flex items-start gap-3">
-            <span className="text-2xl flex-shrink-0">📈</span>
-            <div className="flex-1 min-w-0">
-              <p className="font-semibold text-status-amber text-sm">
-                {cronSpikeCount} {cronSpikeCount === 1 ? 'product' : 'products'} cost more this week — check prices
-              </p>
-              <p className="text-xs text-[var(--text-muted)] mt-0.5 mb-2">
-                Your margin on {cronSpikeCount === 1 ? 'this product' : 'these products'} may have dropped since the last delivery.
-              </p>
-              {cronSpikes.slice(0,4).map((b, i) => (
-                <p key={i} className="text-xs mb-0.5">
-                  <span className="text-white font-medium">{b.product_name}</span>
-                  {b.old_cost && b.proposed_cost ? (
-                    <span className="text-[var(--text-muted)]">
-                      {' '}— {b.old_cost}p → {b.proposed_cost}p
-                    </span>
-                  ) : null}
-                </p>
-              ))}
-              <Link href="/pricing" className="text-xs text-status-amber font-semibold mt-2 inline-block">
-                Review prices →
-              </Link>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Selling at a loss — highest urgency */}
       {atLossCount > 0 && (
