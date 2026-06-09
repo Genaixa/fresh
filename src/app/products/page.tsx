@@ -4,6 +4,7 @@ import { NavBar } from '@/components/ui/NavBar'
 import { TrafficDot, marginStatus } from '@/components/ui/TrafficDot'
 import { formatPrice } from '@/lib/pricing-engine'
 import { SearchBox } from './SearchBox'
+import { SupplierSelect } from './SupplierSelect'
 import type { Product } from '@/types'
 
 type Sort = 'name_asc' | 'name_desc' | 'price_asc' | 'price_desc'
@@ -11,9 +12,9 @@ type Sort = 'name_asc' | 'name_desc' | 'price_asc' | 'price_desc'
 export default async function ProductsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ category?: string; q?: string; sort?: string }>
+  searchParams: Promise<{ category?: string; q?: string; sort?: string; supplier?: string }>
 }) {
-  const { category, q, sort: sortParam } = await searchParams
+  const { category, q, sort: sortParam, supplier } = await searchParams
   const sort: Sort =
     sortParam === 'name_desc'  ? 'name_desc'  :
     sortParam === 'price_asc'  ? 'price_asc'  :
@@ -22,14 +23,10 @@ export default async function ProductsPage({
 
   const showIssues = category === 'issues'
 
-  // Always fetch all active products — category/search filtered in JS so
-  // the Issues count badge is always computed from the full catalogue.
-  const { data: allProducts } = await supabase
-    .from('products')
-    .select('*')
-    .eq('is_active', true)
-    .order('category')
-    .order('name')
+  const [{ data: allProducts }, { data: suppliers }] = await Promise.all([
+    supabase.from('products').select('*').eq('is_active', true).order('category').order('name'),
+    supabase.from('purchase_suppliers').select('id, name').order('name'),
+  ])
 
   function isIssue(p: Product) {
     if (p.margin_floor < 0) return false
@@ -43,9 +40,10 @@ export default async function ProductsPage({
 
   const products = (allProducts ?? [])
     .filter((p: Product) => {
-      if (showIssues)                     return isIssue(p)
+      if (showIssues) return isIssue(p)
       if (q && !p.name.toLowerCase().includes(q.toLowerCase())) return false
-      if (category && category !== 'all') return p.category === category
+      if (category && category !== 'all' && p.category !== category) return false
+      if (supplier && p.default_supplier_id !== supplier) return false
       return true
     })
     .sort((a: Product, b: Product) => {
@@ -55,19 +53,27 @@ export default async function ProductsPage({
       return a.name.localeCompare(b.name)
     })
 
-  function sortHref(s: Sort) {
-    const parts: string[] = []
-    if (category) parts.push(`category=${category}`)
-    if (q)        parts.push(`q=${q}`)
-    if (s !== 'name_asc') parts.push(`sort=${s}`)
-    return `/products${parts.length ? `?${parts.join('&')}` : ''}`
+  function buildHref(overrides: Record<string, string | undefined>) {
+    const params: Record<string, string | undefined> = {
+      category: category && category !== 'all' ? category : undefined,
+      q: q || undefined,
+      sort: sort !== 'name_asc' ? sort : undefined,
+      supplier: supplier || undefined,
+      ...overrides,
+    }
+    const qs = Object.entries(params)
+      .filter(([, v]) => v !== undefined)
+      .map(([k, v]) => `${k}=${v}`)
+      .join('&')
+    return `/products${qs ? `?${qs}` : ''}`
   }
 
-  // Toggle logic: clicking active sort flips direction; clicking new sort resets
   const nameNextSort: Sort = sort === 'name_asc' ? 'name_desc' : 'name_asc'
   const priceNextSort: Sort = sort === 'price_asc' ? 'price_desc' : 'price_asc'
   const nameActive  = sort === 'name_asc' || sort === 'name_desc'
   const priceActive = sort === 'price_asc' || sort === 'price_desc'
+
+  const issueCount = (allProducts ?? []).filter(isIssue).length
 
   return (
     <div className="page pb-24">
@@ -84,52 +90,55 @@ export default async function ProductsPage({
       </div>
 
       {/* Category filter */}
-      <div className="flex gap-2 mb-6 overflow-x-auto pb-1">
+      <div className="flex gap-2 mb-2 overflow-x-auto pb-1">
         {['all', 'fruit', 'veg', 'other'].map(cat => (
           <Link
             key={cat}
-            href={`/products?category=${cat}${q ? `&q=${q}` : ''}${sort !== 'name_asc' ? `&sort=${sort}` : ''}`}
+            href={buildHref({ category: cat === 'all' ? undefined : cat })}
             className={`rounded-full px-4 py-1.5 text-sm font-medium whitespace-nowrap min-h-[36px]
                         flex items-center
-                        ${(category ?? 'all') === cat
+                        ${(category ?? 'all') === cat && !showIssues
                           ? 'bg-brand-accent text-white'
                           : 'bg-[var(--bg-card)] text-[var(--text-muted)]'}`}
           >
             {cat.charAt(0).toUpperCase() + cat.slice(1)}
           </Link>
         ))}
-        {(() => {
-          const issueCount = (allProducts ?? []).filter(isIssue).length
-          if (issueCount === 0) return null
-          return (
-            <Link
-              href="/products?category=issues"
-              className={`rounded-full px-4 py-1.5 text-sm font-medium whitespace-nowrap min-h-[36px]
-                          flex items-center gap-1.5
-                          ${showIssues
-                            ? 'bg-status-red text-white'
-                            : 'bg-status-red/15 text-status-red'}`}
-            >
-              ⚠ Issues
-              <span className={`rounded-full text-xs px-1.5 py-0.5 font-bold
-                ${showIssues ? 'bg-white/20' : 'bg-status-red/20'}`}>
-                {issueCount}
-              </span>
-            </Link>
-          )
-        })()}
+        {issueCount > 0 && (
+          <Link
+            href="/products?category=issues"
+            className={`rounded-full px-4 py-1.5 text-sm font-medium whitespace-nowrap min-h-[36px]
+                        flex items-center gap-1.5
+                        ${showIssues
+                          ? 'bg-status-red text-white'
+                          : 'bg-status-red/15 text-status-red'}`}
+          >
+            ⚠ Issues
+            <span className={`rounded-full text-xs px-1.5 py-0.5 font-bold
+              ${showIssues ? 'bg-white/20' : 'bg-status-red/20'}`}>
+              {issueCount}
+            </span>
+          </Link>
+        )}
       </div>
+
+      {/* Supplier filter */}
+      {(suppliers ?? []).length > 0 && (
+        <div className="mb-4">
+          <SupplierSelect suppliers={suppliers ?? []} current={supplier} />
+        </div>
+      )}
 
       {/* Sort toggle buttons */}
       <div className="flex gap-2 mb-4">
-        <Link href={sortHref(nameNextSort)}
+        <Link href={buildHref({ sort: nameNextSort !== 'name_asc' ? nameNextSort : undefined })}
           className={`px-4 py-1.5 rounded-lg text-xs font-medium transition-colors
             ${nameActive
               ? 'bg-brand-accent/20 text-brand-accent ring-1 ring-brand-accent/40'
               : 'text-[var(--text-muted)] border border-white/10'}`}>
           A–Z {nameActive ? (sort === 'name_asc' ? '↑' : '↓') : ''}
         </Link>
-        <Link href={sortHref(priceNextSort)}
+        <Link href={buildHref({ sort: priceNextSort })}
           className={`px-4 py-1.5 rounded-lg text-xs font-medium transition-colors
             ${priceActive
               ? 'bg-brand-accent/20 text-brand-accent ring-1 ring-brand-accent/40'
@@ -140,7 +149,7 @@ export default async function ProductsPage({
 
       {/* Product list */}
       <div className="space-y-2">
-        {(products ?? []).map((p: Product) => {
+        {products.map((p: Product) => {
           const margin = p.retail_price > 0
             ? (p.retail_price - p.purchase_cost) / p.retail_price
             : 0
@@ -179,7 +188,7 @@ export default async function ProductsPage({
           )
         })}
 
-        {(products ?? []).length === 0 && (
+        {products.length === 0 && (
           <p className="text-center text-[var(--text-muted)] py-12">
             No products found.
           </p>

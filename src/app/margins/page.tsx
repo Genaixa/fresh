@@ -3,7 +3,6 @@ import { createClient } from '@/lib/supabase/server'
 import { NavBar } from '@/components/ui/NavBar'
 import { formatPrice } from '@/lib/pricing-engine'
 import { marginStatus, TrafficDot } from '@/components/ui/TrafficDot'
-import { InfoTip } from '@/components/ui/InfoTip'
 import type { Product } from '@/types'
 
 type Tab  = 'fruit' | 'veg' | 'other' | 'all'
@@ -101,23 +100,18 @@ export default async function MarginsPage({
             {(avgMarkup * 100).toFixed(0)}%
           </p>
           <p className="text-xs text-[var(--text-muted)] mt-1">
-            avg markup<InfoTip text="Markup: profit as % of what you paid. 125% means you make £1.25 for every £1 of stock cost." />
-            {' · '}{(avgGM * 100).toFixed(1)}% gross margin<InfoTip text="Gross margin: profit as % of selling price. Used for industry benchmarks. 55% means 55p profit per £1 sold." />
+            avg markup · {(avgGM * 100).toFixed(1)}% gross margin
           </p>
         </div>
         <div className="text-right text-xs space-y-1">
           <p className="text-status-green font-medium">
-            {onTarget} on target<InfoTip text="Products at or above their margin floor — healthy." />
+            {onTarget} on target
           </p>
-          {close > 0 && <p className="text-status-amber font-medium">
-            {close} close<InfoTip text="Products just below their margin floor. Worth reviewing prices soon." />
-          </p>}
-          {low   > 0 && <p className="text-status-red font-medium">
-            {low} low<InfoTip text="Products well below floor or at a loss. Check costs or raise prices urgently." />
-          </p>}
+          {close > 0 && <p className="text-status-amber font-medium">{close} close</p>}
+          {low   > 0 && <p className="text-status-red font-medium">{low} low</p>}
           {totalWastePence > 0 && (
             <p className="text-status-red font-medium">
-              −{formatPrice(totalWastePence)} waste<InfoTip text="Cost of stock logged as wasted in the last 7 days." />
+              −{formatPrice(totalWastePence)} waste
             </p>
           )}
         </div>

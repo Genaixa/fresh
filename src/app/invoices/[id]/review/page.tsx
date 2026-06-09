@@ -5,7 +5,6 @@ import { confirmInvoiceAndGeneratePrices, rematchInvoiceItems, saveInvoiceNumber
 import type { PurchaseInvoiceItem, Product } from '@/types'
 import { formatPrice } from '@/lib/pricing-engine'
 import { getInvoiceAnomalies } from '@/lib/data-health'
-import { InfoTip } from '@/components/ui/InfoTip'
 
 type Tab  = 'fruit' | 'veg' | 'other' | 'all'
 type Sort = 'name' | 'price'
@@ -263,9 +262,8 @@ export default async function ReviewInvoicePage({
                     <p className="font-medium text-sm">{item.product?.name ?? item.product_name_raw}</p>
                     {boxLabel && <p className="text-xs text-[var(--text-muted)]">{boxLabel}</p>}
                     {anomalyLabel && (
-                      <p className={`text-xs mt-0.5 font-medium ${anomalyColour} flex items-center gap-1`}>
+                      <p className={`text-xs mt-0.5 font-medium ${anomalyColour}`}>
                         {anomalyLabel}
-                        <InfoTip text="This price is 40%+ different from your 90-day average for this product. Double-check before confirming." />
                       </p>
                     )}
                   </div>
