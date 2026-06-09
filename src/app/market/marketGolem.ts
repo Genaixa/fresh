@@ -91,6 +91,7 @@ export async function generateMarketInsights(products: MarketProduct[]): Promise
   if (!result) {
     console.error('[MarketGolem] all models failed or timed out')
     try { writeFileSync(cacheFile('-fail'), JSON.stringify({ ts: Date.now() })) } catch { /* non-fatal */ }
+    sendTelegram(`⚠️ <b>Market Golem failed</b>\nAll AI models timed out — no buying tips today. Check OpenRouter API key or try again later.`).catch(() => {})
     return EMPTY
   }
 

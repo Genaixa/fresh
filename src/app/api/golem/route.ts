@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/service'
 import { runDailySweep } from '@/lib/data-golem'
+import { sendTelegram } from '@/lib/telegram'
 
 export async function GET() {
   return NextResponse.json({ ok: true })
@@ -14,6 +15,13 @@ export async function POST(request: NextRequest) {
   }
 
   const supabase = createServiceClient()
-  const briefing = await runDailySweep(supabase)
-  return NextResponse.json({ ok: true, briefing })
+  try {
+    const briefing = await runDailySweep(supabase)
+    return NextResponse.json({ ok: true, briefing })
+  } catch (err) {
+    const errMsg = err instanceof Error ? err.message : String(err)
+    console.error('[DataGolem] daily sweep crashed:', err)
+    sendTelegram(`❌ <b>Data Golem crashed</b>\nDaily sweep failed — data quality checks did not run.\n${errMsg}`).catch(() => {})
+    return NextResponse.json({ error: errMsg }, { status: 500 })
+  }
 }

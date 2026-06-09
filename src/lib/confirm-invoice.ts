@@ -1,5 +1,6 @@
 import { calculateSuggestedPrice, getWeightedAvgCostBatch } from './pricing-engine'
 import { runPostInvoiceGolem } from './data-golem'
+import { sendTelegram } from './telegram'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Product } from '@/types'
 
@@ -261,6 +262,13 @@ export async function autoConfirmInvoice(
         blocked:       true,
         source:        'pipeline',
       })
+
+      // Rule 1 = selling at a loss — notify immediately, it needs fixing before next sale
+      if (check.reason.startsWith('Rule 1')) {
+        sendTelegram(
+          `🔴 <b>Selling at a loss — ${p.name}</b>\nCost £${(proposedCost / 100).toFixed(2)} but retail is only £${((p.retail_price ?? 0) / 100).toFixed(2)}. Fix the retail price urgently.`
+        ).catch(() => {})
+      }
 
       continue
     }

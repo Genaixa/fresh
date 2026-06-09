@@ -173,16 +173,39 @@ export async function POST(request: NextRequest) {
 
       const unmatched = itemsToInsert.filter(i => !i.is_matched).length
       const total     = itemsToInsert.length
+
+      // Check for items bought above the product's market ceiling
+      const matchedItems = itemsToInsert.filter(i => i.is_matched && i.product_id)
+      let overMaxLines: string[] = []
+      if (matchedItems.length > 0) {
+        const { data: ceilingProducts } = await supabase
+          .from('products')
+          .select('id, name, market_ceiling')
+          .in('id', matchedItems.map(i => i.product_id))
+          .not('market_ceiling', 'is', null)
+        const ceilingMap = new Map((ceilingProducts ?? []).map(p => [p.id, p]))
+        for (const item of matchedItems) {
+          const p = ceilingMap.get(item.product_id)
+          if (p?.market_ceiling && item.unit_cost > p.market_ceiling) {
+            const over = Math.round(((item.unit_cost - p.market_ceiling) / p.market_ceiling) * 100)
+            overMaxLines.push(`  • ${p.name}: paid £${(item.unit_cost / 100).toFixed(2)}/box (max £${(p.market_ceiling / 100).toFixed(2)}, ${over}% over)`)
+          }
+        }
+      }
+
       const lines = [
         `✅ <b>${supplierName}</b> invoice processed (${parsed.invoice_date})`,
         `${total} items — ${total - unmatched} matched, ${unmatched > 0 ? `⚠️ ${unmatched} unmatched` : '✓ all matched'}`,
         parsed.raw_total ? `Total: £${(parsed.raw_total / 100).toFixed(2)}` : '',
+        overMaxLines.length > 0 ? `\n⚠️ <b>Paid over max price:</b>\n${overMaxLines.join('\n')}` : '',
       ].filter(Boolean).join('\n')
       sendTelegram(lines).catch(() => {})
 
       processed++
     } catch (err) {
       console.error('Error processing PDF attachment:', err)
+      const errMsg = err instanceof Error ? err.message : String(err)
+      sendTelegram(`❌ <b>Invoice failed to process</b>\nFile: ${pdf.Name}\n${errMsg}`).catch(() => {})
     }
   }
 
