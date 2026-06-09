@@ -32,16 +32,18 @@ export default async function PricingSuggestionsPage({
   const TARGET_MARGIN = 0.40
   const { data: allProducts } = await supabase
     .from('products')
-    .select('id, name, category, retail_price, purchase_cost, margin_floor, weekly_units')
+    .select('id, name, category, retail_price, purchase_cost, margin_floor, weekly_units, wins_dismissed_cost')
     .eq('is_active', true)
     .gt('retail_price', 0)
     .gt('purchase_cost', 0)
     .order('name')
 
-  type Opp = { id: string; name: string; category: string; retail_price: number; purchase_cost: number; margin_floor: number; weekly_units: number | null }
+  type Opp = { id: string; name: string; category: string; retail_price: number; purchase_cost: number; margin_floor: number; weekly_units: number | null; wins_dismissed_cost: number | null }
   const opportunities = ((allProducts ?? []) as Opp[]).filter(p => {
     const margin = (p.retail_price - p.purchase_cost) / p.retail_price
     if (margin < (p.margin_floor ?? 0.2) || margin >= TARGET_MARGIN) return false
+    // Re-show if cost has moved 10p+ since dismissal; otherwise hide
+    if (p.wins_dismissed_cost !== null && Math.abs(p.purchase_cost - p.wins_dismissed_cost) < 10) return false
     // Only show if the suggested price is at least 5p above current (filter trivial changes)
     const suggested = Math.ceil(Math.round(p.purchase_cost / (1 - TARGET_MARGIN)) / 5) * 5
     return suggested - p.retail_price >= 5

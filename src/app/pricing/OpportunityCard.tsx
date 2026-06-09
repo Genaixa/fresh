@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useCallback } from 'react'
-import { setOpportunityPrice } from './actions'
+import { setOpportunityPrice, dismissOpportunity } from './actions'
 import { formatPrice } from '@/lib/pricing-engine'
 
 interface Props {
@@ -38,6 +38,7 @@ export function OpportunityCard({ productId, productName, currentRetailPrice, co
   const [marginPct,   setMarginPct]   = useState((calcMargin(suggested, costPence) * 100).toFixed(1))
   const [pending,     setPending]     = useState(false)
   const [done,        setDone]        = useState(false)
+  const [dismissed,   setDismissed]   = useState(false)
 
   const currentMarginPct = (calcMargin(currentRetailPrice, costPence) * 100).toFixed(1)
 
@@ -67,7 +68,13 @@ export function OpportunityCard({ productId, productName, currentRetailPrice, co
     setDone(true)
   }
 
-  if (done) return null
+  async function handleDismiss() {
+    setPending(true)
+    await dismissOpportunity(productId)
+    setDismissed(true)
+  }
+
+  if (done || dismissed) return null
 
   return (
     <div className={`card border border-status-green/20 ${pending ? 'opacity-40 pointer-events-none' : ''}`}>
@@ -86,13 +93,21 @@ export function OpportunityCard({ productId, productName, currentRetailPrice, co
             </p>
           )}
         </div>
-        <button
-          onClick={handleApply}
-          disabled={livePricePence <= costPence || belowFloor}
-          className="min-h-[44px] px-4 rounded-xl bg-status-green/20 text-status-green text-sm font-semibold flex items-center justify-center active:scale-95 transition-transform disabled:opacity-40"
-        >
-          Apply
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={handleDismiss}
+            className="min-h-[44px] px-3 rounded-xl bg-white/5 text-[var(--text-muted)] text-xs font-semibold flex items-center justify-center active:scale-95 transition-transform"
+          >
+            Leave
+          </button>
+          <button
+            onClick={handleApply}
+            disabled={livePricePence <= costPence || belowFloor}
+            className="min-h-[44px] px-4 rounded-xl bg-status-green/20 text-status-green text-sm font-semibold flex items-center justify-center active:scale-95 transition-transform disabled:opacity-40"
+          >
+            Apply
+          </button>
+        </div>
       </div>
 
       <div className="flex gap-3">

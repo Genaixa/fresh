@@ -135,6 +135,22 @@ export async function recalculateSuggestions() {
   revalidatePath('/pricing')
 }
 
+export async function dismissOpportunity(productId: string) {
+  const supabase = await createClient()
+  // Fetch current cost so we can store it — card re-appears when cost changes by 10p+
+  const { data: product } = await supabase
+    .from('products')
+    .select('purchase_cost')
+    .eq('id', productId)
+    .single()
+  if (!product) return
+  await supabase
+    .from('products')
+    .update({ wins_dismissed_cost: product.purchase_cost })
+    .eq('id', productId)
+  revalidatePath('/pricing')
+}
+
 export async function setOpportunityPrice(productId: string, pricePence: number) {
   if (!productId || pricePence <= 0) return
   const supabase = await createClient()
