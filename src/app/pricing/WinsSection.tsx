@@ -58,21 +58,20 @@ export function WinsSection({ opportunities, description }: { opportunities: Opp
         <div className="card border border-status-green/30 bg-status-green/5 mb-4">
           <div className="grid grid-cols-2 gap-3 mb-2">
             <div>
-              <p className="text-xs text-[var(--text-muted)] mb-0.5 flex items-center">
-                Per week <InfoTip text="Extra revenue per week if you raise all these products to the suggested price." />
+              <p className="text-xs text-[var(--text-muted)] mb-0.5">
+                Per week<InfoTip text="Extra revenue per week if you raise all these products to the suggested price." />
               </p>
               <p className="text-xl font-bold text-status-green">+{formatPrice(totalGain)}</p>
             </div>
             <div>
-              <p className="text-xs text-[var(--text-muted)] mb-0.5 flex items-center">
-                Per year <InfoTip text="Weekly gain × 52. Assumes current sales volumes and all prices applied." />
+              <p className="text-xs text-[var(--text-muted)] mb-0.5">
+                Per year<InfoTip text="Weekly gain × 52. Assumes current sales volumes and all prices applied." />
               </p>
               <p className="text-xl font-bold text-status-green">+{formatPrice(totalGain * 52)}</p>
             </div>
           </div>
-          <p className="text-xs text-[var(--text-muted)] flex items-center gap-1">
-            if all applied · {coveredCount} of {shown.length} products have weekly volume data
-            <InfoTip text="Products without weekly sales data are excluded from the gain estimate." />
+          <p className="text-xs text-[var(--text-muted)]">
+            if all applied · {coveredCount} of {shown.length} products have weekly volume data<InfoTip text="Products without weekly sales data are excluded from the gain estimate." />
           </p>
         </div>
       )}

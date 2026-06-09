@@ -167,7 +167,7 @@ export function ProductForm({ id, defaultValues: d, suppliers, isNew, deactivate
 function Field({ label, children }: { label: React.ReactNode; children: React.ReactNode }) {
   return (
     <div>
-      <label className="flex items-center text-sm font-medium mb-1.5 text-[var(--text-muted)]">{label}</label>
+      <label className="block text-sm font-medium mb-1.5 text-[var(--text-muted)] leading-snug">{label}</label>
       {children}
     </div>
   )

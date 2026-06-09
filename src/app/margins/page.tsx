@@ -100,30 +100,24 @@ export default async function MarginsPage({
           <p className="text-3xl font-bold text-brand-accent leading-none">
             {(avgMarkup * 100).toFixed(0)}%
           </p>
-          <p className="text-xs text-[var(--text-muted)] mt-1 flex items-center">
-            avg markup
-            <InfoTip text="Markup: profit as % of what you paid. 125% means you make £1.25 for every £1 of stock cost." />
-            {' · '}{(avgGM * 100).toFixed(1)}% gross margin
-            <InfoTip text="Gross margin: profit as % of selling price. Used for industry benchmarks. 55% means 55p profit per £1 sold." />
+          <p className="text-xs text-[var(--text-muted)] mt-1">
+            avg markup<InfoTip text="Markup: profit as % of what you paid. 125% means you make £1.25 for every £1 of stock cost." />
+            {' · '}{(avgGM * 100).toFixed(1)}% gross margin<InfoTip text="Gross margin: profit as % of selling price. Used for industry benchmarks. 55% means 55p profit per £1 sold." />
           </p>
         </div>
         <div className="text-right text-xs space-y-1">
-          <p className="text-status-green font-medium flex items-center justify-end gap-1">
-            {onTarget} on target
-            <InfoTip text="Products at or above their margin floor — healthy." />
+          <p className="text-status-green font-medium">
+            {onTarget} on target<InfoTip text="Products at or above their margin floor — healthy." />
           </p>
-          {close > 0 && <p className="text-status-amber font-medium flex items-center justify-end gap-1">
-            {close} close
-            <InfoTip text="Products just below their margin floor. Worth reviewing prices soon." />
+          {close > 0 && <p className="text-status-amber font-medium">
+            {close} close<InfoTip text="Products just below their margin floor. Worth reviewing prices soon." />
           </p>}
-          {low   > 0 && <p className="text-status-red font-medium flex items-center justify-end gap-1">
-            {low} low
-            <InfoTip text="Products well below floor or at a loss. Check costs or raise prices urgently." />
+          {low   > 0 && <p className="text-status-red font-medium">
+            {low} low<InfoTip text="Products well below floor or at a loss. Check costs or raise prices urgently." />
           </p>}
           {totalWastePence > 0 && (
-            <p className="text-status-red font-medium flex items-center justify-end gap-1">
-              −{formatPrice(totalWastePence)} waste
-              <InfoTip text="Cost of stock logged as wasted in the last 7 days." />
+            <p className="text-status-red font-medium">
+              −{formatPrice(totalWastePence)} waste<InfoTip text="Cost of stock logged as wasted in the last 7 days." />
             </p>
           )}
         </div>

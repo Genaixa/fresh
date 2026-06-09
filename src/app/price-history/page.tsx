@@ -201,9 +201,8 @@ export default async function PriceHistoryPage({
             </div>
             <div className="grid grid-cols-2 gap-3 pt-3 border-t border-white/10">
               <div>
-                <p className="text-xs text-[var(--text-muted)] flex items-center">
-                  4-wk avg cost
-                  <InfoTip text="Average cost per unit across all deliveries in the last 4 weeks. Used as the baseline for spotting price spikes." />
+                <p className="text-xs text-[var(--text-muted)]">
+                  4-wk avg cost<InfoTip text="Average cost per unit across all deliveries in the last 4 weeks. Used as the baseline for spotting price spikes." />
                 </p>
                 <p className="font-semibold">{formatPrice(avg4wk)}</p>
               </div>
