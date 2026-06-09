@@ -307,10 +307,24 @@ export default async function PriceHistoryPage({
                         )}
                       </div>
                       {weeklyGain !== null && (
-                        <p className={`text-xs ${weeklyGain >= 0 ? 'text-status-green' : 'text-status-red'}`}>
-                          {weeklyGain >= 0 ? '+' : ''}{formatPrice(weeklyGain)}/wk at this price
-                          <span className="text-[var(--text-muted)]"> · {weeklyUnits} units/wk</span>
-                        </p>
+                        <div className={`pt-2 border-t border-white/10 mt-2 ${weeklyGain >= 0 ? 'text-status-green' : 'text-status-red'}`}>
+                          <p className="text-xs text-[var(--text-muted)] mb-1.5">Profit at this price ({weeklyUnits} units/wk)</p>
+                          <div className="grid grid-cols-4 gap-2">
+                            {[
+                              { label: 'Day',   val: weeklyGain / 7 },
+                              { label: 'Week',  val: weeklyGain },
+                              { label: 'Month', val: weeklyGain * 52 / 12 },
+                              { label: 'Year',  val: weeklyGain * 52 },
+                            ].map(({ label, val }) => (
+                              <div key={label}>
+                                <p className="text-xs text-[var(--text-muted)]">{label}</p>
+                                <p className="font-semibold text-sm">
+                                  {val >= 0 ? '+' : ''}{formatPrice(Math.round(val))}
+                                </p>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
                       )}
                     </div>
                   )
