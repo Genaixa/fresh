@@ -121,8 +121,9 @@ export default async function ProductsPage({
             : 0
           const dot = marginStatus(margin, p.margin_floor, p.retail_price, p.purchase_cost)
 
-          const atLoss   = p.retail_price > 0 && p.purchase_cost > p.retail_price
-          const unpriced = p.retail_price === 0 && p.purchase_cost > 0
+          const isLossLeader = p.margin_floor < 0
+          const atLoss       = !isLossLeader && p.retail_price > 0 && p.purchase_cost > p.retail_price
+          const unpriced     = p.retail_price === 0 && p.purchase_cost > 0
 
           return (
             <Link
@@ -136,8 +137,9 @@ export default async function ProductsPage({
                 <div>
                   <p className="font-medium">{p.name}</p>
                   <p className="text-xs text-[var(--text-muted)] capitalize">
-                    {atLoss   ? <span className="text-status-red font-semibold">at a loss</span>
-                    : unpriced ? <span className="text-status-amber">unpriced</span>
+                    {isLossLeader ? <span className="text-[var(--text-muted)]">loss leader</span>
+                    : atLoss      ? <span className="text-status-red font-semibold">at a loss</span>
+                    : unpriced    ? <span className="text-status-amber">unpriced</span>
                     : <>{p.category} · {p.unit}</>}
                   </p>
                 </div>
