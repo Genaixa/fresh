@@ -12,24 +12,28 @@ export default async function ProductDetailPage({
 }) {
   const { id } = await params
   const supabase = await createClient()
-  const { data: product } = await supabase.from('products').select('*').eq('id', id).single() as { data: Product | null }
+  const [{ data: product }, { data: suppliers }] = await Promise.all([
+    supabase.from('products').select('*').eq('id', id).single(),
+    supabase.from('purchase_suppliers').select('id, name').eq('is_active', true).order('name'),
+  ])
 
   if (!product) return <div className="page">Product not found.</div>
 
   const suggestion = calculateSuggestedPrice(product)
 
   const defaultValues = {
-    name:            product.name,
-    category:        product.category,
-    unit:            product.unit,
-    retail_price:    (product.retail_price   / 100).toFixed(2),
-    wholesale_price: (product.wholesale_price / 100).toFixed(2),
-    purchase_cost:   (product.purchase_cost   / 100).toFixed(2),
-    case_size:       product.case_size ?? 1,
-    price_multiplier: product.price_multiplier ?? 2.0,
-    market_ceiling:  product.market_ceiling ? (product.market_ceiling / 100).toFixed(2) : '',
-    margin_floor:    (product.margin_floor ?? 0.2) * 100,
-    epos_now_id:     product.epos_now_id ?? '',
+    name:                product.name,
+    category:            product.category,
+    unit:                product.unit,
+    retail_price:        (product.retail_price   / 100).toFixed(2),
+    wholesale_price:     (product.wholesale_price / 100).toFixed(2),
+    purchase_cost:       (product.purchase_cost   / 100).toFixed(2),
+    case_size:           product.case_size ?? 1,
+    price_multiplier:    product.price_multiplier ?? 2.0,
+    market_ceiling:      product.market_ceiling ? (product.market_ceiling / 100).toFixed(2) : '',
+    margin_floor:        (product.margin_floor ?? 0.2) * 100,
+    epos_now_id:         product.epos_now_id ?? '',
+    default_supplier_id: (product as Record<string, unknown>).default_supplier_id as string ?? '',
   }
 
   return (
@@ -53,6 +57,7 @@ export default async function ProductDetailPage({
       <ProductForm
         id={id}
         defaultValues={defaultValues}
+        suppliers={suppliers ?? []}
         isNew={false}
         deactivateButton={
           <form action={deactivateProduct.bind(null, id)}>

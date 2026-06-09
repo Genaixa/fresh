@@ -17,7 +17,9 @@ type Props = {
     market_ceiling: string
     margin_floor: number
     epos_now_id: string
+    default_supplier_id: string
   }
+  suppliers: { id: string; name: string }[]
   isNew: boolean
   deactivateButton?: React.ReactNode
 }
@@ -31,7 +33,7 @@ const UNIT_CASE_LABELS: Record<string, string> = {
   bag:    'Bags per delivery box',
 }
 
-export function ProductForm({ id, defaultValues: d, isNew, deactivateButton }: Props) {
+export function ProductForm({ id, defaultValues: d, suppliers, isNew, deactivateButton }: Props) {
   const [unit, setUnit]         = useState(d.unit)
   const [retail, setRetail]     = useState(d.retail_price)
   const [cost, setCost]         = useState(d.purchase_cost)
@@ -65,6 +67,15 @@ export function ProductForm({ id, defaultValues: d, isNew, deactivateButton }: P
 
       <Field label="Product name">
         <input name="name" defaultValue={d.name} required className="input-field" placeholder="e.g. Lemon" />
+      </Field>
+
+      <Field label="Default supplier">
+        <select name="default_supplier_id" defaultValue={d.default_supplier_id} className="input-field">
+          <option value="">— Unknown —</option>
+          {suppliers.map(s => (
+            <option key={s.id} value={s.id}>{s.name}</option>
+          ))}
+        </select>
       </Field>
 
       <div className="grid grid-cols-2 gap-3">

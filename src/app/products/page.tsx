@@ -6,7 +6,7 @@ import { formatPrice } from '@/lib/pricing-engine'
 import { SearchBox } from './SearchBox'
 import type { Product } from '@/types'
 
-type Sort = 'name' | 'price_asc' | 'price_desc'
+type Sort = 'name_asc' | 'name_desc' | 'price_asc' | 'price_desc'
 
 export default async function ProductsPage({
   searchParams,
@@ -14,7 +14,10 @@ export default async function ProductsPage({
   searchParams: Promise<{ category?: string; q?: string; sort?: string }>
 }) {
   const { category, q, sort: sortParam } = await searchParams
-  const sort: Sort = sortParam === 'price_asc' ? 'price_asc' : sortParam === 'price_desc' ? 'price_desc' : 'name'
+  const sort: Sort =
+    sortParam === 'name_desc'  ? 'name_desc'  :
+    sortParam === 'price_asc'  ? 'price_asc'  :
+    sortParam === 'price_desc' ? 'price_desc' : 'name_asc'
   const supabase = await createClient()
 
   const showIssues = category === 'issues'
@@ -48,6 +51,7 @@ export default async function ProductsPage({
     .sort((a: Product, b: Product) => {
       if (sort === 'price_asc')  return a.retail_price - b.retail_price
       if (sort === 'price_desc') return b.retail_price - a.retail_price
+      if (sort === 'name_desc')  return b.name.localeCompare(a.name)
       return a.name.localeCompare(b.name)
     })
 
@@ -55,9 +59,15 @@ export default async function ProductsPage({
     const parts: string[] = []
     if (category) parts.push(`category=${category}`)
     if (q)        parts.push(`q=${q}`)
-    if (s !== 'name') parts.push(`sort=${s}`)
+    if (s !== 'name_asc') parts.push(`sort=${s}`)
     return `/products${parts.length ? `?${parts.join('&')}` : ''}`
   }
+
+  // Toggle logic: clicking active sort flips direction; clicking new sort resets
+  const nameNextSort: Sort = sort === 'name_asc' ? 'name_desc' : 'name_asc'
+  const priceNextSort: Sort = sort === 'price_asc' ? 'price_desc' : 'price_asc'
+  const nameActive  = sort === 'name_asc' || sort === 'name_desc'
+  const priceActive = sort === 'price_asc' || sort === 'price_desc'
 
   return (
     <div className="page pb-24">
@@ -78,7 +88,7 @@ export default async function ProductsPage({
         {['all', 'fruit', 'veg', 'other'].map(cat => (
           <Link
             key={cat}
-            href={`/products?category=${cat}${q ? `&q=${q}` : ''}${sort !== 'name' ? `&sort=${sort}` : ''}`}
+            href={`/products?category=${cat}${q ? `&q=${q}` : ''}${sort !== 'name_asc' ? `&sort=${sort}` : ''}`}
             className={`rounded-full px-4 py-1.5 text-sm font-medium whitespace-nowrap min-h-[36px]
                         flex items-center
                         ${(category ?? 'all') === cat
@@ -110,21 +120,22 @@ export default async function ProductsPage({
         })()}
       </div>
 
-      {/* Sort pills */}
+      {/* Sort toggle buttons */}
       <div className="flex gap-2 mb-4">
-        {([
-          { s: 'name' as Sort,       label: 'A–Z' },
-          { s: 'price_asc' as Sort,  label: 'Price ↑' },
-          { s: 'price_desc' as Sort, label: 'Price ↓' },
-        ]).map(({ s, label }) => (
-          <Link key={s} href={sortHref(s)}
-            className={`px-4 py-1.5 rounded-lg text-xs font-medium transition-colors
-              ${sort === s
-                ? 'bg-brand-accent/20 text-brand-accent ring-1 ring-brand-accent/40'
-                : 'text-[var(--text-muted)] border border-white/10'}`}>
-            {label}
-          </Link>
-        ))}
+        <Link href={sortHref(nameNextSort)}
+          className={`px-4 py-1.5 rounded-lg text-xs font-medium transition-colors
+            ${nameActive
+              ? 'bg-brand-accent/20 text-brand-accent ring-1 ring-brand-accent/40'
+              : 'text-[var(--text-muted)] border border-white/10'}`}>
+          A–Z {nameActive ? (sort === 'name_asc' ? '↑' : '↓') : ''}
+        </Link>
+        <Link href={sortHref(priceNextSort)}
+          className={`px-4 py-1.5 rounded-lg text-xs font-medium transition-colors
+            ${priceActive
+              ? 'bg-brand-accent/20 text-brand-accent ring-1 ring-brand-accent/40'
+              : 'text-[var(--text-muted)] border border-white/10'}`}>
+          Price {priceActive ? (sort === 'price_asc' ? '↑' : '↓') : ''}
+        </Link>
       </div>
 
       {/* Product list */}

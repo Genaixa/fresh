@@ -25,7 +25,8 @@ export async function upsertProduct(formData: FormData) {
                         return v > 0 ? v : null
                       })(),
     margin_floor:     parseFloat(formData.get('margin_floor') as string) / 100 || 0.20,
-    epos_now_id:      (formData.get('epos_now_id') as string) || null,
+    epos_now_id:           (formData.get('epos_now_id') as string) || null,
+    default_supplier_id:   (formData.get('default_supplier_id') as string) || null,
   }
 
   if (id) {
