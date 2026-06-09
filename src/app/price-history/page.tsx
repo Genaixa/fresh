@@ -20,33 +20,38 @@ export default async function PriceHistoryPage({
 
   type Product = {
     id: string; name: string; retail_price: number; purchase_cost: number
-    margin_floor: number; weekly_units: number | null; category: string
+    margin_floor: number; weekly_units: number | null; case_size: number | null
   }
-  type HistRow = { id: string; price_type: 'purchase' | 'retail'; new_price: number; old_price: number | null; reason: string | null; created_at: string }
+  type HistRow = {
+    id: string; price_type: 'purchase' | 'retail'
+    new_price: number; old_price: number | null; reason: string | null; created_at: string
+  }
+  type DeliveryRow = {
+    id: string; invoice_date: string; supplier_name: string
+    invoice_number: string | null; unit_cost: number; units_per_case: number | null
+  }
   type TimelineEntry = {
-    id: string
-    date: string
+    id: string; date: string
     priceType: 'purchase' | 'retail' | 'both'
-    cost: number
-    retail: number
-    oldCost: number
-    oldRetail: number
-    margin: number
-    oldMargin: number
+    cost: number; retail: number
+    oldCost: number; oldRetail: number
+    margin: number; oldMargin: number
     reason: string | null
   }
 
   let product: Product | null = null
   let timeline: TimelineEntry[] = []
+  let deliveries: (DeliveryRow & { perUnit: number })[] = []
 
   if (product_id) {
     const { data: p } = await supabase
       .from('products')
-      .select('id, name, retail_price, purchase_cost, margin_floor, weekly_units, category')
+      .select('id, name, retail_price, purchase_cost, margin_floor, weekly_units, case_size')
       .eq('id', product_id)
       .single()
     product = p
 
+    // ── System-tracked price changes ─────────────────────────────────────────
     const { data: rows } = await supabase
       .from('price_history')
       .select('id, price_type, new_price, old_price, reason, created_at')
@@ -54,14 +59,11 @@ export default async function PriceHistoryPage({
       .order('created_at', { ascending: true })
 
     if (rows?.length && product) {
-      // Reconstruct state forward from oldest change.
-      // Seed initial state from the old_price of the earliest entry of each type.
       const firstPurchase = rows.find(r => r.price_type === 'purchase')
       const firstRetail   = rows.find(r => r.price_type === 'retail')
       let cost   = firstPurchase?.old_price ?? product.purchase_cost
       let retail = firstRetail?.old_price   ?? product.retail_price
 
-      // Group entries that share the same minute (e.g. both cost+retail updated together)
       const grouped: HistRow[][] = []
       for (const row of rows as HistRow[]) {
         const last = grouped[grouped.length - 1]
@@ -83,45 +85,48 @@ export default async function PriceHistoryPage({
         if (group.length > 1) priceType = 'both'
 
         timeline.push({
-          id:         group[0].id,
-          date:       group[0].created_at,
-          priceType,
-          cost,
-          retail,
-          oldCost,
-          oldRetail,
+          id: group[0].id, date: group[0].created_at, priceType,
+          cost, retail, oldCost, oldRetail,
           margin:    retail > 0 ? (retail - cost) / retail : -99,
           oldMargin: oldRetail > 0 ? (oldRetail - oldCost) / oldRetail : -99,
           reason:    group[0].reason,
         })
       }
-
-      // Newest first for display
       timeline.reverse()
     }
+
+    // ── Invoice delivery history (full historical cost) ───────────────────────
+    const { data: invItems } = await supabase
+      .from('purchase_invoice_items')
+      .select(`
+        id, unit_cost, units_per_case,
+        invoice:purchase_invoices!inner(invoice_date, supplier_name, invoice_number)
+      `)
+      .eq('product_id', product_id)
+      .eq('is_matched', true)
+      .order('invoice(invoice_date)', { ascending: false })
+      .limit(200)
+
+    const caseSize = product?.case_size ?? 1
+    deliveries = (invItems ?? []).map(item => {
+      const inv = item.invoice as unknown as { invoice_date: string; supplier_name: string; invoice_number: string | null }
+      const divisor = item.units_per_case && item.units_per_case > 1
+        ? item.units_per_case
+        : caseSize
+      return {
+        id:             item.id,
+        invoice_date:   inv.invoice_date,
+        supplier_name:  inv.supplier_name,
+        invoice_number: inv.invoice_number,
+        unit_cost:      item.unit_cost,
+        units_per_case: item.units_per_case,
+        perUnit:        Math.round(item.unit_cost / divisor),
+      }
+    })
   }
 
-  const floor = product?.margin_floor ?? 0.2
-  const weeklyUnits = product?.weekly_units ?? 0
-
-  function marginColour(m: number): string {
-    if (m < 0)     return 'text-status-red'
-    if (m < floor) return 'text-status-amber'
-    return 'text-status-green'
-  }
-  function marginStatus(m: number): 'red' | 'amber' | 'green' | 'grey' {
-    if (m < 0)     return 'red'
-    if (m < floor) return 'amber'
-    return 'green'
-  }
-  function pct(m: number) { return `${(m * 100).toFixed(1)}%` }
-  function diff(n: number, o: number) {
-    const d = n - o
-    if (d === 0) return null
-    return `${d > 0 ? '+' : ''}${formatPrice(Math.abs(d))}`
-  }
-  function sign(n: number, o: number) { return n > o ? '↑' : n < o ? '↓' : '=' }
-
+  const floor        = product?.margin_floor ?? 0.2
+  const weeklyUnits  = product?.weekly_units ?? 0
   const currentMargin = product
     ? (product.retail_price - product.purchase_cost) / product.retail_price
     : 0
@@ -129,12 +134,38 @@ export default async function PriceHistoryPage({
     ? (product.retail_price - product.purchase_cost) * weeklyUnits
     : null
 
-  // 4-week avg cost from history
-  const fourWeeksAgo = Date.now() - 28 * 24 * 60 * 60 * 1000
-  const recentCosts = timeline.filter(t => new Date(t.date).getTime() >= fourWeeksAgo).map(t => t.cost)
-  const avg4wk = recentCosts.length
-    ? Math.round(recentCosts.reduce((a, b) => a + b, 0) / recentCosts.length)
+  const retailPrice = product?.retail_price ?? 0
+
+  // 4-week avg — exclude deliveries where per-unit cost > retail (per-case data errors)
+  const fourWeeksAgo  = new Date(Date.now() - 28 * 24 * 60 * 60 * 1000)
+  const validDeliveries   = deliveries.filter(d => retailPrice === 0 || d.perUnit <= retailPrice)
+  const recentDeliveries  = validDeliveries.filter(d => new Date(d.invoice_date) >= fourWeeksAgo)
+  const avg4wk = recentDeliveries.length
+    ? Math.round(recentDeliveries.reduce((s, d) => s + d.perUnit, 0) / recentDeliveries.length)
     : product?.purchase_cost ?? 0
+
+  // Cost trend — valid deliveries only, first half vs second half
+  const allCosts = [...validDeliveries].reverse().map(d => d.perUnit)
+  const half   = Math.floor(allCosts.length / 2)
+  const oldAvg = half > 0 ? allCosts.slice(0, half).reduce((a, b) => a + b, 0) / half : null
+  const newAvg = half > 0 ? allCosts.slice(half).reduce((a, b) => a + b, 0) / (allCosts.length - half) : null
+  const trendPct = oldAvg && newAvg ? Math.round((newAvg / oldAvg - 1) * 100) : null
+
+  // Count bad delivery entries so we can note them
+  const badDeliveryCount = deliveries.length - validDeliveries.length
+
+  function mc(m: number) {
+    if (m < 0)     return 'text-status-red'
+    if (m < floor) return 'text-status-amber'
+    return 'text-status-green'
+  }
+  function ms(m: number): 'red' | 'amber' | 'green' | 'grey' {
+    if (m < 0)     return 'red'
+    if (m < floor) return 'amber'
+    return 'green'
+  }
+  function pct(m: number) { return `${(m * 100).toFixed(1)}%` }
+  function sign(a: number, b: number) { return a > b ? '↑' : a < b ? '↓' : '—' }
 
   return (
     <div className="page pb-24">
@@ -150,8 +181,8 @@ export default async function PriceHistoryPage({
 
       {product && (
         <>
-          {/* Current state summary */}
-          <div className="card mb-2">
+          {/* Current state */}
+          <div className="card mb-4">
             <p className="text-xs text-[var(--text-muted)] mb-3 font-medium uppercase tracking-wide">Current</p>
             <div className="grid grid-cols-3 gap-3 mb-3">
               <div>
@@ -164,9 +195,7 @@ export default async function PriceHistoryPage({
               </div>
               <div>
                 <p className="text-xs text-[var(--text-muted)]">Margin</p>
-                <p className={`text-lg font-bold ${marginColour(currentMargin)}`}>
-                  {pct(currentMargin)}
-                </p>
+                <p className={`text-lg font-bold ${mc(currentMargin)}`}>{pct(currentMargin)}</p>
               </div>
             </div>
             <div className="grid grid-cols-2 gap-3 pt-3 border-t border-white/10">
@@ -184,45 +213,62 @@ export default async function PriceHistoryPage({
                 </div>
               )}
             </div>
+            {weeklyUnits > 0 && (
+              <div className="pt-3 border-t border-white/10 mt-3">
+                <p className="text-xs text-[var(--text-muted)] mb-2">Avg sales volume</p>
+                <div className="grid grid-cols-4 gap-2">
+                  {[
+                    { label: 'Day',   val: (weeklyUnits / 7).toFixed(1) },
+                    { label: 'Week',  val: weeklyUnits.toString() },
+                    { label: 'Month', val: Math.round(weeklyUnits * 52 / 12).toString() },
+                    { label: 'Year',  val: (weeklyUnits * 52).toLocaleString() },
+                  ].map(({ label, val }) => (
+                    <div key={label}>
+                      <p className="text-xs text-[var(--text-muted)]">{label}</p>
+                      <p className="font-semibold text-sm">{val}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            {trendPct !== null && Math.abs(trendPct) >= 5 && (
+              <p className={`text-xs mt-2 pt-2 border-t border-white/10
+                ${trendPct > 0 ? 'text-status-amber' : 'text-status-green'}`}>
+                Long-term cost trend: {trendPct > 0 ? '+' : ''}{trendPct}% over {deliveries.length} deliveries
+              </p>
+            )}
           </div>
 
-          {timeline.length === 0 && (
-            <p className="text-center text-[var(--text-muted)] py-8 text-sm">
-              No price changes recorded yet.
-            </p>
-          )}
-
+          {/* System-tracked price changes */}
           {timeline.length > 0 && (
             <>
-              <div className="space-y-2 mt-4">
+              <p className="section-title mb-2">Price changes</p>
+              <div className="space-y-2 mb-6">
                 {timeline.map(t => {
-                  const atLoss    = t.cost > t.retail
-                  const atOldLoss = t.oldCost > t.oldRetail
-                  const weeklyGain = weeklyUnits > 0
-                    ? (t.retail - t.cost) * weeklyUnits : null
-                  const marginChange = t.margin - t.oldMargin
-                  // Only show margin change when both old states were valid (not initial 0p setup)
+                  const atLoss        = t.cost > t.retail && t.retail > 0
+                  const atOldLoss     = t.oldCost > t.oldRetail && t.oldRetail > 0
+                  const isDataError   = atLoss  // cost > retail = pipeline bug, now guarded
+                  const weeklyGain    = weeklyUnits > 0 ? (t.retail - t.cost) * weeklyUnits : null
+                  const marginChange  = t.margin - t.oldMargin
                   const oldStateValid = t.oldCost > 0 && t.oldRetail > 0
                   const dateStr = new Date(t.date).toLocaleDateString('en-GB', {
                     weekday: 'short', day: 'numeric', month: 'short', year: 'numeric',
                   })
-
                   return (
-                    <div key={t.id} className="card border border-white/8">
-                      {/* Date + what changed */}
+                    <div key={t.id} className={`card border ${isDataError ? 'border-status-red/20 bg-status-red/5 opacity-60' : 'border-white/8'}`}>
                       <div className="flex items-center justify-between mb-3">
                         <p className="text-sm font-semibold">{dateStr}</p>
-                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium
-                          ${t.priceType === 'purchase' ? 'bg-white/10 text-[var(--text-muted)]'
-                          : t.priceType === 'retail'   ? 'bg-brand-accent/20 text-brand-accent'
-                          :                              'bg-white/10 text-[var(--text-muted)]'}`}>
-                          {t.priceType === 'purchase' ? 'Cost changed'
-                          : t.priceType === 'retail'  ? 'Retail changed'
-                          :                             'Both changed'}
-                        </span>
+                        {isDataError ? (
+                          <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-status-red/20 text-status-red">
+                            Data error (corrected)
+                          </span>
+                        ) : (
+                          <span className={`text-xs px-2 py-0.5 rounded-full font-medium
+                            ${t.priceType === 'retail' ? 'bg-brand-accent/20 text-brand-accent' : 'bg-white/10 text-[var(--text-muted)]'}`}>
+                            {t.priceType === 'purchase' ? 'Cost changed' : t.priceType === 'retail' ? 'Retail changed' : 'Both changed'}
+                          </span>
+                        )}
                       </div>
-
-                      {/* Cost + Retail two-col */}
                       <div className="grid grid-cols-2 gap-2 mb-3">
                         <div className="rounded-xl bg-white/5 p-2.5">
                           <p className="text-xs text-[var(--text-muted)] mb-1">Cost</p>
@@ -247,12 +293,10 @@ export default async function PriceHistoryPage({
                           )}
                         </div>
                       </div>
-
-                      {/* Margin row */}
                       <div className="flex items-center justify-between mb-2">
                         <div className="flex items-center gap-2">
-                          <TrafficDot status={marginStatus(t.margin)} />
-                          <span className={`font-semibold text-sm ${marginColour(t.margin)}`}>
+                          <TrafficDot status={ms(t.margin)} />
+                          <span className={`font-semibold text-sm ${mc(t.margin)}`}>
                             {atLoss ? 'At a loss' : `${pct(t.margin)} margin`}
                           </span>
                         </div>
@@ -262,8 +306,6 @@ export default async function PriceHistoryPage({
                           </span>
                         )}
                       </div>
-
-                      {/* Weekly P&L */}
                       {weeklyGain !== null && (
                         <p className={`text-xs ${weeklyGain >= 0 ? 'text-status-green' : 'text-status-red'}`}>
                           {weeklyGain >= 0 ? '+' : ''}{formatPrice(weeklyGain)}/wk at this price
@@ -274,14 +316,105 @@ export default async function PriceHistoryPage({
                   )
                 })}
               </div>
-
-              {/* Tracking since footer */}
-              <p className="text-center text-xs text-[var(--text-muted)] mt-4">
-                Tracking since {new Date(timeline[timeline.length - 1].date).toLocaleDateString('en-GB', {
-                  day: 'numeric', month: 'short', year: 'numeric'
-                })} · {timeline.length} {timeline.length === 1 ? 'change' : 'changes'} recorded
-              </p>
             </>
+          )}
+
+          {/* Full delivery cost history */}
+          {deliveries.length > 0 && (() => {
+            const thisMonthStart = new Date()
+            thisMonthStart.setDate(1)
+            thisMonthStart.setHours(0, 0, 0, 0)
+            const thisMonth = deliveries.filter(d => new Date(d.invoice_date) >= thisMonthStart)
+            const older     = deliveries.filter(d => new Date(d.invoice_date) <  thisMonthStart)
+
+            function DeliveryCard({ d, i }: { d: typeof deliveries[0]; i: number }) {
+              const isDataErr = retailPrice > 0 && d.perUnit > retailPrice
+              const margin   = product!.retail_price > 0
+                ? (product!.retail_price - d.perUnit) / product!.retail_price : -99
+              const vsAvg    = avg4wk > 0 ? Math.round((d.perUnit / avg4wk - 1) * 100) : 0
+              const prevCost = deliveries[i + 1]?.perUnit ?? null
+              const dateStr  = new Date(d.invoice_date).toLocaleDateString('en-GB', {
+                day: 'numeric', month: 'short', year: 'numeric',
+              })
+              return (
+                <div className={`card border ${isDataErr ? 'border-status-red/20 bg-status-red/5 opacity-60' : 'border-white/8'}`}>
+                  <div className="flex items-center justify-between mb-2">
+                    <div>
+                      <p className="text-sm font-semibold">{dateStr}</p>
+                      <p className="text-xs text-[var(--text-muted)]">
+                        {d.supplier_name}
+                        {d.invoice_number ? ` · ${d.invoice_number}` : ''}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className={`font-bold text-lg ${isDataErr ? 'text-status-red line-through' : ''}`}>{formatPrice(d.perUnit)}</p>
+                      {isDataErr ? (
+                        <p className="text-xs text-status-red">Data error</p>
+                      ) : prevCost !== null && d.perUnit !== prevCost && (
+                        <p className={`text-xs ${d.perUnit > prevCost ? 'text-status-red' : 'text-status-green'}`}>
+                          {sign(d.perUnit, prevCost)} {formatPrice(Math.abs(d.perUnit - prevCost))} vs prev
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                  {!isDataErr && (
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <TrafficDot status={ms(margin)} />
+                        <span className={`text-sm ${mc(margin)}`}>
+                          {margin < 0 ? 'At a loss' : `${pct(margin)} margin`}
+                          <span className="text-xs text-[var(--text-muted)] ml-1">(vs {formatPrice(product!.retail_price)} retail)</span>
+                        </span>
+                      </div>
+                      {Math.abs(vsAvg) >= 10 && (
+                        <span className={`text-xs ${vsAvg > 0 ? 'text-status-amber' : 'text-status-green'}`}>
+                          {vsAvg > 0 ? '+' : ''}{vsAvg}% vs 4-wk avg
+                        </span>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )
+            }
+
+            return (
+              <>
+                <p className="section-title mb-1">
+                  Delivery cost history
+                  <span className="text-[var(--text-muted)] font-normal ml-2 text-xs">
+                    {deliveries.length} deliveries · back to {new Date(deliveries[deliveries.length - 1].invoice_date).toLocaleDateString('en-GB', { month: 'short', year: 'numeric' })}
+                  </span>
+                </p>
+                {badDeliveryCount > 0 && (
+                  <p className="text-xs text-status-red mb-2">
+                    {badDeliveryCount} {badDeliveryCount === 1 ? 'entry' : 'entries'} excluded from averages — cost exceeded retail price (data errors, shown struck-through)
+                  </p>
+                )}
+
+                {thisMonth.length > 0 && (
+                  <div className="space-y-2 mb-3">
+                    {thisMonth.map((d, i) => <DeliveryCard key={d.id} d={d} i={i} />)}
+                  </div>
+                )}
+
+                {older.length > 0 && (
+                  <details className="mb-4">
+                    <summary className="text-sm text-[var(--text-muted)] cursor-pointer py-2 select-none list-none flex items-center gap-2">
+                      <span className="text-xs border border-white/20 rounded px-2 py-0.5">Show {older.length} older deliveries</span>
+                    </summary>
+                    <div className="space-y-2 mt-2">
+                      {older.map((d, i) => <DeliveryCard key={d.id} d={d} i={thisMonth.length + i} />)}
+                    </div>
+                  </details>
+                )}
+              </>
+            )
+          })()}
+
+          {timeline.length === 0 && deliveries.length === 0 && (
+            <p className="text-center text-[var(--text-muted)] py-8 text-sm">
+              No price history recorded yet.
+            </p>
           )}
         </>
       )}
