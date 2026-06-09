@@ -35,6 +35,7 @@ export function ProductForm({ id, defaultValues: d, isNew, deactivateButton }: P
   const [unit, setUnit]         = useState(d.unit)
   const [retail, setRetail]     = useState(d.retail_price)
   const [cost, setCost]         = useState(d.purchase_cost)
+  const [floor, setFloor]       = useState(d.margin_floor.toString())
   const [multiplier, setMultiplier] = useState(d.price_multiplier.toString())
 
   // Auto-update multiplier whenever retail or cost changes
@@ -45,6 +46,16 @@ export function ProductForm({ id, defaultValues: d, isNew, deactivateButton }: P
       setMultiplier((r / c).toFixed(2))
     }
   }, [retail, cost])
+
+  const r = parseFloat(retail) || 0
+  const c = parseFloat(cost)   || 0
+  const f = parseFloat(floor)  || 0
+  const margin       = r > 0 && c > 0 ? (r - c) / r : null
+  const marginPct    = margin !== null ? Math.round(margin * 1000) / 10 : null
+  const floorFrac    = f / 100
+  const atLoss       = margin !== null && margin < 0
+  const belowFloor   = margin !== null && !atLoss && margin < floorFrac
+  const healthy      = margin !== null && margin >= floorFrac
 
   const showCaseSize = unit !== 'kg'
 
@@ -89,6 +100,23 @@ export function ProductForm({ id, defaultValues: d, isNew, deactivateButton }: P
           value={cost} onChange={e => setCost(e.target.value)} className="input-field" />
       </Field>
 
+      {/* Live margin indicator */}
+      {marginPct !== null && (
+        <div className={`rounded-xl px-4 py-3 text-sm flex items-center justify-between
+          ${atLoss     ? 'bg-status-red/15 border border-status-red/40'
+          : belowFloor ? 'bg-status-amber/10 border border-status-amber/30'
+          :              'bg-status-green/10 border border-status-green/30'}`}>
+          <span className={atLoss ? 'text-status-red' : belowFloor ? 'text-status-amber' : 'text-status-green'}>
+            {atLoss     ? `Selling at a loss — margin ${marginPct}%`
+            : belowFloor ? `Below floor — margin ${marginPct}% (floor ${f}%)`
+            :              `Margin ${marginPct}%`}
+          </span>
+          {healthy && <span className="text-status-green text-base">✓</span>}
+          {belowFloor && <span className="text-status-amber text-base">⚠</span>}
+          {atLoss && <span className="text-status-red text-base">✗</span>}
+        </div>
+      )}
+
       {showCaseSize && (
         <Field label={UNIT_CASE_LABELS[unit] ?? 'Units per delivery case'}>
           <input name="case_size" type="number" min="1" step="1"
@@ -114,7 +142,7 @@ export function ProductForm({ id, defaultValues: d, isNew, deactivateButton }: P
           </Field>
           <Field label="Margin floor (%)">
             <input name="margin_floor" type="number" step="1" min="0" max="100"
-              defaultValue={d.margin_floor} className="input-field" />
+              value={floor} onChange={e => setFloor(e.target.value)} className="input-field" />
           </Field>
         </div>
       </div>
