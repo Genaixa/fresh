@@ -4,6 +4,7 @@ import { NavBar } from '@/components/ui/NavBar'
 import { approveAll, rejectAll, recalculateSuggestions } from './actions'
 import { SuggestionCard } from './SuggestionCard'
 import { WinsSection } from './WinsSection'
+import { formatPrice } from '@/lib/pricing-engine'
 import type { PriceSuggestion, SuggestionStatus } from '@/types'
 
 type Tab  = 'floor' | 'fruit' | 'veg' | 'other' | 'all' | 'wins'
@@ -24,7 +25,7 @@ export default async function PricingSuggestionsPage({
 
   const { data: suggestions } = await supabase
     .from('price_suggestions')
-    .select('*, product:products(name, margin_floor, purchase_cost, category)')
+    .select('*, product:products(name, margin_floor, purchase_cost, category, weekly_units)')
     .in('status', ['pending', 'on_hold'])
     .order('created_at', { ascending: false })
 
@@ -50,7 +51,7 @@ export default async function PricingSuggestionsPage({
   })
 
   type S = PriceSuggestion & {
-    product: { name: string; margin_floor: number; purchase_cost: number; category: string }
+    product: { name: string; margin_floor: number; purchase_cost: number; category: string; weekly_units: number | null }
     status: SuggestionStatus
   }
 
@@ -105,6 +106,14 @@ export default async function PricingSuggestionsPage({
     } else cmp = (a.product?.name ?? '').localeCompare(b.product?.name ?? '')
     return dir === 'desc' ? -cmp : cmp
   })
+
+  function tabTotals(list: S[]) {
+    const pendingOnly = list.filter(s => s.status === 'pending')
+    const withVol = pendingOnly.filter(s => (s.product?.weekly_units ?? 0) > 0)
+    const total = withVol.reduce((sum, s) =>
+      sum + (s.suggested_retail_price - s.current_retail_price) * (s.product.weekly_units ?? 0), 0)
+    return { total, covered: withVol.length, pendingCount: pendingOnly.length }
+  }
 
   function tabHref(t: string) {
     const parts: string[] = []
@@ -224,6 +233,30 @@ export default async function PricingSuggestionsPage({
             />
           ) : (
             <>
+              {(() => {
+                const { total, covered, pendingCount: cnt } = tabTotals(displayed)
+                if (total <= 0 || covered === 0) return null
+                const isUrgent = tab === 'floor'
+                const colour = isUrgent ? 'border-status-amber/30 bg-status-amber/5' : 'border-status-green/30 bg-status-green/5'
+                const text   = isUrgent ? 'text-status-amber' : 'text-status-green'
+                return (
+                  <div className={`card border ${colour} mb-3`}>
+                    <div className="grid grid-cols-2 gap-3 mb-2">
+                      <div>
+                        <p className="text-xs text-[var(--text-muted)] mb-0.5">Per week</p>
+                        <p className={`text-xl font-bold ${text}`}>+{formatPrice(total)}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-[var(--text-muted)] mb-0.5">Per year</p>
+                        <p className={`text-xl font-bold ${text}`}>+{formatPrice(total * 52)}</p>
+                      </div>
+                    </div>
+                    <p className="text-xs text-[var(--text-muted)]">
+                      if all pending applied · {covered} of {cnt} products have weekly volume data
+                    </p>
+                  </div>
+                )
+              })()}
               <div className="space-y-2">
                 {displayed.map((s: S) => {
                   const inv = invoiceByProduct[s.product_id] ?? null
