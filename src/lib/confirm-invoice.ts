@@ -28,7 +28,7 @@ function costChangeSafe(params: {
   retailPrice:  number
   caseSize:     number
 }): { safe: boolean; reason: string } {
-  const { productName, proposedCost, currentCost, retailPrice, caseSize } = params
+  const { productName: _name, proposedCost, currentCost, retailPrice, caseSize } = params
 
   // Rule 1 — cost > retail
   if (retailPrice > 0 && proposedCost > retailPrice) {
@@ -64,6 +64,133 @@ function costChangeSafe(params: {
   }
 
   return { safe: true, reason: '' }
+}
+
+// ─── Post-confirmation health sweep ──────────────────────────────────────────
+// Runs immediately after every invoice is confirmed, scoped to that invoice's
+// products. This is the primary trigger — David always confirms invoices the
+// moment he gets back from market, so the check fires at exactly the right time
+// without any scheduling.
+//
+// Checks applied to the invoice's products only:
+//   A. At-loss: cost > retail after the update (belt-and-suspenders vs trigger)
+//   B. Case-size mismatch: stored cost × case_size ≈ this invoice's line price
+//   C. Cost spike: weighted 7-day cost > 40% above stored baseline (genuine rise)
+//
+// Results go to cost_change_audit — dashboard surfaces them immediately.
+
+async function runPostConfirmHealthSweep(
+  supabase: SupabaseClient,
+  productIds: string[],
+  invoiceId: string,
+): Promise<void> {
+  if (productIds.length === 0) return
+
+  // Fetch final product state after all updates
+  const { data: products } = await supabase
+    .from('products')
+    .select('id, name, purchase_cost, retail_price, case_size, is_active')
+    .in('id', productIds)
+    .eq('is_active', true)
+
+  if (!products?.length) return
+
+  // Latest invoice line prices for case-size mismatch check
+  const { data: invoiceItems } = await supabase
+    .from('purchase_invoice_items')
+    .select('product_id, unit_cost')
+    .eq('invoice_id', invoiceId)
+    .eq('is_matched', true)
+    .in('product_id', productIds)
+
+  const invoiceCostMap = new Map<string, number>(
+    (invoiceItems ?? []).map(i => [i.product_id, i.unit_cost])
+  )
+
+  // 7-day weighted costs for spike detection
+  const { data: weightedRows } = await supabase
+    .from('product_weighted_costs')
+    .select('product_id, weighted_unit_cost_pence')
+    .in('product_id', productIds)
+
+  const weightedMap = new Map<string, number>(
+    (weightedRows ?? []).map(r => [r.product_id, r.weighted_unit_cost_pence])
+  )
+
+  // Already logged today — don't duplicate alerts for the same product
+  const { data: todayAlerts } = await supabase
+    .from('cost_change_audit')
+    .select('product_id, reason')
+    .in('product_id', productIds)
+    .gte('created_at', new Date().toISOString().slice(0, 10))  // today
+    .eq('source', 'invoice_check')
+
+  const alreadyAlerted = new Set((todayAlerts ?? []).map(a => a.product_id))
+
+  const toInsert: Record<string, unknown>[] = []
+
+  for (const p of products) {
+    if (alreadyAlerted.has(p.id)) continue
+
+    const cost   = p.purchase_cost ?? 0
+    const retail = p.retail_price  ?? 0
+
+    // Check A — at a loss after confirmation
+    if (retail > 0 && cost > retail) {
+      toInsert.push({
+        product_id:    p.id,
+        product_name:  p.name,
+        old_cost:      cost,
+        proposed_cost: cost,
+        retail_price:  retail,
+        reason:        `POST-CONFIRM CHECK A: selling at a loss — cost ${cost}p > retail ${retail}p. Fix urgently.`,
+        blocked:       true,
+        source:        'invoice_check',
+      })
+      continue
+    }
+
+    // Check B — case-size mismatch: stored cost × case_size ≈ invoice line price
+    const caseSize    = p.case_size ?? 1
+    const invoiceLine = invoiceCostMap.get(p.id)
+    if (caseSize > 1 && cost >= MIN_TRUSTED_COST && invoiceLine) {
+      const implied = cost * caseSize
+      const drift   = Math.abs(implied - invoiceLine) / invoiceLine
+      if (drift < 0.15) {
+        toInsert.push({
+          product_id:    p.id,
+          product_name:  p.name,
+          old_cost:      cost,
+          proposed_cost: invoiceLine,
+          retail_price:  retail,
+          reason:        `POST-CONFIRM CHECK B: cost ${cost}p × case_size ${caseSize} = ${implied}p ≈ invoice line ${invoiceLine}p — looks like the case price was used as the unit cost.`,
+          blocked:       true,
+          source:        'invoice_check',
+        })
+        continue
+      }
+    }
+
+    // Check C — genuine cost spike (40–400% above baseline, not a unit mismatch)
+    const weighted = weightedMap.get(p.id)
+    if (weighted && cost >= MIN_TRUSTED_COST && weighted > cost * 1.4 && weighted < cost * 4) {
+      const pctRise = Math.round((weighted / cost - 1) * 100)
+      toInsert.push({
+        product_id:    p.id,
+        product_name:  p.name,
+        old_cost:      cost,
+        proposed_cost: weighted,
+        retail_price:  retail,
+        reason:        `POST-CONFIRM CHECK C: cost rose ${pctRise}% this week (stored ${cost}p, 7-day avg ${weighted}p). Consider raising retail price.`,
+        blocked:       false,
+        source:        'invoice_check',
+      })
+    }
+  }
+
+  if (toInsert.length > 0) {
+    await supabase.from('cost_change_audit').insert(toInsert)
+  }
 }
 
 // ─── Main export ─────────────────────────────────────────────────────────────
@@ -123,7 +250,6 @@ export async function autoConfirmInvoice(
     if (!check.safe) {
       console.warn(`[cost-guard] BLOCKED ${p.name}: ${check.reason}`)
 
-      // Log to audit table — visible on dashboard
       await supabase.from('cost_change_audit').insert({
         product_id:    productId,
         product_name:  p.name,
@@ -135,17 +261,15 @@ export async function autoConfirmInvoice(
         source:        'pipeline',
       })
 
-      continue  // skip this product — purchase_cost stays unchanged
+      continue
     }
 
-    // Safe to update
     const { error } = await supabase
       .from('products')
       .update({ purchase_cost: proposedCost })
       .eq('id', productId)
 
     if (error) {
-      // DB trigger fired — log what happened (trigger already wrote the audit row)
       console.error(`[cost-guard] DB trigger blocked ${p.name}: ${error.message}`)
     }
   }
@@ -197,4 +321,8 @@ export async function autoConfirmInvoice(
   }
 
   await supabase.from('purchase_invoices').update({ status: 'processed' }).eq('id', invoiceId)
+
+  // Health sweep runs last — after all cost updates and suggestions are settled.
+  // Scoped to this invoice's products only. Results appear on dashboard immediately.
+  await runPostConfirmHealthSweep(supabase, productIds, invoiceId)
 }
