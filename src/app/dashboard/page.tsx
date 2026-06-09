@@ -39,6 +39,17 @@ export default async function DashboardPage() {
   const unpricedCount = healthIssues.filter(i => i.type === 'unpriced').length
   const spikeCount    = healthIssues.filter(i => i.type === 'cost_spike').length
 
+  // Blocked cost updates — invoice pipeline rejected a cost write in the last 7 days
+  const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
+  const { data: blockedCosts } = await supabase
+    .from('cost_change_audit')
+    .select('product_name, old_cost, proposed_cost, reason, created_at')
+    .eq('blocked', true)
+    .gte('created_at', sevenDaysAgo)
+    .order('created_at', { ascending: false })
+    .limit(5)
+  const blockedCostCount = blockedCosts?.length ?? 0
+
   const now = new Date()
   const hour = now.getHours()
   const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening'
@@ -137,6 +148,35 @@ export default async function DashboardPage() {
             </div>
           </div>
         </Link>
+      )}
+
+      {/* Blocked cost updates — pipeline rejected a dangerous write */}
+      {blockedCostCount > 0 && (
+        <div className="card border-2 border-status-red bg-status-red/10 mb-4">
+          <div className="flex items-start gap-3">
+            <span className="text-2xl flex-shrink-0">🛡</span>
+            <div className="flex-1 min-w-0">
+              <p className="font-bold text-status-red text-sm">
+                Cost update blocked — check manually
+              </p>
+              <p className="text-xs text-[var(--text-muted)] mt-0.5 mb-2">
+                The system rejected {blockedCostCount} suspicious cost {blockedCostCount === 1 ? 'change' : 'changes'} in the last 7 days to protect your margins. Review and set the correct cost.
+              </p>
+              {blockedCosts?.map((b, i) => (
+                <div key={i} className="text-xs mb-1 font-medium">
+                  <span className="text-white">{b.product_name}</span>
+                  <span className="text-[var(--text-muted)]">
+                    {' '}— tried to set {b.proposed_cost}p
+                    {b.old_cost ? ` (was ${b.old_cost}p)` : ''}
+                  </span>
+                </div>
+              ))}
+              <Link href="/products" className="text-xs text-status-red font-semibold mt-1 inline-block">
+                Fix costs in Products →
+              </Link>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Selling at a loss — highest urgency */}
