@@ -135,6 +135,14 @@ export async function recalculateSuggestions() {
   revalidatePath('/pricing')
 }
 
+export async function setOpportunityPrice(productId: string, pricePence: number) {
+  if (!productId || pricePence <= 0) return
+  const supabase = await createClient()
+  await supabase.from('products').update({ retail_price: pricePence }).eq('id', productId)
+  revalidatePath('/pricing')
+  revalidatePath('/dashboard')
+}
+
 export async function amendAndApproveSuggestion(id: string, formData: FormData) {
   const raw = formData.get('price_pounds') as string
   const customPrice = Math.round(parseFloat(raw) * 100)

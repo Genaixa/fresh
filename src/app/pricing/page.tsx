@@ -3,9 +3,10 @@ import { createClient } from '@/lib/supabase/server'
 import { NavBar } from '@/components/ui/NavBar'
 import { approveAll, rejectAll, recalculateSuggestions } from './actions'
 import { SuggestionCard } from './SuggestionCard'
+import { OpportunityCard } from './OpportunityCard'
 import type { PriceSuggestion, SuggestionStatus } from '@/types'
 
-type Tab  = 'floor' | 'fruit' | 'veg' | 'other' | 'all'
+type Tab  = 'floor' | 'fruit' | 'veg' | 'other' | 'all' | 'wins'
 type Sort = 'name' | 'price' | 'margin'
 type Dir  = 'asc' | 'desc'
 
@@ -15,7 +16,7 @@ export default async function PricingSuggestionsPage({
   searchParams: Promise<{ tab?: string; sort?: string; dir?: string }>
 }) {
   const { tab: tabParam, sort: sortParam, dir: dirParam } = await searchParams
-  const tab:  Tab  = (['floor','fruit','veg','other'].includes(tabParam ?? '') ? tabParam as Tab : 'all')
+  const tab:  Tab  = (['floor','fruit','veg','other','wins'].includes(tabParam ?? '') ? tabParam as Tab : 'all')
   const sort: Sort = sortParam === 'price' ? 'price' : sortParam === 'margin' ? 'margin' : 'name'
   const dir:  Dir  = dirParam === 'desc' ? 'desc' : 'asc'
 
@@ -26,6 +27,25 @@ export default async function PricingSuggestionsPage({
     .select('*, product:products(name, margin_floor, purchase_cost, category)')
     .in('status', ['pending', 'on_hold'])
     .order('created_at', { ascending: false })
+
+  // Opportunities: healthy products between floor (20%) and target (33%) margin
+  const TARGET_MARGIN = 0.33
+  const { data: allProducts } = await supabase
+    .from('products')
+    .select('id, name, category, retail_price, purchase_cost, margin_floor, weekly_units')
+    .eq('is_active', true)
+    .gt('retail_price', 0)
+    .gt('purchase_cost', 0)
+    .order('name')
+
+  type Opp = { id: string; name: string; category: string; retail_price: number; purchase_cost: number; margin_floor: number; weekly_units: number | null }
+  const opportunities = ((allProducts ?? []) as Opp[]).filter(p => {
+    const margin = (p.retail_price - p.purchase_cost) / p.retail_price
+    if (margin < (p.margin_floor ?? 0.2) || margin >= TARGET_MARGIN) return false
+    // Only show if the suggested price is at least 5p above current (filter trivial changes)
+    const suggested = Math.ceil(Math.round(p.purchase_cost / (1 - TARGET_MARGIN)) / 5) * 5
+    return suggested - p.retail_price >= 5
+  })
 
   type S = PriceSuggestion & {
     product: { name: string; margin_floor: number; purchase_cost: number; category: string }
@@ -109,22 +129,45 @@ export default async function PricingSuggestionsPage({
       </div>
 
       {pending.length === 0 ? (
-        <div className="card text-center py-12 flex flex-col items-center">
-          <p className="text-4xl mb-3">✓</p>
-          <p className="font-semibold">All prices up to date</p>
-          <p className="text-sm text-[var(--text-muted)] mt-1 mb-2">
-            New suggestions appear automatically when you confirm a delivery note.
-          </p>
-          <p className="text-xs text-[var(--text-muted)] mb-6 max-w-xs">
-            Use the button below to re-check all products against their current costs —
-            useful if you&apos;ve manually updated a cost without going through an invoice.
-          </p>
-          <form action={recalculateSuggestions}>
-            <button className="btn-primary px-6 py-2.5 text-sm">
-              Recalculate from current costs
-            </button>
-          </form>
-        </div>
+        <>
+          <div className="card text-center py-10 flex flex-col items-center mb-4">
+            <p className="text-4xl mb-3">✓</p>
+            <p className="font-semibold">All prices up to date</p>
+            <p className="text-sm text-[var(--text-muted)] mt-1 mb-2">
+              New suggestions appear automatically when you confirm a delivery note.
+            </p>
+            <p className="text-xs text-[var(--text-muted)] mb-6 max-w-xs">
+              Use the button below to re-check all products against their current costs —
+              useful if you&apos;ve manually updated a cost without going through an invoice.
+            </p>
+            <form action={recalculateSuggestions}>
+              <button className="btn-primary px-6 py-2.5 text-sm">
+                Recalculate from current costs
+              </button>
+            </form>
+          </div>
+          {opportunities.length > 0 && (
+            <div>
+              <h2 className="text-sm font-semibold text-status-green mb-1">💡 Price Wins ({opportunities.length})</h2>
+              <p className="text-xs text-[var(--text-muted)] mb-3">
+                Products currently below 33% margin — consider a small price increase.
+              </p>
+              <div className="space-y-2">
+                {opportunities.map(o => (
+                  <OpportunityCard
+                    key={o.id}
+                    productId={o.id}
+                    productName={o.name}
+                    currentRetailPrice={o.retail_price}
+                    costPence={o.purchase_cost}
+                    marginFloor={o.margin_floor ?? 0.2}
+                    weeklyUnits={o.weekly_units}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+        </>
       ) : (
         <>
           {/* Category tabs */}
@@ -158,6 +201,13 @@ export default async function PricingSuggestionsPage({
                 ${tab === 'all' ? 'bg-white/10 ring-1 ring-white/30 font-semibold' : 'card'}`}>
               All <span className="text-xs opacity-60">({pending.length})</span>
             </a>
+            {opportunities.length > 0 && (
+              <a href={tabHref('wins')}
+                className={`flex-1 text-center rounded-xl py-2 text-sm transition-colors
+                  ${tab === 'wins' ? 'bg-status-green/20 ring-1 ring-status-green font-semibold' : 'card'}`}>
+                💡 Wins <span className="text-xs opacity-60">({opportunities.length})</span>
+              </a>
+            )}
           </div>
 
           {/* Sort toggle */}
@@ -177,51 +227,74 @@ export default async function PricingSuggestionsPage({
             })}
           </div>
 
-          <div className="space-y-2">
-            {displayed.map((s: S) => {
-              const inv = invoiceByProduct[s.product_id] ?? null
-              return (
-                <SuggestionCard
-                  key={s.id}
-                  id={s.id}
-                  productName={s.product?.name ?? ''}
-                  currentRetailPrice={s.current_retail_price}
-                  suggestedRetailPrice={s.suggested_retail_price}
-                  costPence={s.product?.purchase_cost ?? 0}
-                  marginWarning={s.margin_warning}
-                  marginFloor={s.product?.margin_floor ?? 0.2}
-                  isHeld={s.status === 'on_hold'}
-                  invoiceId={inv?.id ?? null}
-                  invoiceDate={inv?.invoice_date ?? null}
-                  supplierName={inv?.supplier_name ?? null}
-                />
-              )
-            })}
-          </div>
+          {tab === 'wins' ? (
+            <>
+              <p className="text-xs text-[var(--text-muted)] mb-3">
+                These products are healthy but below 33% margin. Adjust and apply any you&apos;re happy with.
+              </p>
+              <div className="space-y-2">
+                {opportunities.map(o => (
+                  <OpportunityCard
+                    key={o.id}
+                    productId={o.id}
+                    productName={o.name}
+                    currentRetailPrice={o.retail_price}
+                    costPence={o.purchase_cost}
+                    marginFloor={o.margin_floor ?? 0.2}
+                    weeklyUnits={o.weekly_units}
+                  />
+                ))}
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="space-y-2">
+                {displayed.map((s: S) => {
+                  const inv = invoiceByProduct[s.product_id] ?? null
+                  return (
+                    <SuggestionCard
+                      key={s.id}
+                      id={s.id}
+                      productName={s.product?.name ?? ''}
+                      currentRetailPrice={s.current_retail_price}
+                      suggestedRetailPrice={s.suggested_retail_price}
+                      costPence={s.product?.purchase_cost ?? 0}
+                      marginWarning={s.margin_warning}
+                      marginFloor={s.product?.margin_floor ?? 0.2}
+                      isHeld={s.status === 'on_hold'}
+                      invoiceId={inv?.id ?? null}
+                      invoiceDate={inv?.invoice_date ?? null}
+                      supplierName={inv?.supplier_name ?? null}
+                    />
+                  )
+                })}
+              </div>
 
-          {/* Bulk actions */}
-          <div className="flex gap-3 mt-6">
-            <form action={approveAll} className="flex-1">
-              <button
-                className="btn-primary w-full py-3 text-sm disabled:opacity-40"
-                disabled={pendingCount === 0}
-              >
-                ✓ Approve All{pendingCount > 0 ? ` (${pendingCount})` : ''}
-              </button>
-            </form>
-            <form action={rejectAll} className="flex-1">
-              <button
-                className="w-full py-3 rounded-xl border border-status-red/40 text-status-red text-sm active:bg-status-red/10 transition-colors disabled:opacity-40"
-                disabled={pendingCount === 0}
-              >
-                ✗ Reject All
-              </button>
-            </form>
-          </div>
+              {/* Bulk actions */}
+              <div className="flex gap-3 mt-6">
+                <form action={approveAll} className="flex-1">
+                  <button
+                    className="btn-primary w-full py-3 text-sm disabled:opacity-40"
+                    disabled={pendingCount === 0}
+                  >
+                    ✓ Approve All{pendingCount > 0 ? ` (${pendingCount})` : ''}
+                  </button>
+                </form>
+                <form action={rejectAll} className="flex-1">
+                  <button
+                    className="w-full py-3 rounded-xl border border-status-red/40 text-status-red text-sm active:bg-status-red/10 transition-colors disabled:opacity-40"
+                    disabled={pendingCount === 0}
+                  >
+                    ✗ Reject All
+                  </button>
+                </form>
+              </div>
 
-          <p className="text-center text-xs text-[var(--text-muted)] mt-4">
-            {displayed.length} shown · {pendingCount} ready · {pending.length - pendingCount} on hold · {floorCount} below floor
-          </p>
+              <p className="text-center text-xs text-[var(--text-muted)] mt-4">
+                {displayed.length} shown · {pendingCount} ready · {pending.length - pendingCount} on hold · {floorCount} below floor
+              </p>
+            </>
+          )}
         </>
       )}
 
