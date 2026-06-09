@@ -34,10 +34,10 @@ export default async function DashboardPage() {
     .select('*', { count: 'exact', head: true })
     .eq('status', 'confirmed')
 
-  const healthIssues  = await getProductHealthIssues(supabase)
-  const atLossCount   = healthIssues.filter(i => i.type === 'at_loss').length
-  const unpricedCount = healthIssues.filter(i => i.type === 'unpriced').length
-  const spikeCount    = healthIssues.filter(i => i.type === 'cost_spike').length
+  const healthIssues    = await getProductHealthIssues(supabase)
+  const atLossCount     = healthIssues.filter(i => i.type === 'at_loss').length
+  const unpricedCount   = healthIssues.filter(i => i.type === 'unpriced').length
+  const belowFloorCount = healthIssues.filter(i => i.type === 'below_floor').length
 
   // Blocked cost writes where the bad value actually got into the DB
   // (trigger correctly protected = current cost stayed at old_cost = nothing to fix)
@@ -187,16 +187,16 @@ export default async function DashboardPage() {
       ))}
 
       {/* Combined price health — all health issues in one card */}
-      {(atLossCount > 0 || spikeCount > 0 || unpricedCount > 0) && (() => {
-        const total    = atLossCount + spikeCount + unpricedCount
+      {(atLossCount > 0 || belowFloorCount > 0 || unpricedCount > 0) && (() => {
+        const total    = atLossCount + belowFloorCount + unpricedCount
         const isUrgent = atLossCount > 0
         const parts    = [
-          atLossCount  > 0 ? `${atLossCount} at a loss`                        : null,
-          spikeCount   > 0 ? `${spikeCount} cost spike${spikeCount > 1 ? 's' : ''}` : null,
-          unpricedCount > 0 ? `${unpricedCount} unpriced`                      : null,
+          atLossCount     > 0 ? `${atLossCount} at a loss`                                        : null,
+          belowFloorCount > 0 ? `${belowFloorCount} below floor`                                  : null,
+          unpricedCount   > 0 ? `${unpricedCount} unpriced`                                       : null,
         ].filter(Boolean)
         return (
-          <Link href="/pricing" className="block mb-4">
+          <Link href="/products?category=issues" className="block mb-4">
             <div className={`card border ${isUrgent
               ? 'border-status-red/60 bg-status-red/5'
               : 'border-status-amber/40 bg-status-amber/5'}`}>
@@ -235,20 +235,30 @@ export default async function DashboardPage() {
         </Link>
       )}
 
-      {/* Quick actions grid */}
-      <p className="section-title">Quick Actions</p>
-      <div className="grid grid-cols-2 gap-3 mb-8">
-        <QuickAction href="/waste"            icon="⚠️" label="Log Waste" />
-        <QuickAction href="/margins"          icon="📊" label="Margins" />
-        <QuickAction href="/price-history"    icon="🔍" label="Price History" />
-        <QuickAction href="/pricing"          icon="💰" label="Pricing" />
+      {/* Products & stock */}
+      <p className="section-title">Products</p>
+      <div className="grid grid-cols-3 gap-3 mb-6">
         <QuickAction href="/products"         icon="🥦" label="Products" />
-        <QuickAction href="/sync"             icon="🔄" label="EPOS Sync" />
-        <QuickAction href="/epos-compare"     icon="📈" label="Price Check" />
-        <QuickAction href="/margins/sim"      icon="🧮" label="Simulator" />
         <QuickAction href="/invoices"         icon="📋" label="Invoices" />
-        <QuickAction href="/suppliers"        icon="🏪" label="Suppliers" />
+        <QuickAction href="/waste"            icon="🗑️" label="Waste Log" />
+      </div>
+
+      {/* Pricing & analysis */}
+      <p className="section-title">Pricing</p>
+      <div className="grid grid-cols-3 gap-3 mb-6">
+        <QuickAction href="/pricing"          icon="💰" label="Pricing" />
+        <QuickAction href="/epos-compare"     icon="📈" label="Price Check" />
+        <QuickAction href="/price-history"    icon="🔍" label="Price History" />
+        <QuickAction href="/margins"          icon="📊" label="Margins" />
+        <QuickAction href="/margins/sim"      icon="🧮" label="Simulator" />
         <QuickAction href="/wholesale-lookup" icon="👤" label="Wholesale" />
+      </div>
+
+      {/* Settings */}
+      <p className="section-title">Settings</p>
+      <div className="grid grid-cols-3 gap-3 mb-8">
+        <QuickAction href="/suppliers"        icon="🏪" label="Suppliers" />
+        <QuickAction href="/sync"             icon="🔄" label="EPOS Sync" />
       </div>
     </div>
   )

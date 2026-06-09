@@ -41,6 +41,7 @@ export default async function PricingSuggestionsPage({
 
   type Opp = { id: string; name: string; category: string; retail_price: number; purchase_cost: number; margin_floor: number; weekly_units: number | null; wins_dismissed_cost: number | null }
   const opportunities = ((allProducts ?? []) as Opp[]).filter(p => {
+    if (p.margin_floor < 0) return false  // intentional loss leader
     const margin = (p.retail_price - p.purchase_cost) / p.retail_price
     if (margin < (p.margin_floor ?? 0.2) || margin >= TARGET_MARGIN) return false
     // Re-show if cost has moved 10p+ since dismissal; otherwise hide

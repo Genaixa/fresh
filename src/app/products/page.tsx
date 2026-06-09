@@ -33,10 +33,11 @@ export default async function ProductsPage({
 
   const { data: allProducts } = await query
 
-  // Issues tab: at-loss (non-intentional) + below margin floor
+  // Issues tab: at-loss + below margin floor + unpriced (all non-intentional)
   const products = showIssues
     ? (allProducts ?? []).filter((p: Product) => {
         if (p.margin_floor < 0) return false  // intentional loss leaders excluded
+        if (p.retail_price === 0 && p.purchase_cost > 0) return true  // unpriced
         if (p.retail_price > 0 && p.purchase_cost > p.retail_price) return true  // at a loss
         if (p.retail_price > 0 && p.purchase_cost > 0) {
           const margin = (p.retail_price - p.purchase_cost) / p.retail_price
@@ -85,6 +86,7 @@ export default async function ProductsPage({
         {(() => {
           const issueCount = (allProducts ?? []).filter((p: Product) => {
             if (p.margin_floor < 0) return false
+            if (p.retail_price === 0 && p.purchase_cost > 0) return true
             if (p.retail_price > 0 && p.purchase_cost > p.retail_price) return true
             if (p.retail_price > 0 && p.purchase_cost > 0) {
               return (p.retail_price - p.purchase_cost) / p.retail_price < p.margin_floor

@@ -65,6 +65,8 @@ export async function getProductHealthIssues(
     const margin = retail > 0 ? (retail - cost) / retail : null
     const weighted = weightedMap.get(p.id)
 
+    if (floor < 0) continue  // intentional loss leader — skip all health checks
+
     const base = {
       productId:   p.id,
       productName: p.name,
