@@ -3,7 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { NavBar } from '@/components/ui/NavBar'
 import { approveAll, rejectAll, recalculateSuggestions } from './actions'
 import { SuggestionCard } from './SuggestionCard'
-import { OpportunityCard } from './OpportunityCard'
+import { WinsSection } from './WinsSection'
 import type { PriceSuggestion, SuggestionStatus } from '@/types'
 
 type Tab  = 'floor' | 'fruit' | 'veg' | 'other' | 'all' | 'wins'
@@ -151,22 +151,10 @@ export default async function PricingSuggestionsPage({
           {opportunities.length > 0 && (
             <div>
               <h2 className="text-sm font-semibold text-status-green mb-1">💡 Price Wins ({opportunities.length})</h2>
-              <p className="text-xs text-[var(--text-muted)] mb-3">
-                Products currently below 40% margin — here&apos;s what you&apos;d need to charge to hit 40%.
-              </p>
-              <div className="space-y-2">
-                {opportunities.map(o => (
-                  <OpportunityCard
-                    key={o.id}
-                    productId={o.id}
-                    productName={o.name}
-                    currentRetailPrice={o.retail_price}
-                    costPence={o.purchase_cost}
-                    marginFloor={o.margin_floor ?? 0.2}
-                    weeklyUnits={o.weekly_units}
-                  />
-                ))}
-              </div>
+              <WinsSection
+                opportunities={opportunities.map(o => ({ ...o, margin_floor: o.margin_floor ?? 0.2 }))}
+                description="Products below 40% margin — here's what you'd need to charge to hit 40%."
+              />
             </div>
           )}
         </>
@@ -230,24 +218,10 @@ export default async function PricingSuggestionsPage({
           </div>
 
           {tab === 'wins' ? (
-            <>
-              <p className="text-xs text-[var(--text-muted)] mb-3">
-                These products are currently below 40% margin. Shows the price you&apos;d need to charge to hit 40% — adjust and apply any you&apos;re happy with.
-              </p>
-              <div className="space-y-2">
-                {opportunities.map(o => (
-                  <OpportunityCard
-                    key={o.id}
-                    productId={o.id}
-                    productName={o.name}
-                    currentRetailPrice={o.retail_price}
-                    costPence={o.purchase_cost}
-                    marginFloor={o.margin_floor ?? 0.2}
-                    weeklyUnits={o.weekly_units}
-                  />
-                ))}
-              </div>
-            </>
+            <WinsSection
+              opportunities={opportunities.map(o => ({ ...o, margin_floor: o.margin_floor ?? 0.2 }))}
+              description="Shows what you'd need to charge to hit 40% margin. Adjust any price before applying — or leave as is to hide until costs change."
+            />
           ) : (
             <>
               <div className="space-y-2">
