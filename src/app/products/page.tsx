@@ -15,37 +15,31 @@ export default async function ProductsPage({
 
   const showIssues = category === 'issues'
 
-  let query = supabase
+  // Always fetch all active products — category/search filtered in JS so
+  // the Issues count badge is always computed from the full catalogue.
+  const { data: allProducts } = await supabase
     .from('products')
     .select('*')
     .eq('is_active', true)
     .order('category')
     .order('name')
 
-  if (!showIssues) {
-    if (category && category !== 'all') {
-      query = query.eq('category', category)
+  function isIssue(p: Product) {
+    if (p.margin_floor < 0) return false
+    if (p.retail_price === 0 && p.purchase_cost > 0) return true
+    if (p.retail_price > 0 && p.purchase_cost > p.retail_price) return true
+    if (p.retail_price > 0 && p.purchase_cost > 0) {
+      return (p.retail_price - p.purchase_cost) / p.retail_price < p.margin_floor
     }
-    if (q) {
-      query = query.ilike('name', `%${q}%`)
-    }
+    return false
   }
 
-  const { data: allProducts } = await query
-
-  // Issues tab: at-loss + below margin floor + unpriced (all non-intentional)
-  const products = showIssues
-    ? (allProducts ?? []).filter((p: Product) => {
-        if (p.margin_floor < 0) return false  // intentional loss leaders excluded
-        if (p.retail_price === 0 && p.purchase_cost > 0) return true  // unpriced
-        if (p.retail_price > 0 && p.purchase_cost > p.retail_price) return true  // at a loss
-        if (p.retail_price > 0 && p.purchase_cost > 0) {
-          const margin = (p.retail_price - p.purchase_cost) / p.retail_price
-          if (margin < p.margin_floor) return true  // below floor
-        }
-        return false
-      })
-    : (allProducts ?? [])
+  const products = (allProducts ?? []).filter((p: Product) => {
+    if (showIssues)                           return isIssue(p)
+    if (q)                                    { if (!p.name.toLowerCase().includes(q.toLowerCase())) return false }
+    if (category && category !== 'all')       return p.category === category
+    return true
+  })
 
   return (
     <div className="page pb-24">
@@ -84,15 +78,7 @@ export default async function ProductsPage({
           </Link>
         ))}
         {(() => {
-          const issueCount = (allProducts ?? []).filter((p: Product) => {
-            if (p.margin_floor < 0) return false
-            if (p.retail_price === 0 && p.purchase_cost > 0) return true
-            if (p.retail_price > 0 && p.purchase_cost > p.retail_price) return true
-            if (p.retail_price > 0 && p.purchase_cost > 0) {
-              return (p.retail_price - p.purchase_cost) / p.retail_price < p.margin_floor
-            }
-            return false
-          }).length
+          const issueCount = (allProducts ?? []).filter(isIssue).length
           if (issueCount === 0) return null
           return (
             <Link
