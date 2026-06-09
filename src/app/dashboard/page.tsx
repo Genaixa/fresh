@@ -39,16 +39,21 @@ export default async function DashboardPage() {
   const unpricedCount = healthIssues.filter(i => i.type === 'unpriced').length
   const spikeCount    = healthIssues.filter(i => i.type === 'cost_spike').length
 
-  // Blocked cost updates — invoice pipeline rejected a cost write in the last 7 days
+  // Cost audit alerts from the last 7 days
   const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
-  const { data: blockedCosts } = await supabase
+  const { data: allCostAlerts } = await supabase
     .from('cost_change_audit')
-    .select('product_name, old_cost, proposed_cost, reason, created_at')
-    .eq('blocked', true)
+    .select('product_name, old_cost, proposed_cost, reason, blocked, source, created_at')
     .gte('created_at', sevenDaysAgo)
     .order('created_at', { ascending: false })
-    .limit(5)
-  const blockedCostCount = blockedCosts?.length ?? 0
+    .limit(10)
+
+  // Blocked = data was protected (red — needs fixing)
+  const blockedCosts      = (allCostAlerts ?? []).filter(a => a.blocked)
+  const blockedCostCount  = blockedCosts.length
+  // Warnings = cron flagged genuine cost rises (amber — consider repricing)
+  const cronSpikes        = (allCostAlerts ?? []).filter(a => !a.blocked && a.source === 'cron')
+  const cronSpikeCount    = cronSpikes.length
 
   const now = new Date()
   const hour = now.getHours()
@@ -173,6 +178,36 @@ export default async function DashboardPage() {
               ))}
               <Link href="/products" className="text-xs text-status-red font-semibold mt-1 inline-block">
                 Fix costs in Products →
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Cron cost spike warnings — genuine price rises to act on */}
+      {cronSpikeCount > 0 && (
+        <div className="card border border-status-amber/40 bg-status-amber/5 mb-4">
+          <div className="flex items-start gap-3">
+            <span className="text-2xl flex-shrink-0">📈</span>
+            <div className="flex-1 min-w-0">
+              <p className="font-semibold text-status-amber text-sm">
+                {cronSpikeCount} {cronSpikeCount === 1 ? 'product' : 'products'} cost more this week — check prices
+              </p>
+              <p className="text-xs text-[var(--text-muted)] mt-0.5 mb-2">
+                Your margin on {cronSpikeCount === 1 ? 'this product' : 'these products'} may have dropped since the last delivery.
+              </p>
+              {cronSpikes.slice(0,4).map((b, i) => (
+                <p key={i} className="text-xs mb-0.5">
+                  <span className="text-white font-medium">{b.product_name}</span>
+                  {b.old_cost && b.proposed_cost ? (
+                    <span className="text-[var(--text-muted)]">
+                      {' '}— {b.old_cost}p → {b.proposed_cost}p
+                    </span>
+                  ) : null}
+                </p>
+              ))}
+              <Link href="/pricing" className="text-xs text-status-amber font-semibold mt-2 inline-block">
+                Review prices →
               </Link>
             </div>
           </div>
