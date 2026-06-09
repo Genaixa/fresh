@@ -36,7 +36,7 @@ export async function updateSession(request: NextRequest) {
   }
 
   // Webhook endpoints — no session, secured by token in query string
-  if (pathname.startsWith('/api/delivery-note')) {
+  if (pathname.startsWith('/api/delivery-note') || pathname.startsWith('/api/golem')) {
     return supabaseResponse
   }
 
