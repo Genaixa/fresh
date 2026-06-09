@@ -29,7 +29,7 @@ export default async function PricingSuggestionsPage({
     .order('created_at', { ascending: false })
 
   // Opportunities: healthy products between floor (20%) and target (33%) margin
-  const TARGET_MARGIN = 0.33
+  const TARGET_MARGIN = 0.40
   const { data: allProducts } = await supabase
     .from('products')
     .select('id, name, category, retail_price, purchase_cost, margin_floor, weekly_units')
@@ -150,7 +150,7 @@ export default async function PricingSuggestionsPage({
             <div>
               <h2 className="text-sm font-semibold text-status-green mb-1">💡 Price Wins ({opportunities.length})</h2>
               <p className="text-xs text-[var(--text-muted)] mb-3">
-                Products currently below 33% margin — consider a small price increase.
+                Products currently below 40% margin — here&apos;s what you&apos;d need to charge to hit 40%.
               </p>
               <div className="space-y-2">
                 {opportunities.map(o => (
@@ -230,7 +230,7 @@ export default async function PricingSuggestionsPage({
           {tab === 'wins' ? (
             <>
               <p className="text-xs text-[var(--text-muted)] mb-3">
-                These products are healthy but below 33% margin. Adjust and apply any you&apos;re happy with.
+                These products are currently below 40% margin. Shows the price you&apos;d need to charge to hit 40% — adjust and apply any you&apos;re happy with.
               </p>
               <div className="space-y-2">
                 {opportunities.map(o => (

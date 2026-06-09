@@ -13,7 +13,7 @@ interface Props {
   weeklyUnits: number | null
 }
 
-const TARGET_MARGIN = 0.33
+const TARGET_MARGIN = 0.40
 
 function calcMargin(price: number, cost: number) {
   if (price <= 0) return 0
@@ -123,7 +123,7 @@ export function OpportunityCard({ productId, productName, currentRetailPrice, co
       </div>
 
       <div className="mt-2 text-xs text-[var(--text-muted)] flex justify-between">
-        <span>target 33% · at cost: {formatPrice(costPence)}</span>
+        <span>target 40% · at cost: {formatPrice(costPence)}</span>
         {belowFloor && <span className="text-status-amber">⚠ below floor</span>}
       </div>
     </div>
