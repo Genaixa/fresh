@@ -1,0 +1,422 @@
+import OpenAI from 'openai'
+import type { SupabaseClient } from '@supabase/supabase-js'
+import { sendTelegram } from './telegram'
+
+export interface GolemFinding {
+  alert_type: string
+  severity:   'critical' | 'warning' | 'info'
+  product_id?:   string
+  product_name?: string
+  message:  string
+  action?:  string
+  source:   'data_golem' | 'daily_sweep'
+}
+
+// ─── Jewish holiday calendar (upcoming within 30 days) ──────────────────────
+// product names that spike before each holiday
+const HOLIDAY_PRODUCTS: Record<string, string[]> = {
+  'Rosh Hashanah':  ['Pomegranate', 'Apple Royal Gala', 'Apple Braeburn', 'Apple Pink Lady', 'Honey Date', 'Medjool Date'],
+  'Sukkot':         ['Pomegranate', 'Apple Royal Gala', 'Lemon', 'Etrog'],
+  'Tu B\'Shvat':    ['Pomegranate', 'Dates', 'Fig', 'Medjool Date'],
+  'Purim':          ['Strawberry'],
+  'Pesach':         ['Horseradish', 'Lettuce Cos', 'Lettuce Iceberg', 'Lettuce Little Gem'],
+  'Shavuot':        ['Strawberry', 'Cherry'],
+}
+
+// Approximate upcoming holiday dates (extend as needed)
+const UPCOMING_HOLIDAYS = [
+  { name: 'Rosh Hashanah', date: new Date('2026-09-19') },
+  { name: 'Sukkot',        date: new Date('2026-10-14') },
+  { name: 'Purim',         date: new Date('2027-03-13') },
+  { name: 'Pesach',        date: new Date('2027-04-02') },
+  { name: 'Shavuot',       date: new Date('2027-05-22') },
+  { name: 'Tu B\'Shvat',   date: new Date('2027-02-01') },
+]
+
+const MODELS = [
+  'google/gemma-4-31b-it:free',
+  'google/gemma-4-26b-a4b-it:free',
+  'meta-llama/llama-3.3-70b-instruct:free',
+]
+
+// ─── Check 1: Unmatched invoice items in last 7 days ────────────────────────
+async function checkUnmatchedItems(
+  supabase: SupabaseClient,
+  source: GolemFinding['source'],
+): Promise<GolemFinding[]> {
+  const { data } = await supabase
+    .from('purchase_invoice_items')
+    .select('product_name_raw, invoice_id, purchase_invoices(supplier_name, invoice_date)')
+    .eq('is_matched', false)
+    .gte('created_at', new Date(Date.now() - 7 * 86400000).toISOString())
+    .order('created_at', { ascending: false })
+    .limit(50)
+
+  if (!data?.length) return []
+
+  // Group by raw description
+  const grouped = new Map<string, { supplier: string; date: string }>()
+  for (const item of data) {
+    const inv = (item.purchase_invoices as unknown) as { supplier_name: string; invoice_date: string } | null
+    if (!grouped.has(item.product_name_raw)) {
+      grouped.set(item.product_name_raw, {
+        supplier: inv?.supplier_name ?? 'unknown',
+        date:     inv?.invoice_date  ?? '',
+      })
+    }
+  }
+
+  return [...grouped.entries()].map(([raw, { supplier, date }]) => ({
+    alert_type:  'unmatched_item',
+    severity:    'warning' as const,
+    product_name: raw,
+    message:  `"${raw}" (${supplier}, ${date}) couldn't be matched to any product — needs mapping.`,
+    action:   'Go to invoice review page and map this item to the correct product.',
+    source,
+  }))
+}
+
+// ─── Check 2: Stale costs — regularly-bought products not seen recently ──────
+async function checkStaleCosts(
+  supabase: SupabaseClient,
+  supplierName: string | null,
+  source: GolemFinding['source'],
+): Promise<GolemFinding[]> {
+  // Products bought ≥3 times ever but last invoice was >14 days ago
+  const { data } = await supabase.rpc('golem_stale_costs', {
+    supplier_filter: supplierName,
+    stale_days:      14,
+    min_appearances: 3,
+  })
+
+  if (!data?.length) return []
+
+  return (data as { id: string; name: string; last_invoice_date: string; days_since: number }[])
+    .filter(r => r.days_since > 14)
+    .map(r => ({
+      alert_type:  'stale_cost',
+      severity:    r.days_since > 30 ? 'warning' as const : 'info' as const,
+      product_id:   r.id,
+      product_name: r.name,
+      message:  `${r.name} hasn't appeared on any invoice for ${r.days_since} days — cost may be outdated.`,
+      action:   'Check if still being bought, and from which supplier.',
+      source,
+    }))
+}
+
+// ─── Check 3: Cost drift — today's price far from 4-week average ─────────────
+async function checkCostDrift(
+  supabase: SupabaseClient,
+  invoiceId: string,
+  source: GolemFinding['source'],
+): Promise<GolemFinding[]> {
+  const { data: items } = await supabase
+    .from('purchase_invoice_items')
+    .select('product_id, product_name_raw, unit_cost, products(name, purchase_cost)')
+    .eq('invoice_id', invoiceId)
+    .eq('is_matched', true)
+    .not('product_id', 'is', null)
+
+  if (!items?.length) return []
+
+  const findings: GolemFinding[] = []
+  for (const item of items) {
+    const product = (item.products as unknown) as { name: string; purchase_cost: number } | null
+    if (!product || !product.purchase_cost || product.purchase_cost < 10) continue
+
+    const drift = (item.unit_cost - product.purchase_cost) / product.purchase_cost
+    if (Math.abs(drift) < 0.30) continue  // <30% drift — unremarkable
+
+    const dir      = drift > 0 ? 'up' : 'down'
+    const pct      = Math.round(Math.abs(drift) * 100)
+    const severity = Math.abs(drift) > 0.50 ? 'critical' as const : 'warning' as const
+
+    findings.push({
+      alert_type:  'cost_drift',
+      severity,
+      product_id:   item.product_id!,
+      product_name: product.name,
+      message:  `${product.name} is ${pct}% ${dir} on this invoice (£${(item.unit_cost / 100).toFixed(2)} vs stored £${(product.purchase_cost / 100).toFixed(2)}).`,
+      action:   drift > 0
+        ? 'Check if retail price needs raising.'
+        : 'Potential buying opportunity — cost has dropped.',
+      source,
+    })
+  }
+  return findings
+}
+
+// ─── Check 4: Expire stale price suggestions ─────────────────────────────────
+async function expireOldSuggestions(
+  supabase: SupabaseClient,
+  source: GolemFinding['source'],
+): Promise<GolemFinding[]> {
+  const cutoff = new Date(Date.now() - 14 * 86400000).toISOString()
+  const { data } = await supabase
+    .from('price_suggestions')
+    .update({ status: 'expired' })
+    .eq('status', 'pending')
+    .lt('created_at', cutoff)
+    .select('product_id')
+
+  if (!data?.length) return []
+
+  return [{
+    alert_type:  'expired_suggestions',
+    severity:    'info' as const,
+    message:  `${data.length} price suggestion${data.length > 1 ? 's' : ''} expired (no action taken in 14 days). Fresh ones will generate on the next invoice.`,
+    source,
+  }]
+}
+
+// ─── Check 5: Delivery gap — expected suppliers didn't send today ─────────────
+async function checkDeliveryGap(
+  supabase: SupabaseClient,
+  source: GolemFinding['source'],
+): Promise<GolemFinding[]> {
+  const today = new Date().toISOString().slice(0, 10)
+  const dow   = new Date().getDay()  // 0=Sun, 6=Sat
+
+  // Only flag on weekdays (Mon–Sat)
+  if (dow === 0) return []
+
+  const EXPECTED = ['Total Produce', 'JR Holland']
+  const { data } = await supabase
+    .from('purchase_invoices')
+    .select('supplier_name')
+    .eq('invoice_date', today)
+
+  const arrived = new Set((data ?? []).map(r => r.supplier_name))
+  const findings: GolemFinding[] = []
+
+  for (const supplier of EXPECTED) {
+    if (!arrived.has(supplier)) {
+      findings.push({
+        alert_type:  'delivery_gap',
+        severity:    'warning' as const,
+        message:  `No invoice from ${supplier} today (${today}). Either no delivery or email didn't arrive.`,
+        action:   `Check if David bought from ${supplier} today. If so, upload the PDF manually.`,
+        source,
+      })
+    }
+  }
+  return findings
+}
+
+// ─── Check 6: Dual-supplier arbitrage ────────────────────────────────────────
+async function checkArbitrage(
+  supabase: SupabaseClient,
+  source: GolemFinding['source'],
+): Promise<GolemFinding[]> {
+  const { data } = await supabase
+    .from('product_supplier_last_price')
+    .select('product_id, supplier_name, last_price_p, last_date')
+
+  if (!data?.length) return []
+
+  // Group by product
+  const byProduct = new Map<string, { dole?: number; holland?: number }>()
+  for (const row of data) {
+    const entry = byProduct.get(row.product_id) ?? {}
+    if (row.supplier_name === 'dole wholesale gateshead') entry.dole = row.last_price_p
+    if (row.supplier_name === 'jr holland')               entry.holland = row.last_price_p
+    byProduct.set(row.product_id, entry)
+  }
+
+  const { data: products } = await supabase
+    .from('products')
+    .select('id, name')
+    .in('id', [...byProduct.keys()])
+
+  const nameMap = new Map((products ?? []).map(p => [p.id, p.name]))
+  const findings: GolemFinding[] = []
+
+  for (const [pid, prices] of byProduct) {
+    if (!prices.dole || !prices.holland) continue
+    const diff = Math.abs(prices.dole - prices.holland) / Math.min(prices.dole, prices.holland)
+    if (diff < 0.20) continue  // <20% difference — not worth flagging
+
+    const cheaper   = prices.dole < prices.holland ? 'Dole' : 'Holland'
+    const expensive = prices.dole < prices.holland ? 'Holland' : 'Dole'
+    const pct       = Math.round(diff * 100)
+    const name      = nameMap.get(pid) ?? pid
+
+    findings.push({
+      alert_type:  'arbitrage',
+      severity:    'info' as const,
+      product_id:   pid,
+      product_name: name,
+      message:  `${name}: ${cheaper} is ${pct}% cheaper than ${expensive} (£${(Math.min(prices.dole, prices.holland) / 100).toFixed(2)} vs £${(Math.max(prices.dole, prices.holland) / 100).toFixed(2)}/box).`,
+      action:   `Consider buying from ${cheaper} next time.`,
+      source,
+    })
+  }
+
+  return findings.sort((a, b) => (b.message > a.message ? 1 : -1)).slice(0, 5)
+}
+
+// ─── Check 7: Upcoming holiday prep ──────────────────────────────────────────
+async function checkHolidayPrep(
+  supabase: SupabaseClient,
+  source: GolemFinding['source'],
+): Promise<GolemFinding[]> {
+  const now       = Date.now()
+  const findings: GolemFinding[] = []
+
+  for (const holiday of UPCOMING_HOLIDAYS) {
+    const daysUntil = Math.round((holiday.date.getTime() - now) / 86400000)
+    if (daysUntil < 0 || daysUntil > 30) continue
+
+    const products = HOLIDAY_PRODUCTS[holiday.name] ?? []
+    if (!products.length) continue
+
+    findings.push({
+      alert_type:  'holiday_prep',
+      severity:    daysUntil <= 7 ? 'warning' as const : 'info' as const,
+      message:  `${holiday.name} is in ${daysUntil} days — historically high demand for: ${products.join(', ')}.`,
+      action:   'Consider stocking extra at the market this week.',
+      source,
+    })
+  }
+  return findings
+}
+
+// ─── LLM briefing synthesis ───────────────────────────────────────────────────
+async function generateBriefing(findings: GolemFinding[]): Promise<string | null> {
+  const apiKey = process.env.OPENROUTER_API_KEY
+  if (!apiKey || !findings.length) return null
+
+  const client = new OpenAI({ baseURL: 'https://openrouter.ai/api/v1', apiKey })
+
+  const critical = findings.filter(f => f.severity === 'critical')
+  const warnings = findings.filter(f => f.severity === 'warning')
+  const infos    = findings.filter(f => f.severity === 'info')
+
+  const summary = [
+    critical.length ? `CRITICAL (${critical.length}): ${critical.map(f => f.message).join(' | ')}` : '',
+    warnings.length ? `Warnings (${warnings.length}): ${warnings.map(f => f.message).slice(0, 3).join(' | ')}` : '',
+    infos.length    ? `Info (${infos.length}): ${infos.map(f => f.message).slice(0, 2).join(' | ')}` : '',
+  ].filter(Boolean).join('\n')
+
+  const prompt = `You are the Data Golem for Fresh & Fruity, a Newcastle greengrocer. Owner is David (ADHD — keep it short, direct, no waffle).
+
+Here are today's data findings:
+${summary}
+
+Write a briefing in 2-3 sentences max. Start with the most critical item. Use £ amounts. Plain English. No bullet points.`
+
+  const result = await Promise.race([
+    Promise.any(
+      MODELS.map(model =>
+        client.chat.completions.create({
+          model,
+          messages: [{ role: 'user', content: prompt }],
+          temperature: 0.2,
+          max_tokens: 120,
+          stream: false,
+        }).then(r => {
+          const text = r.choices[0]?.message?.content?.trim()
+          if (!text) throw new Error('empty')
+          return text
+        })
+      )
+    ).catch(() => null),
+    new Promise<null>(resolve => setTimeout(() => resolve(null), 8000)),
+  ])
+
+  return result
+}
+
+// ─── Store findings to DB ─────────────────────────────────────────────────────
+async function storeFindings(
+  supabase: SupabaseClient,
+  findings: GolemFinding[],
+): Promise<void> {
+  if (!findings.length) return
+  // Avoid duplicates: skip alerts for same product + type already raised today
+  const today = new Date().toISOString().slice(0, 10)
+  const { data: existing } = await supabase
+    .from('golem_alerts')
+    .select('alert_type, product_name')
+    .gte('created_at', today)
+    .eq('resolved', false)
+
+  const existingKeys = new Set(
+    (existing ?? []).map(e => `${e.alert_type}::${e.product_name ?? ''}`)
+  )
+
+  const toInsert = findings.filter(f => {
+    const key = `${f.alert_type}::${f.product_name ?? ''}`
+    return !existingKeys.has(key)
+  })
+
+  if (toInsert.length) {
+    await supabase.from('golem_alerts').insert(toInsert)
+  }
+}
+
+// ─── Main entry points ────────────────────────────────────────────────────────
+
+/** Run after a specific invoice is confirmed. */
+export async function runPostInvoiceGolem(
+  supabase: SupabaseClient,
+  invoiceId: string,
+  supplierName: string,
+): Promise<void> {
+  const findings: GolemFinding[] = []
+
+  const [unmatched, stale, drift, expired] = await Promise.all([
+    checkUnmatchedItems(supabase, 'data_golem'),
+    checkStaleCosts(supabase, supplierName, 'data_golem'),
+    checkCostDrift(supabase, invoiceId, 'data_golem'),
+    expireOldSuggestions(supabase, 'data_golem'),
+  ])
+
+  findings.push(...unmatched, ...stale, ...drift, ...expired)
+  await storeFindings(supabase, findings)
+  console.log(`[DataGolem] post-invoice sweep: ${findings.length} findings for invoice ${invoiceId}`)
+}
+
+/** Full daily sweep — run once a day (e.g., 10am). */
+export async function runDailySweep(supabase: SupabaseClient): Promise<string | null> {
+  const findings: GolemFinding[] = []
+
+  const [unmatched, stale, expired, gaps, arbitrage, holidays] = await Promise.all([
+    checkUnmatchedItems(supabase, 'daily_sweep'),
+    checkStaleCosts(supabase, null, 'daily_sweep'),
+    expireOldSuggestions(supabase, 'daily_sweep'),
+    checkDeliveryGap(supabase, 'daily_sweep'),
+    checkArbitrage(supabase, 'daily_sweep'),
+    checkHolidayPrep(supabase, 'daily_sweep'),
+  ])
+
+  findings.push(...unmatched, ...stale, ...expired, ...gaps, ...arbitrage, ...holidays)
+  await storeFindings(supabase, findings)
+
+  const briefing = await generateBriefing(findings.filter(f => f.severity !== 'info'))
+
+  if (briefing) {
+    const today = new Date().toISOString().slice(0, 10)
+    await supabase.from('golem_briefings').upsert({
+      briefing_date: today,
+      content:       briefing,
+      finding_count: findings.length,
+    }, { onConflict: 'briefing_date' })
+  }
+
+  console.log(`[DataGolem] daily sweep: ${findings.length} findings, briefing: ${briefing ? 'yes' : 'none'}`)
+
+  if (briefing || findings.length > 0) {
+    const critical = findings.filter(f => f.severity === 'critical').length
+    const warnings = findings.filter(f => f.severity === 'warning').length
+    const header   = critical > 0
+      ? `🔴 <b>Data Golem — ${critical} critical issue${critical > 1 ? 's' : ''}</b>`
+      : warnings > 0
+        ? `🟡 <b>Data Golem — ${warnings} warning${warnings > 1 ? 's' : ''}</b>`
+        : `🟢 <b>Data Golem — all clear</b>`
+    const msg = [header, briefing ?? `${findings.length} findings logged.`].join('\n')
+    await sendTelegram(msg)
+  }
+
+  return briefing
+}

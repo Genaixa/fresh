@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/service'
 import { parseInvoicePdf, fuzzyMatchProduct, lookupMapping, saveMapping, type BoxSpec } from '@/lib/invoice-parser'
 import { autoConfirmInvoice } from '@/lib/confirm-invoice'
+import { sendTelegram } from '@/lib/telegram'
 
 interface PostmarkAttachment {
   Name: string
@@ -169,6 +170,15 @@ export async function POST(request: NextRequest) {
 
       // Auto-confirm: update costs and generate price suggestions immediately
       await autoConfirmInvoice(supabase, invoice.id)
+
+      const unmatched = itemsToInsert.filter(i => !i.is_matched).length
+      const total     = itemsToInsert.length
+      const lines = [
+        `✅ <b>${supplierName}</b> invoice processed (${parsed.invoice_date})`,
+        `${total} items — ${total - unmatched} matched, ${unmatched > 0 ? `⚠️ ${unmatched} unmatched` : '✓ all matched'}`,
+        parsed.raw_total ? `Total: £${(parsed.raw_total / 100).toFixed(2)}` : '',
+      ].filter(Boolean).join('\n')
+      sendTelegram(lines).catch(() => {})
 
       processed++
     } catch (err) {

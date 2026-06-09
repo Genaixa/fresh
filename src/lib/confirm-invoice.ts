@@ -1,4 +1,5 @@
 import { calculateSuggestedPrice, getWeightedAvgCostBatch } from './pricing-engine'
+import { runPostInvoiceGolem } from './data-golem'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Product } from '@/types'
 
@@ -322,7 +323,13 @@ export async function autoConfirmInvoice(
 
   await supabase.from('purchase_invoices').update({ status: 'processed' }).eq('id', invoiceId)
 
-  // Health sweep runs last — after all cost updates and suggestions are settled.
-  // Scoped to this invoice's products only. Results appear on dashboard immediately.
+  // Health sweep — scoped to this invoice's products
   await runPostConfirmHealthSweep(supabase, productIds, invoiceId)
+
+  // Data Golem — broader staleness and drift checks, fire-and-forget
+  const { data: inv } = await supabase
+    .from('purchase_invoices').select('supplier_name').eq('id', invoiceId).single()
+  runPostInvoiceGolem(supabase, invoiceId, inv?.supplier_name ?? '').catch(err =>
+    console.error('[DataGolem] post-invoice error:', err)
+  )
 }

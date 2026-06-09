@@ -4,6 +4,7 @@ import { tmpdir } from 'os'
 import { join } from 'path'
 import type { MarketProduct } from './page'
 import { CONFIG } from './config'
+import { sendTelegram } from '@/lib/telegram'
 
 export type GolemResult = {
   briefing: string | null
@@ -98,5 +99,10 @@ export async function generateMarketInsights(products: MarketProduct[]): Promise
     tips:     typeof result.tips === 'object' && result.tips ? result.tips : {},
   }
   try { writeFileSync(successCache, JSON.stringify(golemResult)) } catch { /* non-fatal */ }
+
+  if (golemResult.briefing) {
+    sendTelegram(`🛒 <b>Market Golem — ${today}</b>\n${golemResult.briefing}`).catch(() => {})
+  }
+
   return golemResult
 }
