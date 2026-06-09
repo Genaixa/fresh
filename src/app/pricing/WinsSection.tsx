@@ -54,16 +54,20 @@ export function WinsSection({ opportunities, description }: { opportunities: Opp
       <p className="text-xs text-[var(--text-muted)] mb-3">{description}</p>
 
       {coveredCount > 0 && (
-        <div className="card border border-status-green/30 bg-status-green/5 mb-4 flex items-center justify-between">
-          <div>
-            <p className="text-sm font-semibold text-status-green">
-              +{formatPrice(totalGain)}/week · +{formatPrice(totalGain * 52)}/year if all applied
-            </p>
-            <p className="text-xs text-[var(--text-muted)] mt-0.5">
-              {coveredCount} of {shown.length} products have weekly volume data
-            </p>
+        <div className="card border border-status-green/30 bg-status-green/5 mb-4">
+          <div className="grid grid-cols-2 gap-3 mb-2">
+            <div>
+              <p className="text-xs text-[var(--text-muted)] mb-0.5">Per week</p>
+              <p className="text-xl font-bold text-status-green">+{formatPrice(totalGain)}</p>
+            </div>
+            <div>
+              <p className="text-xs text-[var(--text-muted)] mb-0.5">Per year</p>
+              <p className="text-xl font-bold text-status-green">+{formatPrice(totalGain * 52)}</p>
+            </div>
           </div>
-          <span className="text-2xl text-status-green/60">💰</span>
+          <p className="text-xs text-[var(--text-muted)]">
+            if all applied · {coveredCount} of {shown.length} products have weekly volume data
+          </p>
         </div>
       )}
 
