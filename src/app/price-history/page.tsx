@@ -2,7 +2,8 @@ import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
 import { formatPrice } from '@/lib/pricing-engine'
 import { costStatus, TrafficDot } from '@/components/ui/TrafficDot'
-import type { Product, PriceHistoryEntry } from '@/types'
+import { ProductSelector } from './ProductSelector'
+import type { PriceHistoryEntry } from '@/types'
 
 export default async function PriceHistoryPage({
   searchParams,
@@ -52,18 +53,9 @@ export default async function PriceHistoryPage({
       </div>
 
       {/* Product selector */}
-      <form className="mb-6">
-        <select name="product_id" defaultValue={product_id ?? ''}
-          onChange={(e) => { (e.target as HTMLSelectElement).form?.submit() }}
-          className="input-field"
-        >
-          <option value="">— Select a product —</option>
-          {(products ?? []).map((p: { id: string; name: string }) => (
-            <option key={p.id} value={p.id}>{p.name}</option>
-          ))}
-        </select>
-        <noscript><button type="submit" className="btn-primary w-full mt-2">Go</button></noscript>
-      </form>
+      <div className="mb-6">
+        <ProductSelector products={products ?? []} selectedId={product_id} />
+      </div>
 
       {selected && history.length > 0 && (
         <>
