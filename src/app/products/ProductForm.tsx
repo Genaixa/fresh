@@ -100,23 +100,6 @@ export function ProductForm({ id, defaultValues: d, isNew, deactivateButton }: P
           value={cost} onChange={e => setCost(e.target.value)} className="input-field" />
       </Field>
 
-      {/* Live margin indicator */}
-      {marginPct !== null && (
-        <div className={`rounded-xl px-4 py-3 text-sm flex items-center justify-between
-          ${atLoss     ? 'bg-status-red/15 border border-status-red/40'
-          : belowFloor ? 'bg-status-amber/10 border border-status-amber/30'
-          :              'bg-status-green/10 border border-status-green/30'}`}>
-          <span className={atLoss ? 'text-status-red' : belowFloor ? 'text-status-amber' : 'text-status-green'}>
-            {atLoss     ? `Selling at a loss — margin ${marginPct}%`
-            : belowFloor ? `Below floor — margin ${marginPct}% (floor ${f}%)`
-            :              `Margin ${marginPct}%`}
-          </span>
-          {healthy && <span className="text-status-green text-base">✓</span>}
-          {belowFloor && <span className="text-status-amber text-base">⚠</span>}
-          {atLoss && <span className="text-status-red text-base">✗</span>}
-        </div>
-      )}
-
       {showCaseSize && (
         <Field label={UNIT_CASE_LABELS[unit] ?? 'Units per delivery case'}>
           <input name="case_size" type="number" min="1" step="1"
@@ -144,6 +127,23 @@ export function ProductForm({ id, defaultValues: d, isNew, deactivateButton }: P
             <input name="margin_floor" type="number" step="1" min="0" max="100"
               value={floor} onChange={e => setFloor(e.target.value)} className="input-field" />
           </Field>
+
+          {/* Live margin indicator */}
+          {marginPct !== null && (
+            <div className={`rounded-xl px-4 py-3 text-sm flex items-center justify-between
+              ${atLoss     ? 'bg-status-red/15 border border-status-red/40'
+              : belowFloor ? 'bg-status-amber/10 border border-status-amber/30'
+              :              'bg-status-green/10 border border-status-green/30'}`}>
+              <span className={atLoss ? 'text-status-red' : belowFloor ? 'text-status-amber' : 'text-status-green'}>
+                {atLoss     ? `Selling at a loss — margin ${marginPct}%`
+                : belowFloor ? `Below floor — margin ${marginPct}% (floor ${f}%)`
+                :              `Margin ${marginPct}%`}
+              </span>
+              {healthy && <span className="text-status-green text-base">✓</span>}
+              {belowFloor && <span className="text-status-amber text-base">⚠</span>}
+              {atLoss && <span className="text-status-red text-base">✗</span>}
+            </div>
+          )}
         </div>
       </div>
 
