@@ -11,15 +11,13 @@ Full-year product sales reports exported from Epos Now back office
 | `2021_full_year.tsv` | Full year 2021 | 52 | Pasted 9 Jun 2026 |
 | `2022_full_year.tsv` | Full year 2022 | 52 | Pasted 9 Jun 2026 |
 | `2023_full_year.tsv` | Full year 2023 | 52 | Pasted 9 Jun 2026 |
+| `2024_full_year.tsv` | Full year 2024 | 52 | Pasted 9 Jun 2026 (parsed from chat render — proper TSV) |
+| `2025_full_year.tsv` | Full year 2025 | 52 | Pasted 9 Jun 2026 |
+| `2026_ytd.tsv` | 01 Jan – 09 Jun 2026 | 22.71 | Pasted 9 Jun 2026 |
 
-## Files NOT saved (previous session — re-export from Epos Now if needed)
+## Files NOT saved (re-export from Epos Now if needed)
 
-| Period | Weeks | Notes |
-|--------|-------|-------|
-| Full year 2024 | 52 | Context was compacted before export could be saved |
-| Full year 2025 | 52 | Context was compacted before export could be saved |
-| 01 Jan – 11 Mar 2026 | 10 | Context was compacted before export could be saved |
-| 12 Mar – 09 Jun 2026 | 12.71 | Context was compacted before export could be saved |
+None — all years 2020–2026 now saved.
 
 ## How these were used
 
