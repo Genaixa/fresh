@@ -18,6 +18,7 @@ export async function upsertProduct(formData: FormData) {
     retail_price:     poundsToP(formData.get('retail_price')),
     wholesale_price:  poundsToP(formData.get('wholesale_price')),
     purchase_cost:    poundsToP(formData.get('purchase_cost')),
+    case_size:        parseInt(formData.get('case_size') as string, 10) || 1,
     price_multiplier: parseFloat(formData.get('price_multiplier') as string) || 2.0,
     market_ceiling:   formData.get('market_ceiling')
                         ? poundsToP(formData.get('market_ceiling'))
