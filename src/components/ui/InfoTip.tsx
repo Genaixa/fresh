@@ -8,31 +8,33 @@ export function InfoTip({ text }: { text: string }) {
 
   useEffect(() => {
     if (!open) return
-    function handleClick(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) {
-        setOpen(false)
-      }
+    function onDown(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
     }
-    document.addEventListener('mousedown', handleClick)
-    return () => document.removeEventListener('mousedown', handleClick)
+    document.addEventListener('mousedown', onDown)
+    return () => document.removeEventListener('mousedown', onDown)
   }, [open])
 
   return (
-    <span ref={ref} className="relative inline-flex items-center ml-1 align-middle">
+    <span ref={ref} className="relative inline-block leading-none ml-0.5 translate-y-[-1px]">
+      {/* Touch target is larger than visual — padding trick */}
       <button
         type="button"
         onClick={() => setOpen(o => !o)}
-        className="w-4 h-4 rounded-full bg-white/10 text-[var(--text-muted)] text-[10px]
-                   font-bold flex items-center justify-center leading-none
-                   hover:bg-white/20 transition-colors flex-shrink-0"
+        className="p-1 -m-1 text-white/25 hover:text-white/60 transition-colors"
         aria-label="More info"
       >
-        i
+        <svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor">
+          <circle cx="5" cy="5" r="4.5" fill="none" stroke="currentColor" strokeWidth="1"/>
+          <text x="5" y="7.5" textAnchor="middle" fontSize="6" fontWeight="600">i</text>
+        </svg>
       </button>
+
       {open && (
-        <span className="absolute left-0 top-6 z-50 w-60 bg-[var(--bg-card)]
+        <span className="absolute left-0 top-5 z-50 w-56 bg-[var(--bg-card)]
                          border border-white/15 rounded-xl p-3 text-xs
-                         text-[var(--text-muted)] shadow-xl leading-relaxed">
+                         text-[var(--text-muted)] shadow-2xl leading-relaxed
+                         pointer-events-none">
           {text}
         </span>
       )}
