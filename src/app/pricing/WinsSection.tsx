@@ -57,7 +57,7 @@ export function WinsSection({ opportunities, description }: { opportunities: Opp
         <div className="card border border-status-green/30 bg-status-green/5 mb-4 flex items-center justify-between">
           <div>
             <p className="text-sm font-semibold text-status-green">
-              +{formatPrice(totalGain)}/week if all applied
+              +{formatPrice(totalGain)}/week · +{formatPrice(totalGain * 52)}/year if all applied
             </p>
             <p className="text-xs text-[var(--text-muted)] mt-0.5">
               {coveredCount} of {shown.length} products have weekly volume data
