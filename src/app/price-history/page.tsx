@@ -193,82 +193,95 @@ export default async function PriceHistoryPage({
           )}
 
           {timeline.length > 0 && (
-            <div className="space-y-2 mt-4">
-              {timeline.map(t => {
-                const atLoss    = t.cost > t.retail
-                const atOldLoss = t.oldCost > t.oldRetail
-                const weeklyGain = weeklyUnits > 0
-                  ? (t.retail - t.cost) * weeklyUnits : null
-                const costChange   = diff(t.cost,   t.oldCost)
-                const retailChange = diff(t.retail, t.oldRetail)
-                const marginChange = t.margin - t.oldMargin
-                const dateStr = new Date(t.date).toLocaleDateString('en-GB', {
-                  weekday: 'short', day: 'numeric', month: 'short', year: 'numeric',
-                })
+            <>
+              <div className="space-y-2 mt-4">
+                {timeline.map(t => {
+                  const atLoss    = t.cost > t.retail
+                  const atOldLoss = t.oldCost > t.oldRetail
+                  const weeklyGain = weeklyUnits > 0
+                    ? (t.retail - t.cost) * weeklyUnits : null
+                  const marginChange = t.margin - t.oldMargin
+                  // Only show margin change when both old states were valid (not initial 0p setup)
+                  const oldStateValid = t.oldCost > 0 && t.oldRetail > 0
+                  const dateStr = new Date(t.date).toLocaleDateString('en-GB', {
+                    weekday: 'short', day: 'numeric', month: 'short', year: 'numeric',
+                  })
 
-                return (
-                  <div key={t.id} className="card border border-white/8">
-                    {/* Date + what changed */}
-                    <div className="flex items-center justify-between mb-3">
-                      <p className="text-sm font-semibold">{dateStr}</p>
-                      <span className={`text-xs px-2 py-0.5 rounded-full font-medium
-                        ${t.priceType === 'purchase' ? 'bg-white/10 text-[var(--text-muted)]'
-                        : t.priceType === 'retail'   ? 'bg-brand-accent/20 text-brand-accent'
-                        :                              'bg-white/10 text-[var(--text-muted)]'}`}>
-                        {t.priceType === 'purchase' ? 'Cost changed'
-                        : t.priceType === 'retail'  ? 'Retail changed'
-                        :                             'Both changed'}
-                      </span>
-                    </div>
-
-                    {/* Cost + Retail two-col */}
-                    <div className="grid grid-cols-2 gap-2 mb-3">
-                      <div className="rounded-xl bg-white/5 p-2.5">
-                        <p className="text-xs text-[var(--text-muted)] mb-1">Cost</p>
-                        <p className="font-bold">{formatPrice(t.cost)}</p>
-                        {costChange && (
-                          <p className={`text-xs mt-0.5 ${sign(t.cost, t.oldCost) === '↑' ? 'text-status-red' : 'text-status-green'}`}>
-                            {sign(t.cost, t.oldCost)} {costChange} from {formatPrice(t.oldCost)}
-                          </p>
-                        )}
-                      </div>
-                      <div className="rounded-xl bg-white/5 p-2.5">
-                        <p className="text-xs text-[var(--text-muted)] mb-1">Retail</p>
-                        <p className="font-bold">{formatPrice(t.retail)}</p>
-                        {retailChange && (
-                          <p className={`text-xs mt-0.5 ${sign(t.retail, t.oldRetail) === '↑' ? 'text-status-green' : 'text-status-amber'}`}>
-                            {sign(t.retail, t.oldRetail)} {retailChange} from {formatPrice(t.oldRetail)}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Margin row */}
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-2">
-                        <TrafficDot status={marginStatus(t.margin)} />
-                        <span className={`font-semibold text-sm ${marginColour(t.margin)}`}>
-                          {atLoss ? 'At a loss' : `${pct(t.margin)} margin`}
+                  return (
+                    <div key={t.id} className="card border border-white/8">
+                      {/* Date + what changed */}
+                      <div className="flex items-center justify-between mb-3">
+                        <p className="text-sm font-semibold">{dateStr}</p>
+                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium
+                          ${t.priceType === 'purchase' ? 'bg-white/10 text-[var(--text-muted)]'
+                          : t.priceType === 'retail'   ? 'bg-brand-accent/20 text-brand-accent'
+                          :                              'bg-white/10 text-[var(--text-muted)]'}`}>
+                          {t.priceType === 'purchase' ? 'Cost changed'
+                          : t.priceType === 'retail'  ? 'Retail changed'
+                          :                             'Both changed'}
                         </span>
                       </div>
-                      {marginChange !== 0 && !atOldLoss && (
-                        <span className={`text-xs ${marginChange > 0 ? 'text-status-green' : 'text-status-red'}`}>
-                          {marginChange > 0 ? '+' : ''}{(marginChange * 100).toFixed(1)}pp
-                        </span>
+
+                      {/* Cost + Retail two-col */}
+                      <div className="grid grid-cols-2 gap-2 mb-3">
+                        <div className="rounded-xl bg-white/5 p-2.5">
+                          <p className="text-xs text-[var(--text-muted)] mb-1">Cost</p>
+                          <p className="font-bold">{formatPrice(t.cost)}</p>
+                          {t.cost !== t.oldCost && (
+                            t.oldCost === 0
+                              ? <p className="text-xs text-[var(--text-muted)] mt-0.5">First set</p>
+                              : <p className={`text-xs mt-0.5 ${sign(t.cost, t.oldCost) === '↑' ? 'text-status-red' : 'text-status-green'}`}>
+                                  {sign(t.cost, t.oldCost)} {formatPrice(Math.abs(t.cost - t.oldCost))} from {formatPrice(t.oldCost)}
+                                </p>
+                          )}
+                        </div>
+                        <div className="rounded-xl bg-white/5 p-2.5">
+                          <p className="text-xs text-[var(--text-muted)] mb-1">Retail</p>
+                          <p className="font-bold">{formatPrice(t.retail)}</p>
+                          {t.retail !== t.oldRetail && (
+                            t.oldRetail === 0
+                              ? <p className="text-xs text-[var(--text-muted)] mt-0.5">First set</p>
+                              : <p className={`text-xs mt-0.5 ${sign(t.retail, t.oldRetail) === '↑' ? 'text-status-green' : 'text-status-amber'}`}>
+                                  {sign(t.retail, t.oldRetail)} {formatPrice(Math.abs(t.retail - t.oldRetail))} from {formatPrice(t.oldRetail)}
+                                </p>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Margin row */}
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <TrafficDot status={marginStatus(t.margin)} />
+                          <span className={`font-semibold text-sm ${marginColour(t.margin)}`}>
+                            {atLoss ? 'At a loss' : `${pct(t.margin)} margin`}
+                          </span>
+                        </div>
+                        {oldStateValid && !atOldLoss && marginChange !== 0 && (
+                          <span className={`text-xs ${marginChange > 0 ? 'text-status-green' : 'text-status-red'}`}>
+                            {marginChange > 0 ? '+' : ''}{(marginChange * 100).toFixed(1)}pp
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Weekly P&L */}
+                      {weeklyGain !== null && (
+                        <p className={`text-xs ${weeklyGain >= 0 ? 'text-status-green' : 'text-status-red'}`}>
+                          {weeklyGain >= 0 ? '+' : ''}{formatPrice(weeklyGain)}/wk at this price
+                          <span className="text-[var(--text-muted)]"> · {weeklyUnits} units/wk</span>
+                        </p>
                       )}
                     </div>
+                  )
+                })}
+              </div>
 
-                    {/* Weekly P&L */}
-                    {weeklyGain !== null && (
-                      <p className={`text-xs ${weeklyGain >= 0 ? 'text-status-green' : 'text-status-red'}`}>
-                        {weeklyGain >= 0 ? '+' : ''}{formatPrice(weeklyGain)}/wk at this price
-                        <span className="text-[var(--text-muted)]"> · {weeklyUnits} units/wk</span>
-                      </p>
-                    )}
-                  </div>
-                )
-              })}
-            </div>
+              {/* Tracking since footer */}
+              <p className="text-center text-xs text-[var(--text-muted)] mt-4">
+                Tracking since {new Date(timeline[timeline.length - 1].date).toLocaleDateString('en-GB', {
+                  day: 'numeric', month: 'short', year: 'numeric'
+                })} · {timeline.length} {timeline.length === 1 ? 'change' : 'changes'} recorded
+              </p>
+            </>
           )}
         </>
       )}
