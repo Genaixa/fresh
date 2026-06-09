@@ -59,58 +59,33 @@ export async function POST(request: NextRequest) {
       const parsed = await parseInvoicePdf(pdf.Content)
       const supplierName = normaliseSupplier(parsed.supplier_name)
 
-      // Check for same supplier + date already in DB.
-      // Holland sends two separate ticket PDFs in one email — merge items rather than skip.
-      const { data: existing } = await supabase
+      // Duplicate check: skip only if this exact delivery note is already in DB
+      // (same supplier + date + same item set). Suppliers send multiple delivery
+      // notes per day — each PDF should become its own invoice record.
+      const { data: sameDay } = await supabase
         .from('purchase_invoices')
         .select('id')
         .eq('supplier_name', supplierName)
         .eq('invoice_date', parsed.invoice_date)
         .neq('status', 'error')
-        .maybeSingle()
 
-      if (existing) {
-        // Merge: add any items not already present (match on product_name_raw)
-        const { data: existingItems } = await supabase
-          .from('purchase_invoice_items')
-          .select('product_name_raw')
-          .eq('invoice_id', existing.id)
-
-        const existingRaws = new Set((existingItems ?? []).map(i => i.product_name_raw))
-
-        const { data: catalogue } = await supabase
-          .from('products').select('id, name').eq('is_active', true)
-
-        const toMerge = []
-        for (const item of parsed.items) {
-          if (existingRaws.has(item.product_name_raw)) continue
-          const savedMapping = await lookupMapping(supabase, supplierName, item.product_name_raw)
-          let matched_id     = savedMapping?.product_id ?? null
-          let unit_type      = savedMapping?.unit_type     ?? item.unit_type
-          let units_per_case = savedMapping?.units_per_case ?? item.units_per_case
-          let box_weight_kg  = savedMapping?.box_weight_kg  ?? item.box_weight_kg
-          if (!matched_id) {
-            matched_id = fuzzyMatchProduct(item.product_name_raw, catalogue ?? [])
-            if (matched_id) {
-              await saveMapping(supabase, supplierName, item.product_name_raw, matched_id, null, {
-                unit_type: item.unit_type, units_per_case: item.units_per_case,
-                box_weight_kg: item.box_weight_kg, last_price_p: item.unit_cost,
-              })
-            }
+      if (sameDay && sameDay.length > 0) {
+        // Check if any existing invoice for this day has the same items
+        const newRaws = new Set(parsed.items.map(i => i.product_name_raw))
+        let isDuplicate = false
+        for (const inv of sameDay) {
+          const { data: existingItems } = await supabase
+            .from('purchase_invoice_items')
+            .select('product_name_raw')
+            .eq('invoice_id', inv.id)
+          const existingRaws = new Set((existingItems ?? []).map(i => i.product_name_raw))
+          const overlap = [...newRaws].filter(r => existingRaws.has(r)).length
+          if (overlap === newRaws.size && overlap === existingRaws.size) {
+            isDuplicate = true
+            break
           }
-          toMerge.push({
-            invoice_id: existing.id, product_id: matched_id,
-            product_name_raw: item.product_name_raw, brand_raw: item.brand_raw || null,
-            quantity: item.quantity, unit_cost: item.unit_cost, total_cost: item.total_cost,
-            unit_type, units_per_case, box_weight_kg, is_matched: !!matched_id,
-          })
         }
-        if (toMerge.length > 0) {
-          await supabase.from('purchase_invoice_items').insert(toMerge)
-          await autoConfirmInvoice(supabase, existing.id)
-        }
-        processed++
-        continue
+        if (isDuplicate) continue
       }
 
       // Store original PDF in Supabase storage
