@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { NavBar } from '@/components/ui/NavBar'
 import { TrafficDot, marginStatus } from '@/components/ui/TrafficDot'
 import { formatPrice } from '@/lib/pricing-engine'
+import { SearchBox } from './SearchBox'
 import type { Product } from '@/types'
 
 type Sort = 'name' | 'price_asc' | 'price_desc'
@@ -68,16 +69,9 @@ export default async function ProductsPage({
       </div>
 
       {/* Search */}
-      <form className="mb-4">
-        <input
-          name="q"
-          defaultValue={q}
-          placeholder="Search products..."
-          className="w-full rounded-xl border border-white/10 bg-[var(--bg-card)]
-                     px-4 py-3 text-base text-[var(--text)] min-h-[48px]
-                     focus:outline-none focus:ring-2 focus:ring-brand-accent"
-        />
-      </form>
+      <div className="mb-4">
+        <SearchBox defaultValue={q} />
+      </div>
 
       {/* Category filter */}
       <div className="flex gap-2 mb-6 overflow-x-auto pb-1">

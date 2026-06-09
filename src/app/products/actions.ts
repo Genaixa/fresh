@@ -20,9 +20,10 @@ export async function upsertProduct(formData: FormData) {
     purchase_cost:    poundsToP(formData.get('purchase_cost')),
     case_size:        parseInt(formData.get('case_size') as string, 10) || 1,
     price_multiplier: parseFloat(formData.get('price_multiplier') as string) || 2.0,
-    market_ceiling:   formData.get('market_ceiling')
-                        ? poundsToP(formData.get('market_ceiling'))
-                        : null,
+    market_ceiling:   (() => {
+                        const v = poundsToP(formData.get('market_ceiling'))
+                        return v > 0 ? v : null
+                      })(),
     margin_floor:     parseFloat(formData.get('margin_floor') as string) / 100 || 0.20,
     epos_now_id:      (formData.get('epos_now_id') as string) || null,
   }
