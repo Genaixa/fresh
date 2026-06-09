@@ -165,95 +165,56 @@ export default async function DashboardPage() {
         </Link>
       )}
 
-      {/* Blocked cost updates — pipeline rejected a dangerous write */}
+      {/* Blocked cost — bad value actually got into the DB (rare/emergency) */}
       {blockedCostCount > 0 && (
-        <div className="card border-2 border-status-red bg-status-red/10 mb-4">
-          <div className="flex items-start gap-3">
-            <span className="text-2xl flex-shrink-0">🛡</span>
-            <div className="flex-1 min-w-0">
-              <p className="font-bold text-status-red text-sm">
-                Cost update blocked — check manually
-              </p>
-              <p className="text-xs text-[var(--text-muted)] mt-0.5 mb-2">
-                The system rejected {blockedCostCount} suspicious cost {blockedCostCount === 1 ? 'change' : 'changes'} in the last 7 days to protect your margins. Review and set the correct cost.
-              </p>
-              {blockedCosts?.map((b, i) => (
-                <div key={i} className="text-xs mb-1 font-medium">
-                  <span className="text-white">{b.product_name}</span>
-                  <span className="text-[var(--text-muted)]">
-                    {' '}— tried to set {b.proposed_cost}p
-                    {b.old_cost ? ` (was ${b.old_cost}p)` : ''}
-                  </span>
+        <Link href="/products" className="block mb-4">
+          <div className="card border-2 border-status-red bg-status-red/10">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="font-bold text-status-red text-sm">
+                  Wrong cost detected — fix now
+                </p>
+                <p className="text-xs text-[var(--text-muted)] mt-0.5">
+                  {blockedCosts?.map(b => b.product_name).join(', ')} →
+                </p>
+              </div>
+              <span className="text-2xl flex-shrink-0 ml-3">🛡</span>
+            </div>
+          </div>
+        </Link>
+      )}
+
+      {/* Combined price health — all health issues in one card */}
+      {(atLossCount > 0 || spikeCount > 0 || unpricedCount > 0) && (() => {
+        const total    = atLossCount + spikeCount + unpricedCount
+        const isUrgent = atLossCount > 0
+        const parts    = [
+          atLossCount  > 0 ? `${atLossCount} at a loss`                        : null,
+          spikeCount   > 0 ? `${spikeCount} cost spike${spikeCount > 1 ? 's' : ''}` : null,
+          unpricedCount > 0 ? `${unpricedCount} unpriced`                      : null,
+        ].filter(Boolean)
+        return (
+          <Link href="/pricing" className="block mb-4">
+            <div className={`card border ${isUrgent
+              ? 'border-status-red/60 bg-status-red/5'
+              : 'border-status-amber/40 bg-status-amber/5'}`}>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className={`font-semibold text-sm ${isUrgent ? 'text-status-red' : ''}`}>
+                    {total} {total === 1 ? 'product' : 'products'} need attention
+                  </p>
+                  <p className="text-xs text-[var(--text-muted)] mt-0.5">{parts.join(' · ')} →</p>
                 </div>
-              ))}
-              <Link href="/products" className="text-xs text-status-red font-semibold mt-1 inline-block">
-                Fix costs in Products →
-              </Link>
-            </div>
-          </div>
-        </div>
-      )}
-
-
-      {/* Selling at a loss — highest urgency */}
-      {atLossCount > 0 && (
-        <Link href="/price-monitor" className="block mb-4">
-          <div className="card border border-status-red/60 bg-status-red/10">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="font-bold text-sm text-status-red">
-                  {atLossCount} {atLossCount === 1 ? 'product' : 'products'} selling at a loss
-                </p>
-                <p className="text-xs text-[var(--text-muted)] mt-0.5">Cost exceeds retail price →</p>
+                <span className={`text-sm font-bold rounded-full w-8 h-8 flex items-center
+                                  justify-center flex-shrink-0 ml-3
+                                  ${isUrgent ? 'bg-status-red text-white' : 'bg-status-amber text-white'}`}>
+                  {total}
+                </span>
               </div>
-              <span className="bg-status-red text-white text-sm font-bold
-                               rounded-full w-8 h-8 flex items-center justify-center flex-shrink-0 ml-3">
-                {atLossCount}
-              </span>
             </div>
-          </div>
-        </Link>
-      )}
-
-      {/* Cost spikes */}
-      {spikeCount > 0 && (
-        <Link href="/price-monitor" className="block mb-4">
-          <div className="card border border-status-amber/40 bg-status-amber/5">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="font-semibold text-sm">
-                  {spikeCount} {spikeCount === 1 ? 'product' : 'products'} with rising costs
-                </p>
-                <p className="text-xs text-[var(--text-muted)] mt-0.5">Prices may need adjusting →</p>
-              </div>
-              <span className="bg-status-amber text-white text-sm font-bold
-                               rounded-full w-8 h-8 flex items-center justify-center flex-shrink-0 ml-3">
-                {spikeCount}
-              </span>
-            </div>
-          </div>
-        </Link>
-      )}
-
-      {/* Unpriced products */}
-      {unpricedCount > 0 && (
-        <Link href="/price-monitor" className="block mb-4">
-          <div className="card border border-white/20">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="font-semibold text-sm">
-                  {unpricedCount} {unpricedCount === 1 ? 'product' : 'products'} not yet priced
-                </p>
-                <p className="text-xs text-[var(--text-muted)] mt-0.5">Known cost, no retail price set →</p>
-              </div>
-              <span className="bg-white/20 text-sm font-bold
-                               rounded-full w-8 h-8 flex items-center justify-center flex-shrink-0 ml-3">
-                {unpricedCount}
-              </span>
-            </div>
-          </div>
-        </Link>
-      )}
+          </Link>
+        )
+      })()}
 
       {/* Dispatch banner */}
       {hasDeliveries && (
@@ -283,7 +244,6 @@ export default async function DashboardPage() {
         <QuickAction href="/sync"             icon="🔄" label="EPOS Sync" />
         <QuickAction href="/epos-compare"     icon="📈" label="Price Check" />
         <QuickAction href="/margins/sim"      icon="🧮" label="Simulator" />
-        <QuickAction href="/price-monitor"    icon="🤖" label="AI Monitor" />
         <QuickAction href="/invoices"         icon="📋" label="Invoices" />
         <QuickAction href="/suppliers"        icon="🏪" label="Suppliers" />
         <QuickAction href="/wholesale-lookup" icon="👤" label="Wholesale" />
