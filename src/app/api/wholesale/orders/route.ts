@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
+import { sendTelegram } from '@/lib/telegram'
 
 export async function POST(req: Request) {
   const supabase = await createClient()
@@ -29,6 +30,26 @@ export async function POST(req: Request) {
 
   const { error: itemErr } = await supabase.from('wholesale_order_items').insert(lineItems)
   if (itemErr) return NextResponse.json({ error: itemErr.message }, { status: 500 })
+
+  // Alert if order placed during market hours (07:40–13:00) — David may need to buy extra
+  const nowHour = new Date().getHours()
+  const nowMin  = new Date().getMinutes()
+  const inMarketWindow = (nowHour > 7 || (nowHour === 7 && nowMin >= 40)) && nowHour < 13
+  if (inMarketWindow) {
+    const { data: customer } = await supabase
+      .from('wholesale_customers').select('name').eq('id', customer_id).single()
+    const { data: productRows } = await supabase
+      .from('wholesale_order_items')
+      .select('quantity, product:products(name)')
+      .eq('order_id', order.id)
+    const itemSummary = (productRows ?? [])
+      .map((i: any) => `${Number(i.quantity)}× ${(i.product as any)?.name ?? '?'}`)
+      .join(', ')
+    const dueLabel = delivery_date ?? 'no date'
+    sendTelegram(
+      `⚡ <b>Last-minute order while David is at market!</b>\n<b>${customer?.name ?? 'Unknown'}</b> (due: ${dueLabel})\n${itemSummary}\n\nCall David now if he hasn't left the market yet.`
+    ).catch(() => {})
+  }
 
   return NextResponse.json(order)
 }

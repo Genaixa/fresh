@@ -1,6 +1,7 @@
 import OpenAI from 'openai'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { sendTelegram } from './telegram'
+import { CONFIG } from '@/app/market/config'
 
 export interface GolemFinding {
   alert_type: string
@@ -281,6 +282,131 @@ async function checkHolidayPrep(
   return findings
 }
 
+// ─── Check 8: Pending wholesale orders (morning briefing) ────────────────────
+// Returns a formatted HTML string for Telegram — not a GolemFinding list.
+async function buildOrdersBriefing(supabase: SupabaseClient): Promise<string | null> {
+  const today   = new Date().toISOString().slice(0, 10)
+  const in7days = new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10)
+
+  const { data: orders } = await supabase
+    .from('wholesale_orders')
+    .select('id, delivery_date, customer:wholesale_customers(name), items:wholesale_order_items(quantity, product:products(id, name))')
+    .in('status', ['draft', 'confirmed'])
+    .or(`delivery_date.lte.${in7days},delivery_date.is.null`)
+    .order('delivery_date', { ascending: true, nullsFirst: false })
+
+  if (!orders?.length) return null
+
+  const tomorrow = new Date(Date.now() + 86400000).toISOString().slice(0, 10)
+  const lines: string[] = ['📋 <b>Pending wholesale orders:</b>']
+  const notOnMarketPage: string[] = []
+
+  for (const order of orders) {
+    const customer = (order.customer as any)?.name ?? 'Unknown'
+    const items    = (order.items as any[]) ?? []
+    const dueLabel = !order.delivery_date  ? 'no date set'
+      : order.delivery_date === today      ? '⚡ TODAY'
+      : order.delivery_date === tomorrow   ? 'tomorrow'
+      : order.delivery_date
+
+    const itemList = items.map((i: any) => {
+      const name    = (i.product as any)?.name ?? 'unknown'
+      const qty     = Number(i.quantity)
+      const visible = CONFIG[name] !== undefined
+      if (!visible && name !== 'unknown') notOnMarketPage.push(name)
+      return `${qty}× ${name}${visible ? '' : ' ⚠️'}`
+    }).join(', ')
+
+    lines.push(`  • <b>${customer}</b> (${dueLabel}): ${itemList}`)
+  }
+
+  if (notOnMarketPage.length > 0) {
+    const unique = [...new Set(notOnMarketPage)]
+    lines.push(`\n⚠️ Not visible on market page: ${unique.join(', ')} — add to config or buy manually`)
+  }
+
+  return lines.join('\n')
+}
+
+// ─── Check 9: Order fulfillment after market ──────────────────────────────────
+// Compares today's market_session_items (what David actually bought)
+// against wholesale orders due today or tomorrow.
+async function checkOrderFulfillment(
+  supabase: SupabaseClient,
+  source: GolemFinding['source'],
+): Promise<{ findings: GolemFinding[]; telegramLines: string[] }> {
+  const today    = new Date().toISOString().slice(0, 10)
+  const tomorrow = new Date(Date.now() + 86400000).toISOString().slice(0, 10)
+
+  // What David bought today at market
+  const { data: sessions } = await supabase
+    .from('market_sessions')
+    .select('id')
+    .eq('session_date', today)
+
+  const boughtMap = new Map<string, number>()
+  if (sessions?.length) {
+    const { data: sessionItems } = await supabase
+      .from('market_session_items')
+      .select('product_id, qty_boxes')
+      .in('session_id', sessions.map(s => s.id))
+    for (const it of sessionItems ?? []) {
+      boughtMap.set(it.product_id, (boughtMap.get(it.product_id) ?? 0) + it.qty_boxes)
+    }
+  }
+
+  // Orders due today or tomorrow
+  const { data: orders } = await supabase
+    .from('wholesale_orders')
+    .select('id, delivery_date, customer:wholesale_customers(name), items:wholesale_order_items(quantity, product_id, product:products(id, name, case_size))')
+    .in('status', ['draft', 'confirmed'])
+    .or(`delivery_date.eq.${today},delivery_date.eq.${tomorrow}`)
+
+  if (!orders?.length) return { findings: [], telegramLines: [] }
+
+  // Aggregate required boxes per product across all orders
+  interface Need { boxes: number; customers: string[]; name: string }
+  const requiredMap = new Map<string, Need>()
+  for (const order of orders) {
+    const customerName = (order.customer as any)?.name ?? 'Unknown'
+    for (const item of (order.items as any[]) ?? []) {
+      const pid      = item.product_id as string
+      const name     = (item.product as any)?.name ?? pid
+      const caseSize = (item.product as any)?.case_size ?? 1
+      const needed   = Math.ceil(Number(item.quantity) / caseSize)
+      const existing: Need = requiredMap.get(pid) ?? { boxes: 0, customers: [] as string[], name }
+      existing.boxes += needed
+      if (!existing.customers.includes(customerName)) existing.customers.push(customerName)
+      requiredMap.set(pid, existing)
+    }
+  }
+
+  const findings: GolemFinding[] = []
+  const telegramLines: string[] = []
+
+  for (const [pid, { boxes: needed, customers, name }] of requiredMap) {
+    const bought = boughtMap.get(pid) ?? 0
+    if (bought >= needed) continue
+    const shortfall = needed - bought
+    const detail    = bought > 0
+      ? `need ${needed} box${needed > 1 ? 'es' : ''}, bought ${bought} (${shortfall} short)`
+      : `need ${needed} box${needed > 1 ? 'es' : ''}, not bought`
+    const msg = `${name}: ${detail} — for ${customers.join(', ')}`
+    findings.push({
+      alert_type:   'order_shortfall',
+      severity:     'critical' as const,
+      product_id:    pid,
+      product_name:  name,
+      message:       msg,
+      action:       'Call supplier or check storeroom stock.',
+      source,
+    })
+    telegramLines.push(`  • ${msg}`)
+  }
+
+  return { findings, telegramLines }
+}
+
 // ─── LLM briefing synthesis ───────────────────────────────────────────────────
 async function generateBriefing(findings: GolemFinding[]): Promise<string | null> {
   const apiKey = process.env.OPENROUTER_API_KEY
@@ -365,15 +491,23 @@ export async function runPostInvoiceGolem(
 ): Promise<void> {
   const findings: GolemFinding[] = []
 
-  const [unmatched, stale, drift, expired] = await Promise.all([
+  const [unmatched, stale, drift, expired, fulfillment] = await Promise.all([
     checkUnmatchedItems(supabase, 'data_golem'),
     checkStaleCosts(supabase, supplierName, 'data_golem'),
     checkCostDrift(supabase, invoiceId, 'data_golem'),
     expireOldSuggestions(supabase, 'data_golem'),
+    checkOrderFulfillment(supabase, 'data_golem'),
   ])
 
-  findings.push(...unmatched, ...stale, ...drift, ...expired)
+  findings.push(...unmatched, ...stale, ...drift, ...expired, ...fulfillment.findings)
   await storeFindings(supabase, findings)
+
+  if (fulfillment.telegramLines.length > 0) {
+    await sendTelegram(
+      `🔴 <b>Order shortfall — market done but stock is short:</b>\n${fulfillment.telegramLines.join('\n')}\n\nCheck storeroom or call supplier.`
+    )
+  }
+
   console.log(`[DataGolem] post-invoice sweep: ${findings.length} findings for invoice ${invoiceId}`)
 }
 
@@ -381,13 +515,14 @@ export async function runPostInvoiceGolem(
 export async function runDailySweep(supabase: SupabaseClient): Promise<string | null> {
   const findings: GolemFinding[] = []
 
-  const [unmatched, stale, expired, gaps, arbitrage, holidays] = await Promise.all([
+  const [unmatched, stale, expired, gaps, arbitrage, holidays, ordersBriefing] = await Promise.all([
     checkUnmatchedItems(supabase, 'daily_sweep'),
     checkStaleCosts(supabase, null, 'daily_sweep'),
     expireOldSuggestions(supabase, 'daily_sweep'),
     checkDeliveryGap(supabase, 'daily_sweep'),
     checkArbitrage(supabase, 'daily_sweep'),
     checkHolidayPrep(supabase, 'daily_sweep'),
+    buildOrdersBriefing(supabase),
   ])
 
   findings.push(...unmatched, ...stale, ...expired, ...gaps, ...arbitrage, ...holidays)
@@ -406,7 +541,7 @@ export async function runDailySweep(supabase: SupabaseClient): Promise<string | 
 
   console.log(`[DataGolem] daily sweep: ${findings.length} findings, briefing: ${briefing ? 'yes' : 'none'}`)
 
-  if (briefing || findings.length > 0) {
+  if (briefing || findings.length > 0 || ordersBriefing) {
     const critical = findings.filter(f => f.severity === 'critical').length
     const warnings = findings.filter(f => f.severity === 'warning').length
     const header   = critical > 0
@@ -414,8 +549,9 @@ export async function runDailySweep(supabase: SupabaseClient): Promise<string | 
       : warnings > 0
         ? `🟡 <b>Data Golem — ${warnings} warning${warnings > 1 ? 's' : ''}</b>`
         : `🟢 <b>Data Golem — all clear</b>`
-    const msg = [header, briefing ?? `${findings.length} findings logged.`].join('\n')
-    await sendTelegram(msg)
+    const dataSection = [header, briefing ?? (findings.length > 0 ? `${findings.length} findings logged.` : null)].filter(Boolean).join('\n')
+    const parts = [ordersBriefing, dataSection].filter(Boolean)
+    await sendTelegram(parts.join('\n\n'))
   }
 
   return briefing
