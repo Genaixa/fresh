@@ -37,8 +37,11 @@ export default async function ProductDetailPage({
   const p = product
     ? {
         ...product,
-        market_ceiling: product.market_ceiling?.toString() ?? '',
-        margin_floor: product.margin_floor * 100,
+        retail_price:    (product.retail_price   / 100).toFixed(2),
+        wholesale_price: (product.wholesale_price / 100).toFixed(2),
+        purchase_cost:   (product.purchase_cost   / 100).toFixed(2),
+        market_ceiling:  product.market_ceiling ? (product.market_ceiling / 100).toFixed(2) : '',
+        margin_floor:    product.margin_floor * 100,
       }
     : defaults
 
@@ -87,18 +90,18 @@ export default async function ProductDetailPage({
         </div>
 
         <div className="grid grid-cols-2 gap-3">
-          <Field label="Retail price (p)">
-            <input name="retail_price" type="number" min="0"
+          <Field label="Retail price (£)">
+            <input name="retail_price" type="number" min="0" step="0.01"
               defaultValue={p.retail_price} className="input-field" />
           </Field>
-          <Field label="Wholesale price (p)">
-            <input name="wholesale_price" type="number" min="0"
+          <Field label="Wholesale price (£)">
+            <input name="wholesale_price" type="number" min="0" step="0.01"
               defaultValue={p.wholesale_price} className="input-field" />
           </Field>
         </div>
 
-        <Field label="Purchase cost (p)">
-          <input name="purchase_cost" type="number" min="0"
+        <Field label="Purchase cost (£)">
+          <input name="purchase_cost" type="number" min="0" step="0.01"
             defaultValue={p.purchase_cost} className="input-field" />
         </Field>
 
@@ -109,8 +112,8 @@ export default async function ProductDetailPage({
               <input name="price_multiplier" type="number" step="0.05" min="1"
                 defaultValue={p.price_multiplier} className="input-field" />
             </Field>
-            <Field label="Market ceiling (p) — leave blank for none">
-              <input name="market_ceiling" type="number" min="0"
+            <Field label="Market ceiling (£) — leave blank for none">
+              <input name="market_ceiling" type="number" min="0" step="0.01"
                 defaultValue={p.market_ceiling} className="input-field" placeholder="No ceiling" />
             </Field>
             <Field label="Margin floor (%)">

@@ -35,16 +35,16 @@ export default function NewProductPage() {
         </div>
 
         <div className="grid grid-cols-2 gap-3">
-          <Field label="Retail price (p)">
-            <input name="retail_price" type="number" min="0" defaultValue={0} className="input-field" />
+          <Field label="Retail price (£)">
+            <input name="retail_price" type="number" min="0" step="0.01" defaultValue="0.00" className="input-field" />
           </Field>
-          <Field label="Wholesale price (p)">
-            <input name="wholesale_price" type="number" min="0" defaultValue={0} className="input-field" />
+          <Field label="Wholesale price (£)">
+            <input name="wholesale_price" type="number" min="0" step="0.01" defaultValue="0.00" className="input-field" />
           </Field>
         </div>
 
-        <Field label="Purchase cost (p)">
-          <input name="purchase_cost" type="number" min="0" defaultValue={0} className="input-field" />
+        <Field label="Purchase cost (£)">
+          <input name="purchase_cost" type="number" min="0" step="0.01" defaultValue="0.00" className="input-field" />
         </Field>
 
         <div className="border-t border-white/10 pt-4">
@@ -54,8 +54,8 @@ export default function NewProductPage() {
               <input name="price_multiplier" type="number" step="0.05" min="1"
                 defaultValue={2.0} className="input-field" />
             </Field>
-            <Field label="Market ceiling (p) — leave blank for none">
-              <input name="market_ceiling" type="number" min="0"
+            <Field label="Market ceiling (£) — leave blank for none">
+              <input name="market_ceiling" type="number" min="0" step="0.01"
                 className="input-field" placeholder="No ceiling" />
             </Field>
             <Field label="Margin floor (%)">
