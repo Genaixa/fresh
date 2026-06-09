@@ -5,12 +5,15 @@ import { TrafficDot, marginStatus } from '@/components/ui/TrafficDot'
 import { formatPrice } from '@/lib/pricing-engine'
 import type { Product } from '@/types'
 
+type Sort = 'name' | 'price_asc' | 'price_desc'
+
 export default async function ProductsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ category?: string; q?: string }>
+  searchParams: Promise<{ category?: string; q?: string; sort?: string }>
 }) {
-  const { category, q } = await searchParams
+  const { category, q, sort: sortParam } = await searchParams
+  const sort: Sort = sortParam === 'price_asc' ? 'price_asc' : sortParam === 'price_desc' ? 'price_desc' : 'name'
   const supabase = await createClient()
 
   const showIssues = category === 'issues'
@@ -34,12 +37,26 @@ export default async function ProductsPage({
     return false
   }
 
-  const products = (allProducts ?? []).filter((p: Product) => {
-    if (showIssues)                           return isIssue(p)
-    if (q)                                    { if (!p.name.toLowerCase().includes(q.toLowerCase())) return false }
-    if (category && category !== 'all')       return p.category === category
-    return true
-  })
+  const products = (allProducts ?? [])
+    .filter((p: Product) => {
+      if (showIssues)                     return isIssue(p)
+      if (q && !p.name.toLowerCase().includes(q.toLowerCase())) return false
+      if (category && category !== 'all') return p.category === category
+      return true
+    })
+    .sort((a: Product, b: Product) => {
+      if (sort === 'price_asc')  return a.retail_price - b.retail_price
+      if (sort === 'price_desc') return b.retail_price - a.retail_price
+      return a.name.localeCompare(b.name)
+    })
+
+  function sortHref(s: Sort) {
+    const parts: string[] = []
+    if (category) parts.push(`category=${category}`)
+    if (q)        parts.push(`q=${q}`)
+    if (s !== 'name') parts.push(`sort=${s}`)
+    return `/products${parts.length ? `?${parts.join('&')}` : ''}`
+  }
 
   return (
     <div className="page pb-24">
@@ -67,7 +84,7 @@ export default async function ProductsPage({
         {['all', 'fruit', 'veg', 'other'].map(cat => (
           <Link
             key={cat}
-            href={`/products?category=${cat}${q ? `&q=${q}` : ''}`}
+            href={`/products?category=${cat}${q ? `&q=${q}` : ''}${sort !== 'name' ? `&sort=${sort}` : ''}`}
             className={`rounded-full px-4 py-1.5 text-sm font-medium whitespace-nowrap min-h-[36px]
                         flex items-center
                         ${(category ?? 'all') === cat
@@ -97,6 +114,23 @@ export default async function ProductsPage({
             </Link>
           )
         })()}
+      </div>
+
+      {/* Sort pills */}
+      <div className="flex gap-2 mb-4">
+        {([
+          { s: 'name' as Sort,       label: 'A–Z' },
+          { s: 'price_asc' as Sort,  label: 'Price ↑' },
+          { s: 'price_desc' as Sort, label: 'Price ↓' },
+        ]).map(({ s, label }) => (
+          <Link key={s} href={sortHref(s)}
+            className={`px-4 py-1.5 rounded-lg text-xs font-medium transition-colors
+              ${sort === s
+                ? 'bg-brand-accent/20 text-brand-accent ring-1 ring-brand-accent/40'
+                : 'text-[var(--text-muted)] border border-white/10'}`}>
+            {label}
+          </Link>
+        ))}
       </div>
 
       {/* Product list */}
