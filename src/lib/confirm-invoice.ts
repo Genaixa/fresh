@@ -152,12 +152,14 @@ async function runPostConfirmHealthSweep(
       continue
     }
 
-    // Check B — case-size mismatch: stored cost × case_size ≈ invoice line price
+    // Check B — stored purchase_cost ≈ invoice box price (case price stored as per-unit by mistake)
+    // Catches: someone stored 1300p (box price) instead of 130p (per-unit price).
+    // Correct data: cost=130p, invoiceLine=1300p → drift=900% → no fire.
+    // Wrong data:   cost=1300p, invoiceLine=1300p → drift=0% → fires correctly.
     const caseSize    = p.case_size ?? 1
     const invoiceLine = invoiceCostMap.get(p.id)
     if (caseSize > 1 && cost >= MIN_TRUSTED_COST && invoiceLine) {
-      const implied = cost * caseSize
-      const drift   = Math.abs(implied - invoiceLine) / invoiceLine
+      const drift = Math.abs(cost - invoiceLine) / invoiceLine
       if (drift < 0.15) {
         toInsert.push({
           product_id:    p.id,
@@ -165,7 +167,7 @@ async function runPostConfirmHealthSweep(
           old_cost:      cost,
           proposed_cost: invoiceLine,
           retail_price:  retail,
-          reason:        `POST-CONFIRM CHECK B: cost ${cost}p × case_size ${caseSize} = ${implied}p ≈ invoice line ${invoiceLine}p — looks like the case price was used as the unit cost.`,
+          reason:        `POST-CONFIRM CHECK B: stored cost ${cost}p ≈ invoice box price ${invoiceLine}p — looks like the box price was stored as the per-unit cost (should be ~${Math.round(invoiceLine / caseSize)}p for case_size ${caseSize}).`,
           blocked:       true,
           source:        'invoice_check',
         })
