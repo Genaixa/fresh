@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useMemo } from 'react'
 import Link from 'next/link'
-import { NavBar } from '@/components/ui/NavBar'
 import { formatPrice, formatMargin } from '@/lib/pricing-engine'
 
 interface Product {
@@ -383,7 +382,6 @@ export default function BulkMarginPage() {
         </>
       )}
 
-      <NavBar />
     </div>
   )
 }

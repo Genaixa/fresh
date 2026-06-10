@@ -1,5 +1,4 @@
 import { createClient } from '@/lib/supabase/server'
-import { NavBar } from '@/components/ui/NavBar'
 import { getCustomerBalances } from '@/lib/wholesale'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
@@ -152,7 +151,6 @@ export default async function WholesalePage() {
         </section>
       )}
 
-      <NavBar />
     </div>
   )
 }

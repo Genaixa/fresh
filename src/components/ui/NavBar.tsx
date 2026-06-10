@@ -3,6 +3,9 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 
+// Pages that are full-screen experiences with no app chrome
+const HIDDEN_ROUTES = ['/login', '/till', '/forgot-password', '/reset-password', '/portal']
+
 const NAV_ITEMS = [
   { href: '/dashboard', label: 'Home',     icon: '🏠' },
   { href: '/till',      label: 'Till',     icon: '🛍️' },
@@ -13,6 +16,7 @@ const NAV_ITEMS = [
 
 export function NavBar() {
   const pathname = usePathname()
+  if (HIDDEN_ROUTES.some(r => pathname.startsWith(r))) return null
   return (
     <nav className="fixed bottom-0 left-0 right-0 bg-[var(--bg-card)] border-t border-white/10
                     flex justify-around items-center h-16 z-50 max-w-lg mx-auto">

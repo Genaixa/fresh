@@ -1,4 +1,3 @@
-import { NavBar } from '@/components/ui/NavBar'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 
@@ -70,7 +69,6 @@ export default async function InvoicesPage() {
         })}
       </div>
 
-      <NavBar />
     </div>
   )
 }

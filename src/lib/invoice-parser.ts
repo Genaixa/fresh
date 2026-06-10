@@ -71,7 +71,11 @@ Box spec rules — read BOTH Product Description AND Brand column:
 - "X15'S" or "X25'S" or "X14" in Brand → unit_type="count", units_per_case=15 (or 25/14)
 - "12KG" or "25KG" alone in description → unit_type="weight", box_weight_kg=12 (or 25), units_per_case=null
 - "8" or "18" as the only number at end of description (PINEAPPLE . COSTA RICA 8) → unit_type="count", units_per_case=8
-- Numbers like 30, 40, 66, 70, 74, 80 before a country code or KG are SIZE GRADES, not counts — ignore them
+- Pattern "NUMBER WEIGHTKG" where both a count and a weight appear (e.g. "40 15KG", "70 10KG", "35 15KG"):
+  - CITRUS fruit (orange, satsuma, mandarin, tangerine, grapefruit, lemon, lime, clementine): NUMBER is the count per box → unit_type="count", units_per_case=NUMBER, box_weight_kg=null
+  - STONE FRUIT or BERRY (cherry, plum, nectarine, peach, apricot, strawberry, grape): NUMBER is a calibre/size grade → unit_type="weight", box_weight_kg=WEIGHT, units_per_case=null
+  - All other whole fruit: treat NUMBER as count → unit_type="count", units_per_case=NUMBER
+- Standalone size codes with no weight (e.g. "CHERRY SPAIN 28" where 28 is calibre and there is no KG figure) → unit_type="weight", box_weight_kg=null, units_per_case=null
 - "18.2KG" → unit_type="weight", box_weight_kg=18.2
 - If you cannot determine box spec, set unit_type="count", units_per_case=1, box_weight_kg=null`
 

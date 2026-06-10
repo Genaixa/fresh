@@ -1,6 +1,5 @@
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
-import { NavBar } from '@/components/ui/NavBar'
 import { approveAll, rejectAll, recalculateSuggestions } from './actions'
 import { SuggestionCard } from './SuggestionCard'
 import { WinsSection } from './WinsSection'
@@ -308,7 +307,6 @@ export default async function PricingSuggestionsPage({
         </>
       )}
 
-      <NavBar />
     </div>
   )
 }

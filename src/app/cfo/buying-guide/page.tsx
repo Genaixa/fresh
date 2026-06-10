@@ -1,5 +1,4 @@
 import { createClient } from '@/lib/supabase/server'
-import { NavBar } from '@/components/ui/NavBar'
 import Link from 'next/link'
 
 export const dynamic = 'force-dynamic'
@@ -54,7 +53,6 @@ export default async function BuyingGuidePage() {
             Go to EPOS Sync →
           </Link>
         </div>
-        <NavBar />
       </div>
     )
   }
@@ -218,7 +216,6 @@ export default async function BuyingGuidePage() {
         Upload a new sales report on the Sync page to refresh.
       </p>
 
-      <NavBar />
     </div>
   )
 }

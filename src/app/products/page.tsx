@@ -1,6 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
-import { NavBar } from '@/components/ui/NavBar'
 import { TrafficDot, marginStatus } from '@/components/ui/TrafficDot'
 import { formatPrice } from '@/lib/pricing-engine'
 import { SearchBox } from './SearchBox'
@@ -195,7 +194,6 @@ export default async function ProductsPage({
         )}
       </div>
 
-      <NavBar />
     </div>
   )
 }

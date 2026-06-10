@@ -71,7 +71,13 @@ export async function POST(request: NextRequest) {
         .neq('status', 'error')
 
       if (sameDay && sameDay.length > 0) {
-        // Check if any existing invoice for this day has the same items
+        // Duplicate / amendment detection.
+        // Suppliers (esp. Dole) sometimes send the same invoice twice: once before
+        // all items are added, then again with extra lines. We handle two cases:
+        //   (a) Exact duplicate: same item set → skip the new one entirely.
+        //   (b) Subset: new invoice contains all items of an existing unconfirmed
+        //       invoice PLUS at least one extra → the existing was the incomplete
+        //       version; delete it and proceed with the new (more complete) one.
         const newRaws = new Set(parsed.items.map(i => i.product_name_raw))
         let isDuplicate = false
         for (const inv of sameDay) {
@@ -81,9 +87,26 @@ export async function POST(request: NextRequest) {
             .eq('invoice_id', inv.id)
           const existingRaws = new Set((existingItems ?? []).map(i => i.product_name_raw))
           const overlap = [...newRaws].filter(r => existingRaws.has(r)).length
+
           if (overlap === newRaws.size && overlap === existingRaws.size) {
+            // Case (a): exact same item set → skip
             isDuplicate = true
             break
+          }
+
+          // Case (b): existing is a proper subset of new (same invoice, amended)
+          // Only supersede if the existing invoice hasn't been confirmed yet.
+          if (overlap === existingRaws.size && newRaws.size > existingRaws.size) {
+            const { data: existingInv } = await supabase
+              .from('purchase_invoices')
+              .select('status')
+              .eq('id', inv.id)
+              .single()
+            if (existingInv?.status === 'uploaded') {
+              await supabase.from('purchase_invoice_items').delete().eq('invoice_id', inv.id)
+              await supabase.from('purchase_invoices').delete().eq('id', inv.id)
+              console.log(`[delivery-note] Deleted superseded partial invoice ${inv.id} (${existingRaws.size} items → ${newRaws.size} items)`)
+            }
           }
         }
         if (isDuplicate) continue

@@ -1,6 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
-import { NavBar } from '@/components/ui/NavBar'
 import { formatPrice } from '@/lib/pricing-engine'
 import type { Product, WasteEntry } from '@/types'
 
@@ -137,7 +136,6 @@ export default async function WastePage({
         </div>
       )}
 
-      <NavBar />
     </div>
   )
 }

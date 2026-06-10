@@ -1,6 +1,5 @@
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
-import { NavBar } from '@/components/ui/NavBar'
 import { formatPrice } from '@/lib/pricing-engine'
 import { marginStatus, TrafficDot } from '@/components/ui/TrafficDot'
 import type { Product } from '@/types'
@@ -181,7 +180,6 @@ export default async function MarginsPage({
         })}
       </div>
 
-      <NavBar />
     </div>
   )
 }

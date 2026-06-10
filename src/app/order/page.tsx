@@ -1,5 +1,4 @@
 import { createClient } from '@/lib/supabase/server'
-import { NavBar } from '@/components/ui/NavBar'
 import Link from 'next/link'
 
 export const dynamic = 'force-dynamic'
@@ -65,7 +64,6 @@ export default async function OrderIndexPage() {
         ))}
       </div>
 
-      <NavBar />
     </div>
   )
 }

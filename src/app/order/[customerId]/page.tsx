@@ -1,5 +1,4 @@
 import { createClient } from '@/lib/supabase/server'
-import { NavBar } from '@/components/ui/NavBar'
 import { notFound } from 'next/navigation'
 import { CONFIG } from '@/app/market/config'
 import OrderClient from './OrderClient'
@@ -174,7 +173,6 @@ export default async function OrderPage({ params }: { params: Promise<{ customer
         draftItems={Object.fromEntries(draftItems)}
         draftOrderId={draftOrder?.id ?? null}
       />
-      <NavBar />
     </div>
   )
 }

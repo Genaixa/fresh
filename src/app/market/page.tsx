@@ -1,5 +1,4 @@
 import { createClient } from '@/lib/supabase/server'
-import { NavBar } from '@/components/ui/NavBar'
 import MarketBuyClient from './MarketBuyClient'
 import { CONFIG } from './config'
 import { generateMarketInsights } from './marketGolem'
@@ -254,7 +253,6 @@ export default async function MarketPage() {
         supplierIds={SUPPLIER_IDS}
         briefing={golem.briefing}
       />
-      <NavBar />
     </div>
   )
 }

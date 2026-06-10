@@ -1,5 +1,4 @@
 import { createClient } from '@/lib/supabase/server'
-import { NavBar } from '@/components/ui/NavBar'
 import { notFound } from 'next/navigation'
 import { CONFIG } from '@/app/market/config'
 import CustomerCfoClient from './CustomerCfoClient'
@@ -281,7 +280,6 @@ export default async function CustomerCfoPage({
   return (
     <div className="max-w-lg mx-auto px-4 py-4 pb-24 bg-white min-h-screen">
       <CustomerCfoClient summary={summary} currentWeeks={weeksBack} />
-      <NavBar />
     </div>
   )
 }

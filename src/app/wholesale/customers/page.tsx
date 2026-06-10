@@ -1,5 +1,4 @@
 import { createClient } from '@/lib/supabase/server'
-import { NavBar } from '@/components/ui/NavBar'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 
@@ -86,7 +85,6 @@ export default async function CustomersPage() {
         </div>
       )}
 
-      <NavBar />
     </div>
   )
 }

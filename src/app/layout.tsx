@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next'
 import './globals.css'
+import { NavBar } from '@/components/ui/NavBar'
 
 export const metadata: Metadata = {
   title: 'Fresh & Fruity',
@@ -16,7 +17,10 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className="dark" suppressHydrationWarning>
-      <body>{children}</body>
+      <body>
+        {children}
+        <NavBar />
+      </body>
     </html>
   )
 }

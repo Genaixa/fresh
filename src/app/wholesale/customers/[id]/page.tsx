@@ -1,5 +1,4 @@
 import { createClient } from '@/lib/supabase/server'
-import { NavBar } from '@/components/ui/NavBar'
 import Link from 'next/link'
 import { redirect, notFound } from 'next/navigation'
 
@@ -152,7 +151,6 @@ export default async function CustomerDetailPage({ params }: { params: Promise<{
         </section>
       )}
 
-      <NavBar />
     </div>
   )
 }

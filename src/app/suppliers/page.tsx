@@ -1,5 +1,4 @@
 import { createClient } from '@/lib/supabase/server'
-import { NavBar } from '@/components/ui/NavBar'
 import { upsertSupplier, toggleSupplierActive } from './actions'
 import type { Supplier } from '@/types'
 
@@ -65,7 +64,6 @@ export default async function SuppliersPage() {
         </>
       )}
 
-      <NavBar />
     </div>
   )
 }

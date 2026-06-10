@@ -1,5 +1,4 @@
 import { createClient } from '@/lib/supabase/server'
-import { NavBar } from '@/components/ui/NavBar'
 import Link from 'next/link'
 import { logout } from '@/app/login/actions'
 import { getProductHealthIssues } from '@/lib/data-health'

@@ -1,5 +1,4 @@
 import { createClient } from '@/lib/supabase/server'
-import { NavBar } from '@/components/ui/NavBar'
 import { CONFIG } from '@/app/market/config'
 import { generateCfoBriefing } from './cfoGolem'
 import CfoClient from './CfoClient'
@@ -277,7 +276,6 @@ export default async function CfoPage() {
   return (
     <div className="max-w-lg mx-auto px-4 py-4 pb-24 bg-white min-h-screen">
       <CfoClient data={cfoData} />
-      <NavBar />
     </div>
   )
 }
