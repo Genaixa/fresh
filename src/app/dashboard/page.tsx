@@ -96,7 +96,7 @@ export default async function DashboardPage() {
       </div>
 
       {/* Primary CTA */}
-      {hasPending ? (
+      {hasPending && (
         <Link href="/pricing" className="block mb-8">
           <div className="card bg-brand-accent text-white">
             <div className="flex items-center justify-between">
@@ -110,31 +110,6 @@ export default async function DashboardPage() {
             </div>
           </div>
         </Link>
-      ) : (
-        <div className="grid grid-cols-2 gap-3 mb-8">
-          <Link href="/invoices/new">
-            <div className="card border-2 border-brand-accent/40 h-full">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-bold text-base">Upload invoice</p>
-                  <p className="text-[var(--text-muted)] text-xs mt-0.5">Today's delivery →</p>
-                </div>
-                <span className="text-3xl">📄</span>
-              </div>
-            </div>
-          </Link>
-          <Link href="/market">
-            <div className="card border-2 border-brand-accent/40 h-full">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-bold text-base">Market</p>
-                  <p className="text-[var(--text-muted)] text-xs mt-0.5">Buying guide →</p>
-                </div>
-                <span className="text-3xl">🛒</span>
-              </div>
-            </div>
-          </Link>
-        </div>
       )}
 
       {/* Unmapped products banner */}
@@ -272,6 +247,7 @@ export default async function DashboardPage() {
       <div className="grid grid-cols-3 gap-3 mb-8">
         <QuickAction href="/suppliers"        icon="🏪" label="Suppliers" />
         <QuickAction href="/sync"             icon="🔄" label="EPOS Sync" />
+        <QuickAction href="/invoices/new"     icon="📄" label="Upload invoice" />
       </div>
     </div>
   )
