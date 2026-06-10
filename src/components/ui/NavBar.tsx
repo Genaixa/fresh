@@ -9,7 +9,7 @@ const HIDDEN_ROUTES = ['/login', '/till', '/forgot-password', '/reset-password',
 const NAV_ITEMS = [
   { href: '/dashboard', label: 'Home',     icon: '🏠' },
   { href: '/till',      label: 'Till',     icon: '🛍️' },
-  { href: '/market',    label: 'Market',   icon: '🛒' },
+  { href: '/market-run', label: 'Market',   icon: '🛒' },
   { href: '/dispatch',  label: 'Dispatch', icon: '🚐' },
   { href: '/cfo',       label: 'CFO',      icon: '🧠' },
 ]

@@ -1,62 +1,15 @@
 import { createClient } from '@/lib/supabase/server'
-import MarketBuyClient from './MarketBuyClient'
-import { CONFIG } from './config'
-import { generateMarketInsights } from './marketGolem'
+import MarketBuyClient from '@/app/market/MarketBuyClient'
+import { CONFIG } from '@/app/market/config'
+import { generateMarketInsights } from '@/app/market/marketGolem'
+import type { MarketProduct, MarketSession, MarketSessionItem, SupplierIds } from '@/app/market/page'
 
 export const dynamic = 'force-dynamic'
 
-export type MarketProduct = {
-  id: string
-  name: string
-  category: 'fruit' | 'veg'
-  hasDole:    boolean
-  hasHolland: boolean
-  doleLastPricePence:    number | null
-  doleLastDate:          string | null
-  hollandLastPricePence: number | null
-  hollandLastDate:       string | null
-  junAvgBoxPricePence:   number | null
-  maxBoxPricePence:      number
-  // pricing
-  retailPricePence:  number
-  priceMultiplier:   number
-  marginFloor:       number
-  caseSize:          number
-  // wholesale orders needing this product today/tomorrow (in boxes, 0 if none)
-  wholesaleQtyBoxes: number
-  // per-customer breakdown of those wholesale orders (retail units)
-  wholesaleBreakdown: { customerName: string; qty: number }[]
-  // AI-generated tip from Market Golem
-  tip?: string
-}
-
-export type MarketSession = {
-  id: string
-  session_date: string
-  status: 'open' | 'closed'
-  roots_batches: number
-  veg_batches:   number
-  fruit_batches: number
-  trip_number:   number
-}
-
-export type MarketSessionItem = {
-  id: string
-  product_id: string
-  entry_index: number
-  supplier_id: string | null
-  qty_boxes: number
-  price_pence: number | null
-  deal_status: 'green' | 'amber' | 'red' | null
-  units_per_case: number | null
-}
-
-const SUPPLIER_IDS = {
+const SUPPLIER_IDS: SupplierIds = {
   dole:    '11111111-0000-0000-0000-000000000002',
   holland: '11111111-0000-0000-0000-000000000001',
 } as const
-
-export type SupplierIds = typeof SUPPLIER_IDS
 
 function fmtDate(iso: string | null): string | null {
   if (!iso) return null
@@ -64,17 +17,17 @@ function fmtDate(iso: string | null): string | null {
   return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
 }
 
-export default async function MarketPage() {
+export default async function MarketRunPage() {
   const supabase = await createClient()
   const today        = new Date().toISOString().split('T')[0]
   const currentMonth = new Date().getMonth() + 1
 
-  // ── Session — most recent for today (multiple trips per day allowed) ────────
+  // ── Session (type='run' — separate from market-buy sessions) ─────────────
   const { data: sessions } = await supabase
     .from('market_sessions')
     .select('id, session_date, status, roots_batches, veg_batches, fruit_batches, trip_number')
     .eq('session_date', today)
-    .eq('session_type', 'market')
+    .eq('session_type', 'run')
     .order('opened_at', { ascending: false })
     .limit(1)
 
@@ -83,7 +36,7 @@ export default async function MarketPage() {
   if (!session) {
     const { data } = await supabase
       .from('market_sessions')
-      .insert({ session_date: today, status: 'open', session_type: 'market' })
+      .insert({ session_date: today, status: 'open', session_type: 'run' })
       .select('id, session_date, status, roots_batches, veg_batches, fruit_batches, trip_number')
       .single()
     session = data
@@ -97,7 +50,7 @@ export default async function MarketPage() {
     .eq('is_active', true)
     .order('name')
 
-  // ── hasDole / hasHolland from confirmed mappings ──────────────────────────
+  // ── hasDole / hasHolland ──────────────────────────────────────────────────
   const { data: mappings } = await supabase
     .from('supplier_product_mappings')
     .select('product_id, supplier_name')
@@ -111,12 +64,11 @@ export default async function MarketPage() {
     if (sn === 'jr holland') hollandSet.add(m.product_id)
   }
 
-  // ── Last price per supplier: invoice-based (with date) + mapping fallback ──
+  // ── Last price per supplier ───────────────────────────────────────────────
   const { data: lastPrices } = await supabase
     .from('product_supplier_last_price')
     .select('product_id, supplier_name, last_price_p, last_date')
 
-  // Mapping-based fallback (highest-appearances mapping per product+supplier)
   const { data: mappingPrices } = await supabase
     .from('supplier_product_mappings')
     .select('product_id, supplier_name, last_price_p, appearances')
@@ -124,7 +76,6 @@ export default async function MarketPage() {
     .not('last_price_p', 'is', null)
     .order('appearances', { ascending: false })
 
-  // Build fallback maps (highest appearances per product+supplier)
   const doleFallback    = new Map<string, number>()
   const hollandFallback = new Map<string, number>()
   for (const m of mappingPrices ?? []) {
@@ -135,7 +86,6 @@ export default async function MarketPage() {
       hollandFallback.set(m.product_id, m.last_price_p)
   }
 
-  // Primary: invoice data (has date). Fallback: mapping data (no date).
   const dolePriceMap    = new Map<string, { p: number; d: string | null }>()
   const hollandPriceMap = new Map<string, { p: number; d: string | null }>()
   for (const row of lastPrices ?? []) {
@@ -145,7 +95,6 @@ export default async function MarketPage() {
     if (sn === 'jr holland')
       hollandPriceMap.set(row.product_id, { p: row.last_price_p, d: row.last_date })
   }
-  // Fill in fallbacks for products with no invoice data
   for (const [pid, price] of doleFallback)
     if (!dolePriceMap.has(pid)) dolePriceMap.set(pid, { p: price, d: null })
   for (const [pid, price] of hollandFallback)
@@ -173,8 +122,7 @@ export default async function MarketPage() {
     .in('status', ['confirmed', 'draft'])
     .or(`delivery_date.eq.${today},delivery_date.eq.${tomorrow},delivery_date.is.null`)
 
-  const wholesaleQtyMap = new Map<string, number>() // product_id → total retail units needed
-  // product_id → [{ customerName, qty (retail units) }]
+  const wholesaleQtyMap       = new Map<string, number>()
   const wholesaleBreakdownMap = new Map<string, { customerName: string; qty: number }[]>()
   if (pendingOrders && pendingOrders.length > 0) {
     const { data: orderItems } = await supabase
@@ -186,7 +134,6 @@ export default async function MarketPage() {
       wholesaleQtyMap.set(item.product_id, (wholesaleQtyMap.get(item.product_id) ?? 0) + qty)
       const customerName = (item.order as any)?.customer?.name ?? 'Unknown'
       const existing = wholesaleBreakdownMap.get(item.product_id) ?? []
-      // Merge same customer across multiple orders
       const entry = existing.find(e => e.customerName === customerName)
       if (entry) entry.qty += qty
       else existing.push({ customerName, qty })
@@ -206,17 +153,16 @@ export default async function MarketPage() {
   const marketProducts: MarketProduct[] = (products ?? [])
     .filter(p => CONFIG[p.name] !== undefined)
     .map(p => {
-      const cfg    = CONFIG[p.name]!
-      const avgs   = seasonalMap.get(p.id) ?? { weight: null, count: null }
-      const avgPU  = cfg.unitType === 'weight' ? avgs.weight : avgs.count
-      const dole   = dolePriceMap.get(p.id)    ?? null
-      const holl   = hollandPriceMap.get(p.id) ?? null
+      const cfg   = CONFIG[p.name]!
+      const avgs  = seasonalMap.get(p.id) ?? { weight: null, count: null }
+      const avgPU = cfg.unitType === 'weight' ? avgs.weight : avgs.count
+      const dole  = dolePriceMap.get(p.id)    ?? null
+      const holl  = hollandPriceMap.get(p.id) ?? null
 
-      // Convert wholesale retail-unit qty → boxes needed
-      const wsRetailQty  = wholesaleQtyMap.get(p.id) ?? 0
-      const unitsPerBox  = p.case_size > 1 ? p.case_size
-                         : cfg.unitType === 'count' ? cfg.typicalBoxCount
-                         : cfg.retailUnitsPerBox ?? cfg.typicalBoxCount
+      const wsRetailQty = wholesaleQtyMap.get(p.id) ?? 0
+      const unitsPerBox = p.case_size > 1 ? p.case_size
+                        : cfg.unitType === 'count' ? cfg.typicalBoxCount
+                        : cfg.retailUnitsPerBox ?? cfg.typicalBoxCount
       const wsBoxes = wsRetailQty > 0 ? Math.ceil(wsRetailQty / unitsPerBox) : 0
 
       return {
@@ -240,7 +186,12 @@ export default async function MarketPage() {
       }
     })
 
-  // ── Market Golem — AI tips + briefing ────────────────────────────────────
+  // requiredProductIds = products that have pending orders — shown by default
+  const requiredProductIds = marketProducts
+    .filter(p => p.wholesaleQtyBoxes > 0)
+    .map(p => p.id)
+
+  // ── Market Golem ──────────────────────────────────────────────────────────
   const golem = await generateMarketInsights(marketProducts)
 
   const productsWithTips: MarketProduct[] = marketProducts.map(p => ({
@@ -256,6 +207,8 @@ export default async function MarketPage() {
         existingItems={(existingItems ?? []) as MarketSessionItem[]}
         supplierIds={SUPPLIER_IDS}
         briefing={golem.briefing}
+        runMode={true}
+        requiredProductIds={requiredProductIds}
       />
     </div>
   )

@@ -88,16 +88,19 @@ type RowState = {
 // ── Props ─────────────────────────────────────────────────────────────────────
 
 type Props = {
-  session:       MarketSession
-  products:      MarketProduct[]
-  existingItems: MarketSessionItem[]
-  supplierIds:   SupplierIds
-  briefing?:     string | null
+  session:             MarketSession
+  products:            MarketProduct[]
+  existingItems:       MarketSessionItem[]
+  supplierIds:         SupplierIds
+  briefing?:           string | null
+  runMode?:            boolean
+  requiredProductIds?: string[]  // market-run: product IDs with orders — shown by default
 }
 
 // ── Main component ────────────────────────────────────────────────────────────
 
-export default function MarketBuyClient({ session, products, existingItems, supplierIds, briefing }: Props) {
+export default function MarketBuyClient({ session, products, existingItems, supplierIds, briefing, runMode, requiredProductIds }: Props) {
+  const requiredSet = useMemo(() => new Set(requiredProductIds ?? []), [requiredProductIds])
 
   const defaultCountPerBox = (p: MarketProduct): number => {
     const cfg = CONFIG[p.name]
@@ -228,6 +231,10 @@ export default function MarketBuyClient({ session, products, existingItems, supp
   const saveTimers                  = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map())
 
   const isVisible = (p: MarketProduct) => {
+    if (runMode) {
+      if (requiredSet.has(p.id)) return true
+      return existingProductIds.has(p.id) || activeRare.has(p.id)
+    }
     if (!CONFIG[p.name]?.rareBuy) return true
     if (existingProductIds.has(p.id)) return true
     return activeRare.has(p.id)
@@ -286,10 +293,10 @@ export default function MarketBuyClient({ session, products, existingItems, supp
 
   const vegRoots     = veg.filter(p => ROOTS_AND_ONIONS.has(p.name) && isVisible(p))
   const vegOther     = veg.filter(p => !ROOTS_AND_ONIONS.has(p.name) && isVisible(p))
-  const rareVegRoots = veg.filter(p => ROOTS_AND_ONIONS.has(p.name) && CONFIG[p.name]?.rareBuy && !isVisible(p))
-  const rareVegOther = veg.filter(p => !ROOTS_AND_ONIONS.has(p.name) && CONFIG[p.name]?.rareBuy && !isVisible(p))
+  const rareVegRoots = veg.filter(p => ROOTS_AND_ONIONS.has(p.name) && !isVisible(p) && (runMode || CONFIG[p.name]?.rareBuy))
+  const rareVegOther = veg.filter(p => !ROOTS_AND_ONIONS.has(p.name) && !isVisible(p) && (runMode || CONFIG[p.name]?.rareBuy))
   const visFruit       = fruit.filter(isVisible)
-  const rareFruit      = fruit.filter(p => CONFIG[p.name]?.rareBuy && !isVisible(p))
+  const rareFruit      = fruit.filter(p => !isVisible(p) && (runMode || CONFIG[p.name]?.rareBuy))
 
   const handleSectionDone = async (section: 'roots' | 'veg' | 'fruit') => {
     setSectionSaving(section)
@@ -554,7 +561,7 @@ export default function MarketBuyClient({ session, products, existingItems, supp
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h1 className="text-xl font-bold text-gray-900">Market Buy</h1>
+          <h1 className="text-xl font-bold text-gray-900">{runMode ? 'Market Run' : 'Market Buy'}</h1>
           <p className="text-xs text-gray-500">
             {today}{session.trip_number > 1 ? ` · Purchase ${session.trip_number}` : ''} · {session.status === 'open' ? 'Session open' : 'Session closed'}
           </p>
@@ -633,21 +640,54 @@ export default function MarketBuyClient({ session, products, existingItems, supp
       {/* Finish panel — appears once all sections done */}
       {allSectionsDone && session.status === 'open' && (
         <div className="mt-2 mb-4 border border-gray-200 rounded-xl p-4 bg-gray-50">
-          <p className="text-sm font-semibold text-gray-900 mb-0.5">All orders placed</p>
-          <p className="text-xs text-gray-500 mb-3">
-            Back at the van? You can scan your invoices to check for any discrepancies before closing.
+          <p className="text-sm font-semibold text-gray-900 mb-0.5">
+            {runMode ? 'Ready to commit' : 'All orders placed'}
           </p>
+          {runMode ? (() => {
+            const shortfalls = products.filter(p => {
+              if (!requiredSet.has(p.id) || p.wholesaleQtyBoxes <= 0) return false
+              let total = 0
+              for (let batch = 0; batch <= Math.max(batchesDone.roots, batchesDone.veg, batchesDone.fruit); batch++) {
+                total += (rows.get(`${p.id}:${batch * 2}`)?.qty ?? 0) + (rows.get(`${p.id}:${batch * 2 + 1}`)?.qty ?? 0)
+              }
+              return total < p.wholesaleQtyBoxes
+            })
+            return shortfalls.length > 0 ? (
+              <div className="mb-3 border border-amber-300 rounded-lg bg-amber-50 px-3 py-2">
+                <p className="text-xs font-semibold text-amber-800 mb-1">⚠ Shortfall — allocate before committing:</p>
+                {shortfalls.map(p => {
+                  let got = 0
+                  for (let b = 0; b <= Math.max(batchesDone.roots, batchesDone.veg, batchesDone.fruit); b++) {
+                    got += (rows.get(`${p.id}:${b * 2}`)?.qty ?? 0) + (rows.get(`${p.id}:${b * 2 + 1}`)?.qty ?? 0)
+                  }
+                  return (
+                    <p key={p.id} className="text-xs text-amber-700">
+                      {p.name}: need {p.wholesaleQtyBoxes} box{p.wholesaleQtyBoxes !== 1 ? 'es' : ''}, ordered {got}
+                    </p>
+                  )
+                })}
+              </div>
+            ) : (
+              <p className="text-xs text-gray-500 mb-3">All orders covered — tap to see your Dole and Holland lists.</p>
+            )
+          })() : (
+            <p className="text-xs text-gray-500 mb-3">
+              Back at the van? You can scan your invoices to check for any discrepancies before closing.
+            </p>
+          )}
           <div className="flex gap-2">
-            <button
-              disabled
-              className="flex-1 py-2.5 rounded-xl text-sm font-semibold border border-gray-300 text-gray-400 bg-white disabled:cursor-not-allowed">
-              📷 Scan invoices
-            </button>
+            {!runMode && (
+              <button
+                disabled
+                className="flex-1 py-2.5 rounded-xl text-sm font-semibold border border-gray-300 text-gray-400 bg-white disabled:cursor-not-allowed">
+                📷 Scan invoices
+              </button>
+            )}
             <button
               onClick={handleDone}
               disabled={closing}
               className="flex-1 py-2.5 rounded-xl text-sm font-semibold bg-gray-900 text-white active:bg-gray-700 disabled:opacity-50">
-              {closing ? '…' : 'Close & share →'}
+              {closing ? '…' : runMode ? 'Commit & view order →' : 'Close & share →'}
             </button>
           </div>
         </div>
