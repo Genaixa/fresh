@@ -105,8 +105,9 @@ export default async function MarketPage() {
   const doleSet    = new Set<string>()
   const hollandSet = new Set<string>()
   for (const m of mappings ?? []) {
-    if (m.supplier_name === 'dole wholesale gateshead') doleSet.add(m.product_id)
-    if (m.supplier_name === 'jr holland')               hollandSet.add(m.product_id)
+    const sn = m.supplier_name.toLowerCase()
+    if (sn === 'dole wholesale gateshead' || sn === 'total produce') doleSet.add(m.product_id)
+    if (sn === 'jr holland') hollandSet.add(m.product_id)
   }
 
   // ── Last price per supplier: invoice-based (with date) + mapping fallback ──
@@ -126,9 +127,10 @@ export default async function MarketPage() {
   const doleFallback    = new Map<string, number>()
   const hollandFallback = new Map<string, number>()
   for (const m of mappingPrices ?? []) {
-    if (m.supplier_name === 'dole wholesale gateshead' && !doleFallback.has(m.product_id))
+    const sn = m.supplier_name.toLowerCase()
+    if ((sn === 'dole wholesale gateshead' || sn === 'total produce') && !doleFallback.has(m.product_id))
       doleFallback.set(m.product_id, m.last_price_p)
-    if (m.supplier_name === 'jr holland' && !hollandFallback.has(m.product_id))
+    if (sn === 'jr holland' && !hollandFallback.has(m.product_id))
       hollandFallback.set(m.product_id, m.last_price_p)
   }
 
@@ -136,9 +138,10 @@ export default async function MarketPage() {
   const dolePriceMap    = new Map<string, { p: number; d: string | null }>()
   const hollandPriceMap = new Map<string, { p: number; d: string | null }>()
   for (const row of lastPrices ?? []) {
-    if (row.supplier_name === 'dole wholesale gateshead')
+    const sn = row.supplier_name.toLowerCase()
+    if (sn === 'dole wholesale gateshead' || sn === 'total produce')
       dolePriceMap.set(row.product_id, { p: row.last_price_p, d: row.last_date })
-    if (row.supplier_name === 'jr holland')
+    if (sn === 'jr holland')
       hollandPriceMap.set(row.product_id, { p: row.last_price_p, d: row.last_date })
   }
   // Fill in fallbacks for products with no invoice data
