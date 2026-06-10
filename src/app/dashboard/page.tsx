@@ -111,17 +111,30 @@ export default async function DashboardPage() {
           </div>
         </Link>
       ) : (
-        <Link href="/invoices/new" className="block mb-8">
-          <div className="card border-2 border-brand-accent/40">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="font-bold text-lg">Upload today's invoice</p>
-                <p className="text-[var(--text-muted)] text-sm mt-0.5">Scan market prices →</p>
+        <div className="grid grid-cols-2 gap-3 mb-8">
+          <Link href="/invoices/new">
+            <div className="card border-2 border-brand-accent/40 h-full">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="font-bold text-base">Upload invoice</p>
+                  <p className="text-[var(--text-muted)] text-xs mt-0.5">Today's delivery →</p>
+                </div>
+                <span className="text-3xl">📄</span>
               </div>
-              <span className="text-4xl">📄</span>
             </div>
-          </div>
-        </Link>
+          </Link>
+          <Link href="/market">
+            <div className="card border-2 border-brand-accent/40 h-full">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="font-bold text-base">Market</p>
+                  <p className="text-[var(--text-muted)] text-xs mt-0.5">Buying guide →</p>
+                </div>
+                <span className="text-3xl">🛒</span>
+              </div>
+            </div>
+          </Link>
+        </div>
       )}
 
       {/* Unmapped products banner */}
@@ -239,6 +252,7 @@ export default async function DashboardPage() {
       <div className="grid grid-cols-3 gap-3 mb-6">
         <QuickAction href="/products"         icon="🥦" label="Products" />
         <QuickAction href="/invoices"         icon="📋" label="Invoices" />
+        <QuickAction href="/market"           icon="🛒" label="Market" />
         <QuickAction href="/waste"            icon="🗑️" label="Waste Log" />
       </div>
 
