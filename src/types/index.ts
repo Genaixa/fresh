@@ -2,7 +2,7 @@ export type ProductCategory = 'fruit' | 'veg' | 'other'
 export type ProductUnit     = 'each' | 'kg' | 'box' | 'punnet' | 'bunch' | 'bag'
 export type InvoiceStatus   = 'uploaded' | 'processing' | 'processed' | 'error'
 export type PriceType       = 'retail' | 'wholesale' | 'purchase'
-export type SuggestionStatus = 'pending' | 'approved' | 'rejected' | 'auto_applied' | 'on_hold'
+export type SuggestionStatus = 'pending' | 'approved' | 'rejected' | 'auto_applied' | 'on_hold' | 'withheld'
 export type PricingRule     = 'multiplier' | 'ceiling' | 'floor'
 export type WasteReason     = 'spoiled' | 'damaged' | 'markdown' | 'other'
 export type UserRole        = 'owner' | 'cashier' | 'wholesale_customer'
@@ -83,6 +83,8 @@ export interface PriceSuggestion {
   margin_percentage: number | null
   margin_warning: boolean
   status: SuggestionStatus
+  block_reason: string | null          // why a 'withheld' suggestion was held back
+  plausibility_ceiling: number | null  // pence — the plausible max it exceeded
   applied_at: string | null
   applied_by: string | null
   created_at: string

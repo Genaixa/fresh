@@ -2,6 +2,8 @@
 
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
+import { buildPlausibilityContext, checkPlausibility } from '@/lib/pricing-engine'
+import type { Product } from '@/types'
 
 async function applySuggestion(supabase: ReturnType<typeof createClient> extends Promise<infer T> ? T : never, id: string) {
   const { data: suggestion } = await supabase
@@ -28,6 +30,40 @@ async function applySuggestion(supabase: ReturnType<typeof createClient> extends
 export async function approveSuggestion(id: string) {
   const supabase = await createClient()
   await applySuggestion(supabase, id)
+  revalidatePath('/pricing')
+}
+
+// Apply a withheld suggestion's price despite the plausibility guard. Routes the
+// write through apply_retail_override (sets app.bypass_price_guard for that txn)
+// so the retail-write trigger lets it through — an explicit, audited override.
+export async function approveWithheldAnyway(id: string, pricePence: number) {
+  if (!pricePence || pricePence <= 0) return
+  const supabase = await createClient()
+
+  const { data: suggestion } = await supabase
+    .from('price_suggestions')
+    .select('product_id')
+    .eq('id', id)
+    .single()
+  if (!suggestion) return
+
+  const { error } = await supabase.rpc('apply_retail_override', {
+    p_id: suggestion.product_id,
+    p_price: pricePence,
+  })
+  if (error) { console.error('[approveWithheldAnyway]', error.message); return }
+
+  const { data: { user } } = await supabase.auth.getUser()
+  await supabase
+    .from('price_suggestions')
+    .update({
+      suggested_retail_price: pricePence,
+      status: 'approved',
+      applied_at: new Date().toISOString(),
+      applied_by: user?.id,
+    })
+    .eq('id', id)
+
   revalidatePath('/pricing')
 }
 
@@ -81,15 +117,16 @@ export async function recalculateSuggestions() {
   // Load all active products with a cost set
   const { data: products } = await supabase
     .from('products')
-    .select('id, purchase_cost, retail_price, price_multiplier, market_ceiling, margin_floor, case_size')
+    .select('id, name, category, purchase_cost, retail_price, price_multiplier, market_ceiling, margin_floor, case_size')
     .eq('is_active', true)
     .gt('purchase_cost', 0)
 
   if (!products?.length) { revalidatePath('/pricing'); return }
 
-  // Clear existing pending suggestions so we start fresh
-  await supabase.from('price_suggestions').delete().eq('status', 'pending')
+  // Clear existing pending + withheld suggestions so we start fresh
+  await supabase.from('price_suggestions').delete().in('status', ['pending', 'withheld'])
 
+  const ctx = await buildPlausibilityContext(supabase, products.map(p => p.id))
   const now = new Date().toISOString()
   const toInsert = []
 
@@ -116,6 +153,10 @@ export async function recalculateSuggestions() {
 
     const margin = capped > 0 ? (capped - unit_cost) / capped : 0
 
+    // Plausibility filter — implausible suggestions go to 'withheld' (review queue),
+    // never to the pending / Approve-All path.
+    const pl = checkPlausibility(p as unknown as Product, capped, unit_cost, ctx)
+
     toInsert.push({
       product_id:             p.id,
       current_retail_price:   p.retail_price,
@@ -123,7 +164,9 @@ export async function recalculateSuggestions() {
       rule_applied:           p.market_ceiling && suggested > p.market_ceiling ? 'ceiling' : margin < p.margin_floor ? 'floor' : 'multiplier',
       margin_percentage:      margin,
       margin_warning:         margin < p.margin_floor,
-      status:                 'pending',
+      status:                 pl.plausible ? 'pending' : 'withheld',
+      block_reason:           pl.reason,
+      plausibility_ceiling:   pl.ceiling === Number.MAX_SAFE_INTEGER ? null : pl.ceiling,
       created_at:             now,
     })
   }

@@ -192,7 +192,7 @@ export async function POST(request: NextRequest) {
       }
 
       // Auto-confirm: update costs and generate price suggestions immediately
-      await autoConfirmInvoice(supabase, invoice.id)
+      const confirmResult = await autoConfirmInvoice(supabase, invoice.id)
 
       const unmatched = itemsToInsert.filter(i => !i.is_matched).length
       const total     = itemsToInsert.length
@@ -216,11 +216,19 @@ export async function POST(request: NextRequest) {
         }
       }
 
+      const withheld = confirmResult.withheld
+      const withheldBlock = withheld.length > 0
+        ? `\n🚫 <b>${withheld.length} suggestion${withheld.length > 1 ? 's' : ''} withheld as implausible</b> — review on /pricing:\n${withheld
+            .map(w => `  • ${w.name}: blocked £${(w.suggested / 100).toFixed(2)} (plausible max £${(w.ceiling / 100).toFixed(2)})`)
+            .join('\n')}`
+        : ''
+
       const lines = [
         `✅ <b>${supplierName}</b> invoice processed (${parsed.invoice_date})`,
         `${total} items — ${total - unmatched} matched, ${unmatched > 0 ? `⚠️ ${unmatched} unmatched` : '✓ all matched'}`,
         parsed.raw_total ? `Total: £${(parsed.raw_total / 100).toFixed(2)}` : '',
         overMaxLines.length > 0 ? `\n⚠️ <b>Paid over max price:</b>\n${overMaxLines.join('\n')}` : '',
+        withheldBlock,
       ].filter(Boolean).join('\n')
       sendTelegram(lines).catch(() => {})
 

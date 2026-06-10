@@ -28,6 +28,14 @@ export default async function PricingSuggestionsPage({
     .in('status', ['pending', 'on_hold'])
     .order('created_at', { ascending: false })
 
+  // Withheld by the plausibility filter — never enter the pending / Approve-All path,
+  // surfaced here for explicit review.
+  const { data: withheldData } = await supabase
+    .from('price_suggestions')
+    .select('*, product:products(name, margin_floor, purchase_cost, category, weekly_units)')
+    .eq('status', 'withheld')
+    .order('created_at', { ascending: false })
+
   // Opportunities: healthy products between floor (20%) and target (33%) margin
   const TARGET_MARGIN = 0.40
   const { data: allProducts } = await supabase
@@ -56,10 +64,11 @@ export default async function PricingSuggestionsPage({
   }
 
   const pending = (suggestions ?? []) as S[]
+  const withheld = (withheldData ?? []) as S[]
   const pendingCount = pending.filter(s => s.status === 'pending').length
 
   // Look up most recent confirmed invoice per product (suggestions don't store invoice_id)
-  const productIds = pending.map(s => s.product_id).filter(Boolean)
+  const productIds = [...pending, ...withheld].map(s => s.product_id).filter(Boolean)
   type InvoiceRef = { id: string; invoice_date: string; supplier_name: string; pdf_url: string | null }
   const invoiceByProduct: Record<string, InvoiceRef> = {}
 
@@ -138,6 +147,41 @@ export default async function PricingSuggestionsPage({
         <Link href="/dashboard" className="text-brand-accent min-h-[48px] min-w-[48px] flex items-center justify-center text-xl">←</Link>
         <h1 className="text-xl font-bold flex-1">Price Suggestions</h1>
       </div>
+
+      {/* Withheld — implausible suggestions blocked before the pending list */}
+      {withheld.length > 0 && (
+        <div className="mb-5">
+          <h2 className="text-sm font-semibold text-status-red mb-1">
+            🚫 Needs review ({withheld.length})
+          </h2>
+          <p className="text-xs text-[var(--text-muted)] mb-2">
+            These suggestions looked wrong (e.g. a bad cost or multiplier) and were held back
+            so they couldn&apos;t be approved by mistake. Fix the price or discard.
+          </p>
+          <div className="space-y-2">
+            {withheld.map((s: S) => {
+              const inv = invoiceByProduct[s.product_id] ?? null
+              return (
+                <SuggestionCard
+                  key={s.id}
+                  id={s.id}
+                  productName={s.product?.name ?? ''}
+                  currentRetailPrice={s.current_retail_price}
+                  suggestedRetailPrice={s.suggested_retail_price}
+                  costPence={s.product?.purchase_cost ?? 0}
+                  marginWarning={s.margin_warning}
+                  marginFloor={s.product?.margin_floor ?? 0.2}
+                  isWithheld
+                  blockReason={s.block_reason}
+                  invoiceId={inv?.id ?? null}
+                  invoiceDate={inv?.invoice_date ?? null}
+                  supplierName={inv?.supplier_name ?? null}
+                />
+              )
+            })}
+          </div>
+        </div>
+      )}
 
       {pending.length === 0 ? (
         <>

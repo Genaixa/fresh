@@ -1,4 +1,4 @@
-import { calculateSuggestedPrice, getWeightedAvgCostBatch } from './pricing-engine'
+import { calculateSuggestedPrice, getWeightedAvgCostBatch, buildPlausibilityContext, checkPlausibility } from './pricing-engine'
 import { runPostInvoiceGolem } from './data-golem'
 import { sendTelegram } from './telegram'
 import type { SupabaseClient } from '@supabase/supabase-js'
@@ -199,10 +199,15 @@ async function runPostConfirmHealthSweep(
 
 // ─── Main export ─────────────────────────────────────────────────────────────
 
+/** What autoConfirmInvoice held back, so the autopilot digest can mention it. */
+export interface ConfirmResult {
+  withheld: { name: string; suggested: number; ceiling: number }[]
+}
+
 export async function autoConfirmInvoice(
   supabase: SupabaseClient,
   invoiceId: string,
-): Promise<void> {
+): Promise<ConfirmResult> {
   const { data: items } = await supabase
     .from('purchase_invoice_items')
     .select('product_id, unit_cost, units_per_case')
@@ -212,7 +217,7 @@ export async function autoConfirmInvoice(
 
   if (!items || items.length === 0) {
     await supabase.from('purchase_invoices').update({ status: 'processed' }).eq('id', invoiceId)
-    return
+    return { withheld: [] }
   }
 
   // Update case_size from invoice where available
@@ -292,7 +297,7 @@ export async function autoConfirmInvoice(
 
   if (!products || products.length === 0) {
     await supabase.from('purchase_invoices').update({ status: 'processed' }).eq('id', invoiceId)
-    return
+    return { withheld: [] }
   }
 
   const suggestions = (products as Product[]).map(product => {
@@ -322,13 +327,32 @@ export async function autoConfirmInvoice(
     return isUnpriced || currentMargin < floor || (ceiling !== null && s.current_retail_price > ceiling)
   })
 
+  // Plausibility filter — divert implausible suggestions (£29 avocado) to 'withheld'
+  // so they never enter the pending / Approve-All / Telegram path. They stay visible
+  // in the /pricing review queue with a diagnosis instead of being deleted.
+  const withheld: ConfirmResult['withheld'] = []
   if (changingSuggestions.length > 0) {
-    await supabase
-      .from('price_suggestions')
-      .delete()
-      .eq('status', 'pending')
-      .in('product_id', changingSuggestions.map(s => s.product_id))
-    await supabase.from('price_suggestions').insert(changingSuggestions)
+    const ctx = await buildPlausibilityContext(supabase, changingSuggestions.map(s => s.product_id))
+
+    const finalised = changingSuggestions.map(s => {
+      const product  = (products as Product[]).find(p => p.id === s.product_id)!
+      const unitCost = weightedCosts.get(s.product_id) ?? product.purchase_cost
+      const pl = checkPlausibility(product, s.suggested_retail_price, unitCost, ctx)
+      if (!pl.plausible) {
+        withheld.push({ name: product.name, suggested: s.suggested_retail_price, ceiling: pl.ceiling })
+      }
+      return {
+        ...s,
+        status:               pl.plausible ? ('pending' as const) : ('withheld' as const),
+        block_reason:         pl.reason,
+        plausibility_ceiling: pl.ceiling === Number.MAX_SAFE_INTEGER ? null : pl.ceiling,
+      }
+    })
+
+    const ids = finalised.map(s => s.product_id)
+    // Clear any prior pending/withheld for these products so we don't duplicate
+    await supabase.from('price_suggestions').delete().in('status', ['pending', 'withheld']).in('product_id', ids)
+    await supabase.from('price_suggestions').insert(finalised)
   }
 
   await supabase.from('purchase_invoices').update({ status: 'processed' }).eq('id', invoiceId)
@@ -342,4 +366,6 @@ export async function autoConfirmInvoice(
   runPostInvoiceGolem(supabase, invoiceId, inv?.supplier_name ?? '').catch(err =>
     console.error('[DataGolem] post-invoice error:', err)
   )
+
+  return { withheld }
 }
