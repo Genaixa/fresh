@@ -47,6 +47,20 @@ export async function deleteMarketItem(data: {
   if (error) throw error
 }
 
+// Remove a product entirely from a session (all its supplier/batch entries)
+export async function deleteMarketProduct(data: {
+  sessionId: string
+  productId: string
+}) {
+  const supabase = await createClient()
+  const { error } = await supabase
+    .from('market_session_items')
+    .delete()
+    .eq('session_id', data.sessionId)
+    .eq('product_id', data.productId)
+  if (error) throw error
+}
+
 export async function completeSectionBatch(sessionId: string, section: 'roots' | 'veg' | 'fruit', newCount: number) {
   const supabase = await createClient()
   await supabase

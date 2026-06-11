@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { closeMarketSession, completeSectionBatch, startNewTrip, upsertMarketItem } from './actions'
+import { closeMarketSession, completeSectionBatch, deleteMarketProduct, startNewTrip, upsertMarketItem } from './actions'
 import { CONFIG } from './config'
 import type { MarketProduct, MarketSession, MarketSessionItem, SupplierIds } from './page'
 
@@ -126,7 +126,15 @@ export default function MarketBuyClient({ session, products, existingItems, supp
     )
 
     for (const p of products) {
-      const preferredIsHolland = CONFIG[p.name]?.preferredSupplier === 'holland'
+      // Default the order quantity to the CHEAPER supplier by last price.
+      // Only fall back to the configured preference when prices can't decide.
+      const dpLast = p.doleLastPricePence
+      const hpLast = p.hollandLastPricePence
+      const preferredIsHolland =
+        dpLast != null && hpLast != null ? hpLast < dpLast
+        : hpLast != null                 ? true
+        : dpLast != null                 ? false
+        : CONFIG[p.name]?.preferredSupplier === 'holland'
       const ws = p.wholesaleQtyBoxes ?? 0
 
       for (let batch = 0; batch <= maxBatch; batch++) {
@@ -176,6 +184,7 @@ export default function MarketBuyClient({ session, products, existingItems, supp
   const [activeTab, setActiveTab]     = useState<'veg' | 'fruit'>('veg')
   const [collapsed, setCollapsed]     = useState<Set<string>>(() => new Set())
   const [activeRare, setActiveRare]   = useState<Set<string>>(() => new Set())
+  const [removed, setRemoved]         = useState<Set<string>>(() => new Set())
   const [showAdd, setShowAdd]         = useState<string | null>(null)
   const [justAdded, setJustAdded]     = useState<string | null>(null)
   const [confirmReset, setConfirmReset]   = useState(false)
@@ -233,8 +242,10 @@ export default function MarketBuyClient({ session, products, existingItems, supp
   const isVisible = (p: MarketProduct) => {
     if (runMode) {
       if (requiredSet.has(p.id)) return true
+      if (removed.has(p.id)) return false
       return existingProductIds.has(p.id) || activeRare.has(p.id)
     }
+    if (removed.has(p.id)) return false
     if (!CONFIG[p.name]?.rareBuy) return true
     if (existingProductIds.has(p.id)) return true
     return activeRare.has(p.id)
@@ -264,6 +275,22 @@ export default function MarketBuyClient({ session, products, existingItems, supp
       }
     }, 800))
   }, [session.id, supplierIds])
+
+  // Remove a mistakenly-added item: cancel pending saves so they can't resurrect
+  // it, zero its qty locally (so totals exclude it), hide the card, and delete it.
+  const removeProduct = useCallback((productId: string) => {
+    for (const [k, t] of saveTimers.current) {
+      if (k.startsWith(`${productId}:`)) { clearTimeout(t); saveTimers.current.delete(k) }
+    }
+    setRows(prev => {
+      const n = new Map(prev)
+      for (const [k, r] of n) if (k.startsWith(`${productId}:`)) n.set(k, { ...r, qty: 0 })
+      return n
+    })
+    setActiveRare(prev => { const n = new Set(prev); n.delete(productId); return n })
+    setRemoved(prev => new Set(prev).add(productId))
+    deleteMarketProduct({ sessionId: session.id, productId }).catch(() => {})
+  }, [session.id])
 
   const update = useCallback((productId: string, entryIndex: number, patch: Partial<Omit<RowState, 'supplier'>>, product: MarketProduct) => {
     setRows(prev => {
@@ -421,10 +448,15 @@ export default function MarketBuyClient({ session, products, existingItems, supp
         alertMap.set(product.name, { rrpMin: calc.rrpMin, currentRetail: product.retailPricePence, margin: calc.margin ?? 0 })
       }
 
-      // Above max: paid more than the configured max box price
-      if (product.maxBoxPricePence && pp > product.maxBoxPricePence && !aboveMaxSet.has(product.name)) {
+      // Above max: compare against the box's ACTUAL count (same as the entry view).
+      // A 12-punnet box has a higher max than the 6-punnet config default, so the
+      // static maxBoxPricePence would false-flag a perfectly fine per-unit price.
+      const effMax = cfg.unitType === 'count'
+        ? Math.round(cfg.maxPayPerUnitPence * row.countPerBox)
+        : product.maxBoxPricePence
+      if (effMax && pp > effMax && !aboveMaxSet.has(product.name)) {
         aboveMaxSet.add(product.name)
-        aboveMaxList.push({ name: product.name, paid: pp, max: product.maxBoxPricePence })
+        aboveMaxList.push({ name: product.name, paid: pp, max: effMax })
       }
     }
 
@@ -508,6 +540,7 @@ export default function MarketBuyClient({ session, products, existingItems, supp
                     onShiftBalance={shiftBalance}
                     isNew={justAdded === p.id}
                     onScrolled={() => setJustAdded(null)}
+                    onRemove={!requiredSet.has(p.id) ? () => removeProduct(p.id) : undefined}
                   />
                 ))}
 
@@ -788,18 +821,27 @@ function SessionSummary({ date, lines, financials, onClose }: {
   const grandTotal   = doleTotal + hollandTotal
 
   const buildShareText = () => {
-    const out: string[] = [`Fresh & Fruity — Market Buy ${date}`, '']
+    // Right-justify amounts into a column. Wrapped in ``` so WhatsApp renders it
+    // monospace — otherwise proportional fonts make the padding look ragged.
+    const WIDTH = 30
+    const row = (left: string, right: string) => {
+      const gap = Math.max(1, WIDTH - left.length - right.length)
+      return left + ' '.repeat(gap) + right
+    }
+    const out: string[] = [`🍋 Fresh & Fruity — Market Buy ${date}`, '']
     const addSection = (label: string, items: SummaryLine[], total: number) => {
       if (!items.length) return
+      out.push('```')
       out.push(label.toUpperCase())
       for (const l of items)
-        out.push(`${l.name.padEnd(22)} ${l.qty} × ${fmt(l.pricePence)} = ${fmt(l.qty * l.pricePence)}`)
-      out.push(`${label} total: ${fmt(total)}`)
+        out.push(row(`${l.name} ×${l.qty}`, fmt(l.qty * l.pricePence)))
+      out.push(row(`${label} total`, fmt(total)))
+      out.push('```')
       out.push('')
     }
     addSection('Dole', lines.dole, doleTotal)
     addSection('JR Holland', lines.holland, hollandTotal)
-    out.push(`GRAND TOTAL: ${fmt(grandTotal)}`)
+    out.push(`*GRAND TOTAL — ${fmt(grandTotal)}*`)
     return out.join('\n')
   }
 
@@ -855,7 +897,7 @@ function SessionSummary({ date, lines, financials, onClose }: {
   }
 
   return (
-    <div className="fixed inset-0 z-50 bg-[var(--bg)] overflow-y-auto pb-8">
+    <div className="fixed inset-0 z-50 bg-[var(--bg)] overflow-y-auto pb-28">
       <div className="max-w-lg mx-auto">
         <div className="sticky top-0 bg-[var(--bg)] border-b border-white/10 px-4 py-3 flex items-center justify-between">
           <div>
@@ -997,7 +1039,7 @@ function PricingLine({ calc, retailPricePence, unitLabel }: {
 
 // ── Product card ──────────────────────────────────────────────────────────────
 
-function ProductCard({ product, doleRow, hollandRow, onUpdate, onShiftBalance, isNew, onScrolled, batchNumber = 0 }: {
+function ProductCard({ product, doleRow, hollandRow, onUpdate, onShiftBalance, isNew, onScrolled, batchNumber = 0, onRemove }: {
   product:          MarketProduct
   doleRow:          RowState
   hollandRow:       RowState
@@ -1006,6 +1048,7 @@ function ProductCard({ product, doleRow, hollandRow, onUpdate, onShiftBalance, i
   isNew?:           boolean
   onScrolled?:      () => void
   batchNumber?:     number
+  onRemove?:        () => void
 }) {
   const cardRef  = useRef<HTMLDivElement>(null)
   const [showBreakdown, setShowBreakdown] = useState(false)
@@ -1047,6 +1090,10 @@ function ProductCard({ product, doleRow, hollandRow, onUpdate, onShiftBalance, i
         <span className="font-semibold text-gray-900 text-sm">{product.name}</span>
         <span className="text-[10px] text-gray-400">({refText})</span>
         {anySaving && <span className="text-[9px] text-gray-400 ml-auto">saving…</span>}
+        {onRemove && (
+          <button onClick={onRemove} aria-label={`Remove ${product.name}`}
+            className={`${anySaving ? '' : 'ml-auto'} -my-1 w-6 h-6 rounded-md text-gray-300 active:text-red-600 flex items-center justify-center text-sm leading-none shrink-0`}>✕</button>
+        )}
       </div>
       {product.tip && (
         <p className="text-[10px] text-green-700 mb-2 pl-4">{product.tip}</p>
@@ -1108,7 +1155,8 @@ function ProductCard({ product, doleRow, hollandRow, onUpdate, onShiftBalance, i
             <div className="absolute left-0 bottom-full mb-1 z-20 bg-white border border-gray-200 rounded-xl shadow-lg px-3 py-2 min-w-[160px]">
               {product.wholesaleBreakdown.map((b, i) => (
                 <p key={i} className="text-xs text-gray-800 py-0.5">
-                  {b.qty} × <span className="font-medium">{b.customerName}</span>
+                  <span className="font-medium">{b.customerName}</span>{' '}
+                  {[b.boxes > 0 ? `${b.boxes} box` : '', b.units > 0 ? `${b.units} loose` : ''].filter(Boolean).join(' + ') || '0'}
                 </p>
               ))}
             </div>

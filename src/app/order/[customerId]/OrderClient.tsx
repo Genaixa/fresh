@@ -4,6 +4,7 @@ import { useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import type { OrderProduct, OrderCustomer } from './page'
 import { upsertOrder, confirmOrder } from '../actions'
+import { suggestedWholesalePrice } from '@/lib/wholesale-pricing'
 
 type LineItem = { qty: number; unitType: 'box' | 'retail_unit'; pricePence: number }
 
@@ -58,12 +59,15 @@ function QtyRow({
   isInternal: boolean
   onChange:   (id: string, line: LineItem | null) => void
 }) {
-  const defaultPrice = product.lastSellPricePence ?? (
-    isInternal ? product.lastBuyCostPence ?? 0 : product.retailPrice
-  )
-
   const qty       = line?.qty ?? 0
   const unitType  = line?.unitType  ?? (isInternal ? 'box' : 'retail_unit')
+  // David's wholesale guideline — pre-fill as a suggestion, stays editable.
+  const defaultPrice = isInternal
+    ? product.lastBuyCostPence ?? 0
+    : suggestedWholesalePrice({
+        name: product.name, unitType, retailPence: product.retailPrice,
+        boxCostPence: product.lastBuyCostPence, typicalBoxCount: product.typicalBoxCount,
+      })
   const price     = line?.pricePence ?? defaultPrice
 
   function set(patch: Partial<LineItem>) {
@@ -73,7 +77,13 @@ function QtyRow({
   }
 
   function toggleUnit() {
-    set({ unitType: unitType === 'box' ? 'retail_unit' : 'box' })
+    const newUnit = unitType === 'box' ? 'retail_unit' : 'box'
+    // Box vs loose price differently — re-suggest for the new unit.
+    const suggested = isInternal ? price : suggestedWholesalePrice({
+      name: product.name, unitType: newUnit, retailPence: product.retailPrice,
+      boxCostPence: product.lastBuyCostPence, typicalBoxCount: product.typicalBoxCount,
+    })
+    set({ unitType: newUnit, pricePence: suggested })
   }
 
   const alert = qty > 0 ? getPricingAlert(price, unitType, product.lastBuyCostPence, product.typicalBoxCount) : null
@@ -168,13 +178,16 @@ export default function OrderClient({
     if (Object.keys(draftItems).length > 0) {
       for (const [id, v] of Object.entries(draftItems)) m.set(id, v)
     } else {
-      // Pre-fill favourites with usual qty + last sell price
+      // Pre-fill favourites with usual qty + the suggested wholesale price
       for (const p of products) {
         if (p.orderCount > 0 && p.avgQty > 0) {
           m.set(p.id, {
             qty:        p.avgQty,
             unitType:   p.avgUnitType,
-            pricePence: p.lastSellPricePence ?? p.retailPrice,
+            pricePence: suggestedWholesalePrice({
+              name: p.name, unitType: p.avgUnitType, retailPence: p.retailPrice,
+              boxCostPence: p.lastBuyCostPence, typicalBoxCount: p.typicalBoxCount,
+            }),
           })
         }
       }

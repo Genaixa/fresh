@@ -16,6 +16,7 @@ type Item = {
 type Order = {
   id:            string
   status:        string
+  order_date:    string | null
   delivery_date: string | null
   customer:      { id: string; name: string } | null
   items:         Item[]
@@ -25,10 +26,14 @@ function pence(p: number) { return `£${(p / 100).toFixed(2)}` }
 
 export default function DispatchDeliveryClient({
   order,
+  prevOrderId,
+  prevCustomerName,
   nextOrderId,
   nextCustomerName,
 }: {
   order:            Order
+  prevOrderId:      string | null
+  prevCustomerName: string | null
   nextOrderId:      string | null
   nextCustomerName: string | null
 }) {
@@ -58,7 +63,9 @@ export default function DispatchDeliveryClient({
   function adjustQty(id: string, delta: number) {
     setQuantities(prev => ({
       ...prev,
-      [id]: Math.max(0.5, (prev[id] ?? 1) + delta),
+      // Whole units only — orders are in boxes/units, so no half-bananas.
+      // To drop an item entirely, untick it rather than stepping to zero.
+      [id]: Math.max(1, Math.round((prev[id] ?? 1) + delta)),
     }))
   }
 
@@ -95,15 +102,28 @@ export default function DispatchDeliveryClient({
   }
 
   return (
-    <div className="page pb-32">
-      {/* Header */}
-      <div className="flex items-center gap-3 mb-1">
-        <Link href="/dispatch" className="text-[var(--text-muted)] text-2xl leading-none">←</Link>
+    <div className="page pb-44">
+      {/* Header — name + delivery date on the top line */}
+      <div className="flex items-baseline gap-3 mb-1">
+        <Link href="/dispatch" className="text-[var(--text-muted)] text-2xl leading-none self-center">←</Link>
         <h1 className="text-2xl font-bold">{order.customer?.name}</h1>
+        <span className="ml-auto text-lg font-bold text-brand-accent whitespace-nowrap">
+          {order.delivery_date ? new Date(order.delivery_date).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' }) : 'no date'}
+        </span>
       </div>
-      <p className="text-sm text-[var(--text-muted)] mb-6 ml-9">
-        {nextCustomerName ? `Next: ${nextCustomerName}` : 'Last delivery'}
+      <p className="text-xs text-[var(--text-muted)] mb-4 ml-9">
+        ordered {order.order_date ? new Date(order.order_date).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' }) : '—'}
       </p>
+
+      {/* Prev / next order — scroll through the run */}
+      <div className="flex items-center justify-between mb-6">
+        {prevOrderId
+          ? <Link href={`/dispatch/${prevOrderId}`} className="text-sm text-[var(--text-muted)] active:opacity-60">← {prevCustomerName}</Link>
+          : <span />}
+        {nextOrderId
+          ? <Link href={`/dispatch/${nextOrderId}`} className="text-sm text-[var(--text-muted)] active:opacity-60">{nextCustomerName} →</Link>
+          : <span className="text-sm text-[var(--text-muted)]">Last delivery</span>}
+      </div>
 
       {alreadyDone ? (
         <div className="card text-center py-10 space-y-4">
@@ -178,7 +198,7 @@ export default function DispatchDeliveryClient({
       )}
 
       {!alreadyDone && (
-        <div className="fixed bottom-0 left-0 right-0 max-w-lg mx-auto p-4 bg-[var(--bg-main)] border-t border-white/10">
+        <div className="fixed bottom-16 left-0 right-0 max-w-lg mx-auto p-4 bg-[var(--bg-main)] border-t border-white/10 z-40">
           <button
             onClick={handleDispatch}
             disabled={dispatching || handedCount === 0}

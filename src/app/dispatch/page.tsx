@@ -4,6 +4,21 @@ import Link from 'next/link'
 export const dynamic = 'force-dynamic'
 
 function pence(p: number) { return `£${(p / 100).toFixed(2)}` }
+function fmtDate(iso: string | null) {
+  if (!iso) return 'no date'
+  return new Date(iso).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })
+}
+function groupLabel(iso: string | null): string {
+  if (!iso) return 'No delivery date'
+  const d = new Date(iso + 'T00:00:00')
+  const today = new Date(); today.setHours(0, 0, 0, 0)
+  const diff = Math.round((d.getTime() - today.getTime()) / 86400000)
+  const dateStr = d.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'short' })
+  if (diff < 0)  return `⚠️ Overdue · ${dateStr}`
+  if (diff === 0) return `Today · ${dateStr}`
+  if (diff === 1) return `Tomorrow · ${dateStr}`
+  return dateStr
+}
 
 export default async function DispatchPage() {
   const supabase = await createClient()
@@ -12,6 +27,7 @@ export default async function DispatchPage() {
     .from('wholesale_orders')
     .select(`
       id,
+      order_date,
       delivery_date,
       customer:wholesale_customers(name),
       items:wholesale_order_items(
@@ -59,8 +75,16 @@ export default async function DispatchPage() {
 
   const productRows = Array.from(productMap.values()).sort((a, b) => a.name.localeCompare(b.name))
 
+  // Group orders by delivery date (orderList is already sorted ascending = nearest first)
+  const dateGroups: { date: string | null; orders: any[] }[] = []
+  for (const o of orderList) {
+    const last = dateGroups[dateGroups.length - 1]
+    if (last && last.date === o.delivery_date) last.orders.push(o)
+    else dateGroups.push({ date: o.delivery_date, orders: [o] })
+  }
+
   return (
-    <div className="page pb-32">
+    <div className="page pb-44">
       <div className="flex items-center gap-3 mb-6">
         <Link href="/dashboard" className="text-[var(--text-muted)] text-2xl leading-none">←</Link>
         <div>
@@ -76,24 +100,28 @@ export default async function DispatchPage() {
         </div>
       ) : (
         <>
-          <p className="section-title">Customers</p>
-          <div className="space-y-2 mb-6">
-            {orderList.map((o: any, idx: number) => {
-              const total = (o.items ?? []).reduce(
-                (s: number, i: any) => s + Math.round(Number(i.quantity) * i.unit_price), 0
-              )
-              return (
-                <Link key={o.id} href={`/dispatch/${o.id}`}
-                  className="card flex items-center justify-between active:opacity-70 transition-opacity">
-                  <div className="flex items-center gap-3">
-                    <span className="text-lg font-bold text-[var(--text-muted)] w-6 shrink-0">{idx + 1}</span>
-                    <p className="font-semibold">{(o.customer as any)?.name}</p>
-                  </div>
-                  <p className="font-bold text-brand-accent">{pence(total)}</p>
-                </Link>
-              )
-            })}
-          </div>
+          {dateGroups.map(g => (
+            <div key={g.date ?? 'none'} className="mb-5">
+              <p className="section-title">{groupLabel(g.date)} · {g.orders.length}</p>
+              <div className="space-y-2">
+                {g.orders.map((o: any) => {
+                  const total = (o.items ?? []).reduce(
+                    (s: number, i: any) => s + Math.round(Number(i.quantity) * i.unit_price), 0
+                  )
+                  return (
+                    <Link key={o.id} href={`/dispatch/${o.id}`}
+                      className="card flex items-center justify-between active:opacity-70 transition-opacity">
+                      <div>
+                        <p className="font-semibold">{(o.customer as any)?.name}</p>
+                        <p className="text-xs text-[var(--text-muted)] mt-0.5">ordered {fmtDate(o.order_date)}</p>
+                      </div>
+                      <p className="font-bold text-brand-accent">{pence(total)}</p>
+                    </Link>
+                  )
+                })}
+              </div>
+            </div>
+          ))}
 
           <p className="section-title">Load checklist</p>
           <div className="space-y-2 mb-8">
@@ -121,7 +149,7 @@ export default async function DispatchPage() {
       )}
 
       {firstOrderId && (
-        <div className="fixed bottom-0 left-0 right-0 max-w-lg mx-auto p-4 bg-[var(--bg-main)] border-t border-white/10">
+        <div className="fixed bottom-16 left-0 right-0 max-w-lg mx-auto p-4 bg-[var(--bg-main)] border-t border-white/10 z-40">
           <Link href={`/dispatch/${firstOrderId}`}
             className="btn-primary w-full py-5 text-lg font-semibold flex items-center justify-center rounded-xl">
             All loaded → Start deliveries

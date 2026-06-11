@@ -19,6 +19,7 @@ export interface ParsedInvoiceItem {
 export interface ParsedInvoice {
   supplier_name: string
   invoice_date: string  // ISO date string YYYY-MM-DD
+  invoice_number: string | null  // Ticket No / Delivery No — used to detect duplicates
   items: ParsedInvoiceItem[]
   raw_total: number | null  // pence
 }
@@ -55,14 +56,16 @@ Extract all line items. Return ONLY valid JSON — no markdown fences, no explan
       "box_weight_kg": number or null
     }
   ],
-  "raw_total_pence": number or null
+  "raw_total_pence": number or null,
+  "invoice_number": "string or null"
 }
 
 Rules:
 - Convert all prices to integer pence. £10.50 → 1050. Price is per box (per line).
 - Date: use DD/MM/YYYY interpretation (UK dates).
 - Do NOT include VAT rows, subtotals, or Total lines as items.
-- Skip the "BAGS PLASTIC" line if present.
+- invoice_number: the "Ticket No" (e.g. 2744185) or the Dole "No" / "Delivery No" (e.g. 11230791). null if none found.
+- Include EVERY line item — including non-produce lines like carrier bags, water, plastic — so the line values add up to the printed total. Do not skip any line.
 
 Box spec rules — read BOTH Product Description AND Brand column:
 - "24X500ML" in description → unit_type="count", units_per_case=24, box_weight_kg=null
@@ -131,6 +134,7 @@ export async function parseInvoicePdf(base64Content: string, mimeType = 'applica
       box_weight_kg: number | null
     }>
     raw_total_pence: number | null
+    invoice_number: string | null
   }
 
   try {
@@ -153,6 +157,7 @@ export async function parseInvoicePdf(base64Content: string, mimeType = 'applica
       box_weight_kg:    item.box_weight_kg    ?? null,
     })),
     raw_total: parsed.raw_total_pence ?? null,
+    invoice_number: parsed.invoice_number ?? null,
   }
 }
 

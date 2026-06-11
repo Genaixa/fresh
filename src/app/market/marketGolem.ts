@@ -13,11 +13,14 @@ export type GolemResult = {
 
 const EMPTY: GolemResult = { briefing: null, tips: {} }
 
-// All tried in parallel — first to succeed wins, rest are cancelled
+// All tried in parallel — first to succeed wins, rest are cancelled.
+// Cheap, reliable paid models (the :free tiers kept getting discontinued —
+// e.g. OpenRouter pulled gemma-*:free, which broke this golem). gemini-2.5-flash
+// is the same model the invoice parser uses, so it's proven on this key.
 const MODELS = [
-  'google/gemma-4-31b-it:free',
-  'google/gemma-4-26b-a4b-it:free',
-  'meta-llama/llama-3.3-70b-instruct:free',
+  'google/gemini-2.5-flash',
+  'google/gemini-2.0-flash-001',
+  'meta-llama/llama-3.3-70b-instruct',
 ]
 
 function cacheFile(suffix = '') {

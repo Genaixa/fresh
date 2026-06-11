@@ -11,7 +11,7 @@ export default async function DispatchDeliveryPage({ params }: { params: Promise
   const { data: order } = await supabase
     .from('wholesale_orders')
     .select(`
-      id, status, delivery_date,
+      id, status, order_date, delivery_date,
       customer:wholesale_customers(id, name),
       items:wholesale_order_items(
         id, product_id, quantity, unit_type, unit_price,
@@ -32,11 +32,14 @@ export default async function DispatchDeliveryPage({ params }: { params: Promise
 
   const confirmList = (allConfirmed ?? []) as any[]
   const currentIdx = confirmList.findIndex(o => o.id === orderId)
+  const prevOrder = currentIdx > 0 ? (confirmList[currentIdx - 1] ?? null) : null
   const nextOrder = currentIdx >= 0 ? (confirmList[currentIdx + 1] ?? null) : null
 
   return (
     <DispatchDeliveryClient
       order={order as any}
+      prevOrderId={prevOrder?.id ?? null}
+      prevCustomerName={(prevOrder?.customer as any)?.name ?? null}
       nextOrderId={nextOrder?.id ?? null}
       nextCustomerName={(nextOrder?.customer as any)?.name ?? null}
     />

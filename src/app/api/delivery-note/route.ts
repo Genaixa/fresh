@@ -130,11 +130,12 @@ export async function POST(request: NextRequest) {
       const { data: invoice, error: invErr } = await supabase
         .from('purchase_invoices')
         .insert({
-          supplier_name: supplierName,
-          invoice_date:  parsed.invoice_date,
-          total_amount:  parsed.raw_total ?? null,
-          status:        'uploaded',
-          pdf_url:       pdfStoragePath,
+          supplier_name:  supplierName,
+          invoice_date:   parsed.invoice_date,
+          invoice_number: parsed.invoice_number ?? null,
+          total_amount:   parsed.raw_total ?? null,
+          status:         'uploaded',
+          pdf_url:        pdfStoragePath,
         })
         .select()
         .single()
@@ -191,6 +192,38 @@ export async function POST(request: NextRequest) {
         await supabase.from('purchase_invoice_items').insert(itemsToInsert)
       }
 
+      // De-duplicate by ticket number: if this supplier already has another invoice
+      // with the same number, keep whichever has MORE line items (most complete) and
+      // delete the rest. Handles the autopilot grabbing a resent email twice.
+      let dedupNote = ''
+      if (parsed.invoice_number) {
+        const { data: dupes } = await supabase
+          .from('purchase_invoices')
+          .select('id')
+          .eq('supplier_name', supplierName)
+          .eq('invoice_number', parsed.invoice_number)
+        if (dupes && dupes.length > 1) {
+          const withCounts = await Promise.all(dupes.map(async d => {
+            const { count } = await supabase
+              .from('purchase_invoice_items')
+              .select('*', { count: 'exact', head: true })
+              .eq('invoice_id', d.id)
+            return { id: d.id, n: count ?? 0 }
+          }))
+          withCounts.sort((a, b) => b.n - a.n) // most items first = the keeper
+          const removeIds = withCounts.slice(1).map(d => d.id)
+          await supabase.from('purchase_invoice_items').delete().in('invoice_id', removeIds)
+          await supabase.from('purchase_invoices').delete().in('id', removeIds)
+          if (removeIds.includes(invoice.id)) {
+            // The invoice we just ingested is the smaller duplicate — drop it and stop.
+            sendTelegram(`🔁 <b>${supplierName}</b> — ticket ${parsed.invoice_number} is a duplicate with fewer lines; ignored, kept the existing fuller copy.`).catch(() => {})
+            processed++
+            continue
+          }
+          dedupNote = `\n🔁 <b>Duplicate ticket ${parsed.invoice_number}</b> — kept this fuller copy (${withCounts[0].n} lines), removed ${removeIds.length} smaller duplicate${removeIds.length > 1 ? 's' : ''}.`
+        }
+      }
+
       // Auto-confirm: update costs and generate price suggestions immediately
       const confirmResult = await autoConfirmInvoice(supabase, invoice.id)
 
@@ -209,9 +242,14 @@ export async function POST(request: NextRequest) {
         const ceilingMap = new Map((ceilingProducts ?? []).map(p => [p.id, p]))
         for (const item of matchedItems) {
           const p = ceilingMap.get(item.product_id)
-          if (p?.market_ceiling && item.unit_cost > p.market_ceiling) {
-            const over = Math.round(((item.unit_cost - p.market_ceiling) / p.market_ceiling) * 100)
-            overMaxLines.push(`  • ${p.name}: paid £${(item.unit_cost / 100).toFixed(2)}/box (max £${(p.market_ceiling / 100).toFixed(2)}, ${over}% over)`)
+          if (!p?.market_ceiling) continue
+          // market_ceiling is per retail unit, but unit_cost is per box — convert
+          // the box price down to per-unit before comparing, or every box trips it.
+          const divisor = (item.unit_type === 'weight' ? item.box_weight_kg : item.units_per_case) || 1
+          const perUnitCost = Math.round(item.unit_cost / divisor)
+          if (perUnitCost > p.market_ceiling) {
+            const over = Math.round(((perUnitCost - p.market_ceiling) / p.market_ceiling) * 100)
+            overMaxLines.push(`  • ${p.name}: paid £${(perUnitCost / 100).toFixed(2)}/unit (max £${(p.market_ceiling / 100).toFixed(2)}, ${over}% over)`)
           }
         }
       }
@@ -223,10 +261,21 @@ export async function POST(request: NextRequest) {
             .join('\n')}`
         : ''
 
+      // Reconciliation: the captured lines should sum to the invoice's printed
+      // total. A gap means the parser likely dropped or misread a line — flag it
+      // so a missing line never slips through silently again.
+      const lineSum = itemsToInsert.reduce((s, i) => s + (i.total_cost ?? 0), 0)
+      const reconcileGap = parsed.raw_total != null ? parsed.raw_total - lineSum : 0
+      const reconcileWarning = (parsed.raw_total != null && Math.abs(reconcileGap) > 1)
+        ? `\n⚠️ <b>Lines don't add up — check for a missed line:</b>\n  ${total} lines = £${(lineSum / 100).toFixed(2)}, but invoice total = £${(parsed.raw_total / 100).toFixed(2)} (£${(Math.abs(reconcileGap) / 100).toFixed(2)} ${reconcileGap > 0 ? 'missing' : 'extra'})`
+        : ''
+
       const lines = [
         `✅ <b>${supplierName}</b> invoice processed (${parsed.invoice_date})`,
         `${total} items — ${total - unmatched} matched, ${unmatched > 0 ? `⚠️ ${unmatched} unmatched` : '✓ all matched'}`,
         parsed.raw_total ? `Total: £${(parsed.raw_total / 100).toFixed(2)}` : '',
+        reconcileWarning,
+        dedupNote,
         overMaxLines.length > 0 ? `\n⚠️ <b>Paid over max price:</b>\n${overMaxLines.join('\n')}` : '',
         withheldBlock,
       ].filter(Boolean).join('\n')

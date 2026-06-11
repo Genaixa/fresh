@@ -122,21 +122,26 @@ export default async function MarketRunPage() {
     .in('status', ['confirmed', 'draft'])
     .or(`delivery_date.eq.${today},delivery_date.eq.${tomorrow},delivery_date.is.null`)
 
-  const wholesaleQtyMap       = new Map<string, number>()
-  const wholesaleBreakdownMap = new Map<string, { customerName: string; qty: number }[]>()
+  // Track box-orders and loose (retail_unit) orders SEPARATELY — a box qty must
+  // NOT be divided by units-per-box again (customers order mostly in whole boxes).
+  const wholesaleQtyMap       = new Map<string, { boxes: number; units: number }>()
+  const wholesaleBreakdownMap = new Map<string, { customerName: string; boxes: number; units: number }[]>()
   if (pendingOrders && pendingOrders.length > 0) {
     const { data: orderItems } = await supabase
       .from('wholesale_order_items')
-      .select('product_id, quantity, order:wholesale_orders(customer:wholesale_customers(name))')
+      .select('product_id, quantity, unit_type, order:wholesale_orders(customer:wholesale_customers(name))')
       .in('order_id', pendingOrders.map(o => o.id))
     for (const item of orderItems ?? []) {
       const qty = Number(item.quantity)
-      wholesaleQtyMap.set(item.product_id, (wholesaleQtyMap.get(item.product_id) ?? 0) + qty)
+      const isBox = item.unit_type === 'box'
+      const agg = wholesaleQtyMap.get(item.product_id) ?? { boxes: 0, units: 0 }
+      if (isBox) agg.boxes += qty; else agg.units += qty
+      wholesaleQtyMap.set(item.product_id, agg)
       const customerName = (item.order as any)?.customer?.name ?? 'Unknown'
       const existing = wholesaleBreakdownMap.get(item.product_id) ?? []
       const entry = existing.find(e => e.customerName === customerName)
-      if (entry) entry.qty += qty
-      else existing.push({ customerName, qty })
+      if (entry) { if (isBox) entry.boxes += qty; else entry.units += qty }
+      else existing.push({ customerName, boxes: isBox ? qty : 0, units: isBox ? 0 : qty })
       wholesaleBreakdownMap.set(item.product_id, existing)
     }
   }
@@ -159,11 +164,12 @@ export default async function MarketRunPage() {
       const dole  = dolePriceMap.get(p.id)    ?? null
       const holl  = hollandPriceMap.get(p.id) ?? null
 
-      const wsRetailQty = wholesaleQtyMap.get(p.id) ?? 0
+      // Box orders count directly; loose (retail_unit) orders convert to boxes.
+      const ws          = wholesaleQtyMap.get(p.id) ?? { boxes: 0, units: 0 }
       const unitsPerBox = p.case_size > 1 ? p.case_size
                         : cfg.unitType === 'count' ? cfg.typicalBoxCount
                         : cfg.retailUnitsPerBox ?? cfg.typicalBoxCount
-      const wsBoxes = wsRetailQty > 0 ? Math.ceil(wsRetailQty / unitsPerBox) : 0
+      const wsBoxes = ws.boxes + (ws.units > 0 ? Math.ceil(ws.units / unitsPerBox) : 0)
 
       return {
         id:                     p.id,
