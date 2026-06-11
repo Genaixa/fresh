@@ -12,7 +12,7 @@ export default async function DispatchDeliveryPage({ params }: { params: Promise
     .from('wholesale_orders')
     .select(`
       id, status, order_date, delivery_date,
-      customer:wholesale_customers(id, name),
+      customer:wholesale_customers(id, name, account_number),
       items:wholesale_order_items(
         id, product_id, quantity, unit_type, unit_price,
         product:products(id, name)

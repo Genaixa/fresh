@@ -86,6 +86,11 @@ export default function InvoiceDetailPage() {
         </span>
       </div>
 
+      <div className="grid grid-cols-2 gap-2 mb-4">
+        <a href={`/api/invoices/${invoice.id}/export?format=pdf`} className="card block text-center text-brand-accent text-sm py-3 font-medium">⬇ PDF</a>
+        <a href={`/api/invoices/${invoice.id}/export?format=csv`} className="card block text-center text-brand-accent text-sm py-3 font-medium">⬇ CSV / Excel</a>
+      </div>
+
       {/* Dates */}
       <div className="card mb-4 grid grid-cols-2 gap-2 text-sm">
         <div>

@@ -34,12 +34,18 @@ export async function generateInvoiceFromOrder(orderId: string): Promise<Wholesa
   // Calculate totals
   const subtotal = items.reduce((sum, i) => sum + Math.round(i.quantity * i.unit_price), 0)
 
+  // Next sequence = highest existing number + 1 (NOT count, which collides with
+  // gaps left by deleted/undone invoices).
   const year = new Date().getFullYear()
-  const { count } = await supabase
+  const { data: yearInvoices } = await supabase
     .from('wholesale_invoices')
-    .select('*', { count: 'exact', head: true })
+    .select('invoice_number')
     .ilike('invoice_number', `INV-${year}-%`)
-  const seq = (count ?? 0) + 1
+  let seq = 1
+  for (const r of yearInvoices ?? []) {
+    const m = (r.invoice_number as string | null)?.match(/-(\d+)$/)
+    if (m) seq = Math.max(seq, parseInt(m[1], 10) + 1)
+  }
 
   const invoiceNumber = formatInvoiceNumber(seq, year)
   const invoiceDate   = new Date().toISOString().split('T')[0]
@@ -83,6 +89,22 @@ export async function generateInvoiceFromOrder(orderId: string): Promise<Wholesa
     .eq('id', orderId)
 
   return invoice as WholesaleInvoice
+}
+
+// Undo a dispatch — void the invoice and return the order to 'confirmed' so it
+// reappears on the dispatch list. For accidental taps / a delivery that didn't happen.
+export async function undispatchOrder(orderId: string): Promise<void> {
+  const supabase = await createClient()
+  const { data: inv } = await supabase
+    .from('wholesale_invoices')
+    .select('id')
+    .eq('order_id', orderId)
+    .maybeSingle()
+  if (inv) {
+    await supabase.from('wholesale_invoice_items').delete().eq('invoice_id', inv.id)
+    await supabase.from('wholesale_invoices').delete().eq('id', inv.id)
+  }
+  await supabase.from('wholesale_orders').update({ status: 'confirmed' }).eq('id', orderId)
 }
 
 export async function getCustomerBalances(): Promise<CustomerBalance[]> {

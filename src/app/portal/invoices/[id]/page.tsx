@@ -117,10 +117,12 @@ export default async function PortalInvoicePage({ params }: { params: Promise<{ 
         </div>
       )}
 
-      <a href={`/api/wholesale/invoices/${id}/pdf`} target="_blank"
-        className="card block text-center text-brand-accent text-sm py-3">
-        Download / Print Invoice
-      </a>
+      <div className="grid grid-cols-2 gap-2">
+        <a href={`/api/invoices/${id}/export?format=pdf`}
+          className="card block text-center text-brand-accent text-sm py-3 font-medium">⬇ PDF</a>
+        <a href={`/api/invoices/${id}/export?format=csv`}
+          className="card block text-center text-brand-accent text-sm py-3 font-medium">⬇ CSV / Excel</a>
+      </div>
 
       <div className="mt-6 text-center text-[var(--text-muted)] text-xs">
         <p>Fresh &amp; Fruity · 193 Coatsworth Road, Gateshead NE8 1SR</p>

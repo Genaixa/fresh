@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
-import { generateInvoiceFromOrder } from '@/lib/wholesale'
+import { generateInvoiceFromOrder, undispatchOrder } from '@/lib/wholesale'
 
 export async function POST(req: Request, { params }: { params: Promise<{ orderId: string }> }) {
   const { orderId } = await params
@@ -47,6 +47,20 @@ export async function POST(req: Request, { params }: { params: Promise<{ orderId
   try {
     const invoice = await generateInvoiceFromOrder(orderId)
     return NextResponse.json({ invoice_id: invoice.id, invoice_number: invoice.invoice_number })
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message }, { status: 400 })
+  }
+}
+
+// Undo a dispatch — voids the invoice, returns the order to the dispatch list.
+export async function DELETE(_req: Request, { params }: { params: Promise<{ orderId: string }> }) {
+  const { orderId } = await params
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  try {
+    await undispatchOrder(orderId)
+    return NextResponse.json({ ok: true })
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 400 })
   }

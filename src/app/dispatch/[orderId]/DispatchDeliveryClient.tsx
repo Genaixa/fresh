@@ -18,7 +18,7 @@ type Order = {
   status:        string
   order_date:    string | null
   delivery_date: string | null
-  customer:      { id: string; name: string } | null
+  customer:      { id: string; name: string; account_number: string | null } | null
   items:         Item[]
 }
 
@@ -45,7 +45,16 @@ export default function DispatchDeliveryClient({
   const [quantities, setQuantities] = useState<Record<string, number>>(() =>
     Object.fromEntries(order.items.map(i => [i.id, Number(i.quantity)]))
   )
+  // Editable at delivery (string state so typing isn't fought by re-formatting).
+  const [priceStr, setPriceStr] = useState<Record<string, string>>(() =>
+    Object.fromEntries(order.items.map(i => [i.id, (i.unit_price / 100).toFixed(2)]))
+  )
+  const priceOf = (id: string, fallback: number) => {
+    const v = parseFloat(priceStr[id] ?? '')
+    return isNaN(v) ? fallback : Math.round(v * 100)
+  }
   const [dispatching, setDispatching] = useState(false)
+  const [undoing, setUndoing] = useState(false)
   const [error, setError] = useState('')
 
   const alreadyDone = order.status === 'dispatched'
@@ -53,7 +62,7 @@ export default function DispatchDeliveryClient({
   const handedCount = order.items.filter(i => checked[i.id]).length
   const total = order.items.reduce((s, i) => {
     if (!checked[i.id]) return s
-    return s + Math.round((quantities[i.id] ?? Number(i.quantity)) * i.unit_price)
+    return s + Math.round((quantities[i.id] ?? Number(i.quantity)) * priceOf(i.id, i.unit_price))
   }, 0)
 
   function toggle(id: string) {
@@ -82,7 +91,7 @@ export default function DispatchDeliveryClient({
         .map(i => ({
           product_id: i.product_id,
           quantity:   quantities[i.id] ?? Number(i.quantity),
-          unit_price: i.unit_price,
+          unit_price: priceOf(i.id, i.unit_price),
           unit_type:  i.unit_type,
         }))
 
@@ -101,34 +110,61 @@ export default function DispatchDeliveryClient({
     }
   }
 
-  return (
-    <div className="page pb-44">
-      {/* Header — name + delivery date on the top line */}
-      <div className="flex items-baseline gap-3 mb-1">
-        <Link href="/dispatch" className="text-[var(--text-muted)] text-2xl leading-none self-center">←</Link>
-        <h1 className="text-2xl font-bold">{order.customer?.name}</h1>
-        <span className="ml-auto text-lg font-bold text-brand-accent whitespace-nowrap">
-          {order.delivery_date ? new Date(order.delivery_date).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' }) : 'no date'}
-        </span>
-      </div>
-      <p className="text-xs text-[var(--text-muted)] mb-4 ml-9">
-        ordered {order.order_date ? new Date(order.order_date).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' }) : '—'}
-      </p>
+  async function handleUndo() {
+    if (!confirm('Undo this delivery? The invoice will be voided and the order goes back to your dispatch list.')) return
+    setUndoing(true); setError('')
+    try {
+      const res = await fetch(`/api/dispatch/${order.id}`, { method: 'DELETE' })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error)
+      router.push('/dispatch')
+    } catch (err: any) {
+      setError(err.message)
+      setUndoing(false)
+    }
+  }
 
-      {/* Prev / next order — scroll through the run */}
-      <div className="flex items-center justify-between mb-6">
+  return (
+    <div className="page pb-24">
+      {/* Header */}
+      <div className="mb-5">
+        <div className="flex items-start justify-between mb-3">
+          <Link href="/dispatch" className="text-[var(--text-muted)] text-2xl leading-none">←</Link>
+          <div className="text-right leading-none">
+            <p className="text-[10px] uppercase tracking-wider text-[var(--text-muted)] mb-1">Deliver</p>
+            <p className="text-xl font-bold text-brand-accent">
+              {order.delivery_date ? new Date(order.delivery_date).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' }) : 'no date'}
+            </p>
+          </div>
+        </div>
+        <h1 className="text-center text-2xl font-bold leading-tight">{order.customer?.name}</h1>
+        <p className="text-center text-xs text-[var(--text-muted)] mt-1">Account {order.customer?.account_number ?? '—'}</p>
+        <div className="flex items-center justify-center gap-2 text-xs text-[var(--text-muted)] mt-2">
+          <span>Ordered {order.order_date ? new Date(order.order_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : '—'}</span>
+          <span className="opacity-40">·</span>
+          <span>Order #{order.id.slice(0, 8).toUpperCase()}</span>
+        </div>
+      </div>
+
+      {/* Prev / next */}
+      <div className="flex items-center justify-between gap-2 mb-5">
         {prevOrderId
-          ? <Link href={`/dispatch/${prevOrderId}`} className="text-sm text-[var(--text-muted)] active:opacity-60">← {prevCustomerName}</Link>
+          ? <Link href={`/dispatch/${prevOrderId}`} className="px-3 py-1.5 rounded-lg bg-white/5 text-sm text-[var(--text-muted)] active:opacity-60 truncate">← {prevCustomerName}</Link>
           : <span />}
         {nextOrderId
-          ? <Link href={`/dispatch/${nextOrderId}`} className="text-sm text-[var(--text-muted)] active:opacity-60">{nextCustomerName} →</Link>
-          : <span className="text-sm text-[var(--text-muted)]">Last delivery</span>}
+          ? <Link href={`/dispatch/${nextOrderId}`} className="px-3 py-1.5 rounded-lg bg-white/5 text-sm text-[var(--text-muted)] active:opacity-60 truncate">{nextCustomerName} →</Link>
+          : <span className="px-3 py-1.5 text-xs text-[var(--text-muted)]">Last delivery</span>}
       </div>
 
       {alreadyDone ? (
         <div className="card text-center py-10 space-y-4">
           <p className="text-lg font-semibold">Already dispatched</p>
+          {error && <p className="text-status-red text-sm">{error}</p>}
           <Link href="/dispatch" className="btn-primary inline-block">Back to deliveries</Link>
+          <button onClick={handleUndo} disabled={undoing}
+            className="block mx-auto text-sm text-status-red underline active:opacity-60 disabled:opacity-40">
+            {undoing ? 'Undoing…' : 'Undo delivery (voids invoice)'}
+          </button>
         </div>
       ) : (
         <>
@@ -136,7 +172,7 @@ export default function DispatchDeliveryClient({
             {order.items.map(item => {
               const isChecked = checked[item.id]
               const qty       = quantities[item.id] ?? Number(item.quantity)
-              const lineTotal = isChecked ? Math.round(qty * item.unit_price) : 0
+              const lineTotal = isChecked ? Math.round(qty * priceOf(item.id, item.unit_price)) : 0
 
               return (
                 <div key={item.id}
@@ -156,7 +192,17 @@ export default function DispatchDeliveryClient({
 
                     <div className="flex-1 min-w-0">
                       <p className="font-semibold leading-tight truncate">{item.product?.name}</p>
-                      <p className="text-xs text-[var(--text-muted)]">{pence(item.unit_price)} each</p>
+                      <div className="flex items-center gap-1 mt-1">
+                        <span className="text-xs text-[var(--text-muted)]">£</span>
+                        <input
+                          type="number" inputMode="decimal" step="0.50" min="0"
+                          value={priceStr[item.id] ?? ''}
+                          onChange={e => setPriceStr(p => ({ ...p, [item.id]: e.target.value }))}
+                          disabled={!isChecked}
+                          className="w-20 px-2 py-1 rounded-md border border-white/25 bg-white/10 text-[var(--text)] text-sm font-mono outline-none focus:border-brand-accent disabled:opacity-40 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                        />
+                        <span className="text-xs text-[var(--text-muted)]">each</span>
+                      </div>
                     </div>
 
                     {/* Quantity controls */}
@@ -185,30 +231,20 @@ export default function DispatchDeliveryClient({
             })}
           </div>
 
-          {/* Running total */}
-          <div className="card flex items-center justify-between mb-4">
-            <p className="text-[var(--text-muted)]">
-              {handedCount}/{order.items.length} items
-            </p>
-            <p className="text-2xl font-bold text-brand-accent">{pence(total)}</p>
+          {/* Items count · total · deliver action — all on one line */}
+          {error && <p className="text-status-red text-sm mb-2">{error}</p>}
+          <div className="card flex items-center justify-between gap-2">
+            <p className="text-[var(--text-muted)] text-sm shrink-0">{handedCount}/{order.items.length} items</p>
+            <p className="text-xl font-bold text-brand-accent">{pence(total)}</p>
+            <button
+              onClick={handleDispatch}
+              disabled={dispatching || handedCount === 0}
+              className="btn-primary px-4 py-2.5 text-sm font-bold disabled:opacity-50 rounded-lg shrink-0"
+            >
+              {dispatching ? 'Invoicing…' : 'Deliver & invoice'}
+            </button>
           </div>
-
-          {error && <p className="text-status-red text-sm mb-3">{error}</p>}
         </>
-      )}
-
-      {!alreadyDone && (
-        <div className="fixed bottom-16 left-0 right-0 max-w-lg mx-auto p-4 bg-[var(--bg-main)] border-t border-white/10 z-40">
-          <button
-            onClick={handleDispatch}
-            disabled={dispatching || handedCount === 0}
-            className="btn-primary w-full py-5 text-xl font-bold disabled:opacity-50 rounded-xl"
-          >
-            {dispatching
-              ? 'Generating invoice…'
-              : `Dispatched → ${pence(total)}`}
-          </button>
-        </div>
       )}
     </div>
   )
