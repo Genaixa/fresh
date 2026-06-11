@@ -202,6 +202,11 @@ export default function DispatchDeliveryClient({
                           className="w-20 px-2 py-1 rounded-md border border-white/25 bg-white/10 text-[var(--text)] text-sm font-mono outline-none focus:border-brand-accent disabled:opacity-40 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
                         />
                         <span className="text-xs text-[var(--text-muted)]">each</span>
+                        <button
+                          onClick={() => setPriceStr(p => ({ ...p, [item.id]: (item.unit_price / 100).toFixed(2) }))}
+                          aria-label="Reset price"
+                          className={`text-base text-brand-accent active:opacity-60 ml-1 leading-none ${priceOf(item.id, item.unit_price) !== item.unit_price ? '' : 'invisible'}`}
+                        >↺</button>
                       </div>
                     </div>
 
