@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 
 // Pages that are full-screen experiences with no app chrome
-const HIDDEN_ROUTES = ['/login', '/till', '/forgot-password', '/reset-password', '/portal']
+const HIDDEN_ROUTES = ['/login', '/till', '/forgot-password', '/reset-password', '/portal', '/cfo/analysis']
 
 const NAV_ITEMS = [
   { href: '/dashboard', label: 'Home',     icon: '🏠' },
