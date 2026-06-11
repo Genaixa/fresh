@@ -27,7 +27,7 @@ export default function CfoClient({ data }: { data: CfoData }) {
     products, briefing, reportAlerts, reportWinners, outstanding,
   } = data
 
-  const losing = products.filter(p => p.margin !== null && p.margin < 0)
+  const losing = products.filter(p => p.margin !== null && p.margin < 0 && !p.isLossLeader)
   const totalOwed = outstanding.reduce((s, o) => s + o.balance, 0)
 
   return (

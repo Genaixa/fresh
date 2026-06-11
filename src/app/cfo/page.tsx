@@ -24,6 +24,7 @@ export type CfoProduct = {
   margin:        number | null // 0–1
   retailPerUnit: number        // pence
   costPerUnit:   number        // pence
+  isLossLeader:  boolean       // deliberately sold at/below cost — skip leak alerts
 }
 
 export type CfoCustomer = {
@@ -108,14 +109,14 @@ export default async function CfoPage() {
 
   const { data: products } = await supabase
     .from('products')
-    .select('id, name, retail_price, case_size, purchase_cost, margin_floor')
+    .select('id, name, retail_price, case_size, purchase_cost, margin_floor, is_loss_leader')
     .eq('is_active', true)
 
   const prodMap = new Map((products ?? []).map(p => [p.id, p]))
 
   // 3. Aggregate items by week
   function aggregate(ids: Set<string>): CfoProduct[] {
-    const byProd = new Map<string, { spend: number; boxes: number; name: string; retail: number; caseSize: number }>()
+    const byProd = new Map<string, { spend: number; boxes: number; name: string; retail: number; caseSize: number; lossLeader: boolean }>()
 
     for (const item of items ?? []) {
       if (!ids.has(item.invoice_id)) continue
@@ -125,6 +126,7 @@ export default async function CfoPage() {
       const existing = byProd.get(item.product_id) ?? {
         spend: 0, boxes: 0,
         name: p.name, retail: p.retail_price, caseSize: p.case_size ?? 1,
+        lossLeader: p.is_loss_leader ?? false,
       }
       existing.spend += item.total_cost ?? Math.round(item.unit_cost * Number(item.quantity))
       existing.boxes += Number(item.quantity)
@@ -138,7 +140,7 @@ export default async function CfoPage() {
       const costPerUnit   = upb ? Math.round(avgCostPerBox / upb) : avgCostPerBox
       const margin        = revPerBox ? (revPerBox - avgCostPerBox) / revPerBox : null
 
-      return { name: r.name, spend: r.spend, boxes: r.boxes, avgCostPerBox, revPerBox, margin, retailPerUnit: r.retail, costPerUnit }
+      return { name: r.name, spend: r.spend, boxes: r.boxes, avgCostPerBox, revPerBox, margin, retailPerUnit: r.retail, costPerUnit, isLossLeader: r.lossLeader }
     }).sort((a, b) => b.spend - a.spend)
   }
 
@@ -160,7 +162,7 @@ export default async function CfoPage() {
   const lastWeekMargin = lastWeekRev > 0 ? (lastWeekRev - lastKnownSpend) / lastWeekRev : 0
 
   // 5. AI briefing
-  const losingMoney = thisProducts.filter(p => p.margin !== null && p.margin < 0)
+  const losingMoney = thisProducts.filter(p => p.margin !== null && p.margin < 0 && !p.isLossLeader)
   const briefing = await generateCfoBriefing({
     weekLabel,
     thisWeekSpend,
@@ -237,7 +239,7 @@ export default async function CfoPage() {
   }
 
   const reportAlerts: ReportAlert[] = (products ?? [])
-    .filter(p => p.purchase_cost > 0 && p.retail_price > 0)
+    .filter(p => p.purchase_cost > 0 && p.retail_price > 0 && !p.is_loss_leader)
     .map(p => {
       const floor  = p.margin_floor ?? 0.20
       const margin = (p.retail_price - p.purchase_cost) / p.retail_price
@@ -280,8 +282,11 @@ export default async function CfoPage() {
     if (inv.payment_status === 'overdue') cur.overdue += bal
     balByCust.set(inv.customer_id, cur)
   }
+  // Only real external debtors — custNameMap holds active, non-internal customers,
+  // so this drops the internal shop ("Fresh & Fruity") and anyone inactive.
   const outstanding: Outstanding[] = [...balByCust.entries()]
-    .map(([id, v]) => ({ id, name: custNameMap.get(id) ?? 'Unknown', balance: v.balance, overdue: v.overdue }))
+    .filter(([id]) => custNameMap.has(id))
+    .map(([id, v]) => ({ id, name: custNameMap.get(id)!, balance: v.balance, overdue: v.overdue }))
     .filter(o => o.balance > 0)
     .sort((a, b) => b.balance - a.balance)
     .slice(0, 5)
