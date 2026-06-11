@@ -157,17 +157,6 @@ export default function CfoClient({ data }: { data: CfoData }) {
 
       {/* ── DOORS ─────────────────────────────────────────────── */}
       <div className="space-y-2">
-        <Link href="/cfo/analysis"
-          className="block rounded-xl bg-[#eef4fb] border border-[#cfe0f4] px-4 py-3 active:scale-[0.99] transition-transform">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="font-bold text-[#0a6ed1] text-sm">Sales Analysis</p>
-              <p className="text-xs text-[#5a87b8] mt-0.5">Full dashboard — best on a desktop screen</p>
-            </div>
-            <span className="text-[#0a6ed1] text-xl ml-3">→</span>
-          </div>
-        </Link>
-
         <Link href="/cfo/buying-guide"
           className="block rounded-xl bg-green-50 border border-green-200 px-4 py-3 active:scale-[0.99] transition-transform">
           <div className="flex items-center justify-between">
