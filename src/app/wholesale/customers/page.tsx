@@ -56,7 +56,12 @@ export default async function CustomersPage() {
                 <div className="card">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="font-semibold">{c.name}</p>
+                      <p className="font-semibold">
+                        {c.name}
+                        {c.account_number && (
+                          <span className="text-[var(--text-muted)] text-xs font-mono ml-2">#{c.account_number}</span>
+                        )}
+                      </p>
                       {c.contact_name && (
                         <p className="text-[var(--text-muted)] text-xs">{c.contact_name}</p>
                       )}

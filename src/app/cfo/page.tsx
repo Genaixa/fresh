@@ -47,6 +47,13 @@ export type ReportWinner = {
   retail_price: number
 }
 
+export type Outstanding = {
+  id:      string
+  name:    string
+  balance: number
+  overdue: number
+}
+
 export type CfoData = {
   weekLabel:      string
   thisWeekSpend:  number
@@ -61,6 +68,7 @@ export type CfoData = {
   customers:      CfoCustomer[]
   reportAlerts:   ReportAlert[]
   reportWinners:  ReportWinner[]
+  outstanding:    Outstanding[]
 }
 
 export default async function CfoPage() {
@@ -257,6 +265,27 @@ export default async function CfoPage() {
     .sort((a, b) => b.margin - a.margin)
     .slice(0, 5)
 
+  // 8. AR snapshot — outstanding balances (top 5 owed)
+  await supabase.rpc('mark_overdue_invoices')
+  const { data: invSums } = await supabase
+    .from('wholesale_invoices')
+    .select('customer_id, total_amount, amount_paid, payment_status')
+
+  const custNameMap = new Map((wsCustomers ?? []).map(c => [c.id, c.name]))
+  const balByCust = new Map<string, { balance: number; overdue: number }>()
+  for (const inv of invSums ?? []) {
+    const bal = inv.total_amount - inv.amount_paid
+    const cur = balByCust.get(inv.customer_id) ?? { balance: 0, overdue: 0 }
+    cur.balance += bal
+    if (inv.payment_status === 'overdue') cur.overdue += bal
+    balByCust.set(inv.customer_id, cur)
+  }
+  const outstanding: Outstanding[] = [...balByCust.entries()]
+    .map(([id, v]) => ({ id, name: custNameMap.get(id) ?? 'Unknown', balance: v.balance, overdue: v.overdue }))
+    .filter(o => o.balance > 0)
+    .sort((a, b) => b.balance - a.balance)
+    .slice(0, 5)
+
   const cfoData: CfoData = {
     weekLabel,
     thisWeekSpend,
@@ -271,6 +300,7 @@ export default async function CfoPage() {
     customers,
     reportAlerts,
     reportWinners,
+    outstanding,
   }
 
   return (
