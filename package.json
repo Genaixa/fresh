@@ -16,6 +16,7 @@
     "@supabase/supabase-js": "^2.45.4",
     "autoprefixer": "^10.5.0",
     "next": "^15.5.19",
+    "nodemailer": "^8.0.11",
     "openai": "^6.38.0",
     "pdf-lib": "^1.17.1",
     "react": "^19.0.0",
@@ -24,6 +25,7 @@
   },
   "devDependencies": {
     "@types/node": "^20",
+    "@types/nodemailer": "^8.0.1",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^8",

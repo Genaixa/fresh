@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
+import { EmailInvoiceButton } from './EmailInvoiceButton'
 
 function pence(p: number) { return `£${(p / 100).toFixed(2)}` }
 function fmtDate(d: string) { return new Date(d).toLocaleDateString('en-GB') }
@@ -90,6 +91,8 @@ export default function InvoiceDetailPage() {
         <a href={`/api/invoices/${invoice.id}/export?format=pdf`} className="card block text-center text-brand-accent text-sm py-3 font-medium">⬇ PDF</a>
         <a href={`/api/invoices/${invoice.id}/export?format=csv`} className="card block text-center text-brand-accent text-sm py-3 font-medium">⬇ CSV / Excel</a>
       </div>
+
+      <EmailInvoiceButton invoiceId={invoice.id} />
 
       {/* Dates */}
       <div className="card mb-4 grid grid-cols-2 gap-2 text-sm">
