@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
 import { ProfitChart } from './MarginChart'
+import { GuideTabs } from './GuideTabs'
 
 export const dynamic = 'force-dynamic'
 
@@ -97,23 +98,6 @@ export default async function BuyingGuidePage() {
       </div>
     )
 
-    // Earner line: the headline number is £/week (margin × volume) — what the
-    // product actually puts in the till — with margin & rate as supporting detail.
-    const EarnLine = ({ r }: { r: M }) => (
-      <div className="px-3 py-2 flex items-center justify-between gap-3">
-        <div className="min-w-0">
-          <p className="font-medium text-sm truncate">{r.name}</p>
-          <p className="text-[11px] text-[var(--text-muted)]">
-            sells ~{r.weeklyUnits}/wk · cost {u(r.cost)} · sell {u(r.retail)}
-          </p>
-        </div>
-        <div className="text-right shrink-0">
-          <p className="font-bold text-sm text-status-green leading-tight tabular-nums">£{Math.round(r.weeklyProfit / 100)}<span className="text-[10px] font-normal text-[var(--text-muted)]">/wk</span></p>
-          <p className={`text-[10px] tabular-nums ${r.marginPct < 0.20 ? 'text-status-amber' : 'text-[var(--text-muted)]'}`}>{Math.round(r.marginPct * 100)}%</p>
-        </div>
-      </div>
-    )
-
     const totalWeekly = [...big, ...steady, ...small].reduce((s, r) => s + r.weeklyProfit, 0)
 
     return (
@@ -148,23 +132,6 @@ export default async function BuyingGuidePage() {
           </section>
         )}
 
-        {big.length > 0 && (
-          <section className="mb-6">
-            <p className="section-title">💰 Your big earners — £25+ a week</p>
-            <p className="text-xs text-[var(--text-muted)] mb-3">
-              These pay the bills. Keep them stocked and protect their prices.
-            </p>
-            <div className="rounded-xl border border-white/10 bg-[var(--bg-card)] divide-y divide-white/5 overflow-hidden">{big.map(r => <EarnLine key={r.name} r={r} />)}</div>
-          </section>
-        )}
-
-        {steady.length > 0 && (
-          <section className="mb-6">
-            <p className="section-title">Steady earners — £5–25 a week</p>
-            <div className="rounded-xl border border-white/10 bg-[var(--bg-card)] divide-y divide-white/5 overflow-hidden">{steady.map(r => <EarnLine key={r.name} r={r} />)}</div>
-          </section>
-        )}
-
         {thin.length > 0 && (
           <section className="mb-6">
             <p className="section-title text-status-amber">Thin margins — biggest sellers first</p>
@@ -192,33 +159,8 @@ export default async function BuyingGuidePage() {
           </section>
         )}
 
-        {small.length > 0 && (
-          <section className="mb-6">
-            <p className="section-title">Small fry — under £5 a week</p>
-            <p className="text-xs text-[var(--text-muted)] mb-3">
-              Healthy margins, just slow sellers — fine to stock, not where the money is.
-            </p>
-            <div className="rounded-xl border border-white/10 bg-[var(--bg-card)] divide-y divide-white/5 overflow-hidden">{small.map(r => <EarnLine key={r.name} r={r} />)}</div>
-          </section>
-        )}
-
-        {noVolume.length > 0 && (
-          <section className="mb-6">
-            <p className="section-title">No sales-rate data yet — ranked by margin</p>
-            <p className="text-xs text-[var(--text-muted)] mb-3">
-              The till doesn&apos;t track how fast these sell, so we can only show the per-sale margin.
-            </p>
-            <div className="rounded-xl border border-white/10 bg-[var(--bg-card)] divide-y divide-white/5 overflow-hidden">{noVolume.map(r => <Line key={r.name} r={r} tone="text-status-green" />)}</div>
-          </section>
-        )}
-
-        {lossLeaders.length > 0 && (
-          <section className="mb-6">
-            <p className="section-title">Loss-leaders (on purpose)</p>
-            <p className="text-xs text-[var(--text-muted)] mb-3">Kept cheap to pull customers in — ignored in the alerts above.</p>
-            <div className="rounded-xl border border-white/10 bg-[var(--bg-card)] divide-y divide-white/5 overflow-hidden">{lossLeaders.map(r => <Line key={r.name} r={r} tone="text-[var(--text-muted)]" />)}</div>
-          </section>
-        )}
+        <p className="section-title">Where the money is</p>
+        <GuideTabs big={big} steady={steady} small={small} noVolume={noVolume} lossLeaders={lossLeaders} />
 
         <p className="text-[10px] text-[var(--text-muted)] text-center mt-2">
           Sales rates: June 2026 till data where available (1–12 Jun), else long-run average.

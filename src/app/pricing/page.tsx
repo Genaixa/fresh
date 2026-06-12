@@ -13,28 +13,40 @@ type Dir  = 'asc' | 'desc'
 export default async function PricingSuggestionsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ tab?: string; sort?: string; dir?: string }>
+  searchParams: Promise<{ tab?: string; sort?: string; dir?: string; invoice?: string }>
 }) {
-  const { tab: tabParam, sort: sortParam, dir: dirParam } = await searchParams
+  const { tab: tabParam, sort: sortParam, dir: dirParam, invoice: invoiceParam } = await searchParams
   const tab:  Tab  = (['floor','fruit','veg','other','wins'].includes(tabParam ?? '') ? tabParam as Tab : 'all')
   const sort: Sort = sortParam === 'price' ? 'price' : sortParam === 'margin' ? 'margin' : 'name'
   const dir:  Dir  = dirParam === 'desc' ? 'desc' : 'asc'
 
   const supabase = await createClient()
 
-  const { data: suggestions } = await supabase
+  // ?invoice=<id> scopes the page to one delivery note (used straight after
+  // "Confirm & Generate" so a 3-item invoice shows 3 suggestions, not the
+  // whole system backlog).
+  const scopeInvoice = invoiceParam && /^[0-9a-f-]{36}$/.test(invoiceParam) ? invoiceParam : null
+  const { data: scopedInvoiceRow } = scopeInvoice
+    ? await supabase.from('purchase_invoices').select('supplier_name, invoice_date').eq('id', scopeInvoice).single()
+    : { data: null }
+
+  let pendingQuery = supabase
     .from('price_suggestions')
     .select('*, product:products(name, margin_floor, purchase_cost, category, weekly_units)')
     .in('status', ['pending', 'on_hold'])
     .order('created_at', { ascending: false })
+  if (scopeInvoice) pendingQuery = pendingQuery.eq('invoice_id', scopeInvoice)
+  const { data: suggestions } = await pendingQuery
 
   // Withheld by the plausibility filter — never enter the pending / Approve-All path,
   // surfaced here for explicit review.
-  const { data: withheldData } = await supabase
+  let withheldQuery = supabase
     .from('price_suggestions')
     .select('*, product:products(name, margin_floor, purchase_cost, category, weekly_units)')
     .eq('status', 'withheld')
     .order('created_at', { ascending: false })
+  if (scopeInvoice) withheldQuery = withheldQuery.eq('invoice_id', scopeInvoice)
+  const { data: withheldData } = await withheldQuery
 
   // Opportunities: healthy products between floor (20%) and target (33%) margin
   const TARGET_MARGIN = 0.40
@@ -47,7 +59,8 @@ export default async function PricingSuggestionsPage({
     .order('name')
 
   type Opp = { id: string; name: string; category: string; retail_price: number; purchase_cost: number; margin_floor: number; weekly_units: number | null; wins_dismissed_cost: number | null }
-  const opportunities = ((allProducts ?? []) as Opp[]).filter(p => {
+  // Wins are system-wide opportunities — hidden in invoice-scoped view
+  const opportunities = (scopeInvoice ? [] : ((allProducts ?? []) as Opp[])).filter(p => {
     if (p.margin_floor < 0) return false  // intentional loss leader
     const margin = (p.retail_price - p.purchase_cost) / p.retail_price
     if (margin < (p.margin_floor ?? 0.2) || margin >= TARGET_MARGIN) return false
@@ -147,6 +160,18 @@ export default async function PricingSuggestionsPage({
         <Link href="/dashboard" className="text-brand-accent min-h-[48px] min-w-[48px] flex items-center justify-center text-xl">←</Link>
         <h1 className="text-xl font-bold flex-1">Price Suggestions</h1>
       </div>
+
+      {scopeInvoice && (
+        <div className="mb-4 rounded-xl border border-brand-accent/40 bg-brand-accent/10 px-3 py-2.5 flex items-center justify-between gap-3">
+          <p className="text-xs">
+            Showing only this delivery note
+            {scopedInvoiceRow && (
+              <span className="font-semibold"> — {scopedInvoiceRow.supplier_name} · {new Date(scopedInvoiceRow.invoice_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}</span>
+            )}
+          </p>
+          <Link href="/pricing" className="text-xs text-brand-accent font-semibold shrink-0">Show all →</Link>
+        </div>
+      )}
 
       {/* Withheld — implausible suggestions blocked before the pending list */}
       {withheld.length > 0 && (

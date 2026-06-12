@@ -7,7 +7,10 @@ export default async function InvoicesPage() {
   const { data: invoices } = await supabase
     .from('purchase_invoices')
     .select('id, supplier_name, invoice_date, status')
-    .in('status', ['uploaded', 'confirmed', 'processed'])
+    // NB: status is the invoice_status enum (uploaded|processing|processed|error) —
+    // a non-label value here makes Postgres reject the whole query and the page
+    // silently renders empty.
+    .in('status', ['uploaded', 'processing', 'processed'])
     .order('invoice_date', { ascending: false })
     .limit(60)
 

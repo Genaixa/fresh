@@ -61,5 +61,6 @@ export async function rematchInvoiceItems(invoiceId: string) {
 export async function confirmInvoiceAndGeneratePrices(invoiceId: string) {
   const supabase = await createClient()
   await autoConfirmInvoice(supabase as Parameters<typeof autoConfirmInvoice>[0], invoiceId)
-  redirect('/pricing')
+  // Land on suggestions scoped to THIS invoice — not the whole system backlog
+  redirect(`/pricing?invoice=${invoiceId}`)
 }

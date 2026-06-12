@@ -1,4 +1,6 @@
+import { after } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { createServiceClient } from '@/lib/supabase/service'
 import MarketBuyClient from '@/app/market/MarketBuyClient'
 import { CONFIG } from '@/app/market/config'
 import { generateMarketInsights } from '@/app/market/marketGolem'
@@ -197,8 +199,35 @@ export default async function MarketRunPage() {
     .filter(p => p.wholesaleQtyBoxes > 0)
     .map(p => p.id)
 
-  // ── Market Golem ──────────────────────────────────────────────────────────
-  const golem = await generateMarketInsights(marketProducts)
+  // ── Market Golem — served from cache so the page never blocks on the LLM.
+  // First visit of the day kicks generation off in the background (after the
+  // response is sent); every later load gets the briefing instantly.
+  const cacheKey = `market-run:${today}`
+  const { data: cachedBriefing } = await supabase
+    .from('ai_briefings')
+    .select('briefing, tips')
+    .eq('key', cacheKey)
+    .maybeSingle()
+
+  let golem: { briefing: string | null; tips: Record<string, string> }
+  if (cachedBriefing) {
+    golem = {
+      briefing: cachedBriefing.briefing,
+      tips:     (cachedBriefing.tips ?? {}) as Record<string, string>,
+    }
+  } else {
+    golem = { briefing: null, tips: {} }
+    after(async () => {
+      try {
+        const fresh = await generateMarketInsights(marketProducts)
+        if (fresh.briefing || Object.keys(fresh.tips).length > 0) {
+          await createServiceClient()
+            .from('ai_briefings')
+            .upsert({ key: cacheKey, briefing: fresh.briefing, tips: fresh.tips })
+        }
+      } catch { /* tips are optional sugar — never break the page for them */ }
+    })
+  }
 
   const productsWithTips: MarketProduct[] = marketProducts.map(p => ({
     ...p,

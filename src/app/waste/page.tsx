@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
-import Link from 'next/link'
 import { formatPrice } from '@/lib/pricing-engine'
 import type { Product, WasteEntry } from '@/types'
+import { WastePicker } from './WastePicker'
 
 export default async function WastePage({
   searchParams,
@@ -23,6 +23,21 @@ export default async function WastePage({
     .order('created_at', { ascending: false })
     .limit(10)
 
+  // "Often wasted" — frequency over the last ~300 entries drives the quick-tap grid
+  const { data: freqRows } = await supabase
+    .from('waste_log')
+    .select('product_id')
+    .order('created_at', { ascending: false })
+    .limit(300)
+  const freqCount = new Map<string, number>()
+  for (const w of freqRows ?? []) {
+    if (w.product_id) freqCount.set(w.product_id, (freqCount.get(w.product_id) ?? 0) + 1)
+  }
+  const frequentIds = [...freqCount.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 8)
+    .map(([id]) => id)
+
   const selected = (products ?? []).find((p: { id: string }) => p.id === product_id) as
     (Product & { id: string; name: string; purchase_cost: number }) | undefined
 
@@ -32,37 +47,12 @@ export default async function WastePage({
         <h1 className="text-xl font-bold">Log Waste</h1>
       </div>
 
-      {/* Product search */}
-      <form className="mb-4">
-        <input
-          name="product_id"
-          list="product-list"
-          placeholder="Search product..."
-          className="input-field"
-          autoComplete="off"
-        />
-        <datalist id="product-list">
-          {(products ?? []).map((p: { id: string; name: string }) => (
-            <option key={p.id} value={p.id} label={p.name} />
-          ))}
-        </datalist>
-        <noscript><button type="submit" className="btn-primary w-full mt-2">Select</button></noscript>
-      </form>
-
-      {/* Product list for quick tap */}
-      <div className="grid grid-cols-2 gap-2 mb-6">
-        {(products ?? []).slice(0, 12).map((p: { id: string; name: string }) => (
-          <Link
-            key={p.id}
-            href={`/waste?product_id=${p.id}`}
-            className={`card text-sm font-medium min-h-[48px] flex items-center justify-center
-                        text-center active:scale-95 transition-transform
-                        ${product_id === p.id ? 'border-2 border-brand-accent' : ''}`}
-          >
-            {p.name}
-          </Link>
-        ))}
-      </div>
+      {/* Product picker: live name search, often-wasted first, full catalogue on tap */}
+      <WastePicker
+        products={(products ?? []).map((p: { id: string; name: string }) => ({ id: p.id, name: p.name }))}
+        frequentIds={frequentIds}
+        selectedId={product_id}
+      />
 
       {/* Waste entry form */}
       {selected && (

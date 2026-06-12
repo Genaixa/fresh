@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
+import { redirect } from 'next/navigation'
 
 interface SaleRow {
   id: string
@@ -38,16 +39,27 @@ export default async function EposComparePage({
   const period = params.period ?? ''
 
   if (!period || !/^\d{4}-\d{2}-\d{2}$/.test(period)) {
+    // No period in the URL → default to the latest imported month rather than
+    // dead-ending on "No period selected".
+    const { data: latest } = await supabase
+      .from('sales_data')
+      .select('sale_date')
+      .eq('source', 'epos_month_import')
+      .order('sale_date', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+    if (latest?.sale_date) redirect(`/epos-compare?period=${latest.sale_date}`)
+
     return (
       <div className="page pb-24">
         <div className="flex items-center gap-3 mb-6">
-          <Link href="/sync" className="text-brand-accent min-h-[48px] min-w-[48px]
+          <Link href="/dashboard" className="text-brand-accent min-h-[48px] min-w-[48px]
                                          flex items-center justify-center text-xl">←</Link>
           <h1 className="text-xl font-bold">EPOS Compare</h1>
         </div>
         <div className="card text-center py-10">
-          <p className="text-[var(--text-muted)] mb-4">No period selected</p>
-          <Link href="/sync" className="btn-primary">Go to Sync</Link>
+          <p className="text-[var(--text-muted)] mb-4">No sales imported yet</p>
+          <Link href="/sync" className="btn-primary">Upload Sales Report</Link>
         </div>
       </div>
     )
@@ -73,7 +85,7 @@ export default async function EposComparePage({
     return (
       <div className="page pb-24">
         <div className="flex items-center gap-3 mb-6">
-          <Link href="/sync" className="text-brand-accent min-h-[48px] min-w-[48px]
+          <Link href="/dashboard" className="text-brand-accent min-h-[48px] min-w-[48px]
                                          flex items-center justify-center text-xl">←</Link>
           <h1 className="text-xl font-bold">EPOS Compare</h1>
         </div>
@@ -121,7 +133,7 @@ export default async function EposComparePage({
   return (
     <div className="page pb-24">
       <div className="flex items-center gap-3 mb-6">
-        <Link href="/sync" className="text-brand-accent min-h-[48px] min-w-[48px]
+        <Link href="/dashboard" className="text-brand-accent min-h-[48px] min-w-[48px]
                                        flex items-center justify-center text-xl">←</Link>
         <div>
           <h1 className="text-xl font-bold">EPOS Compare</h1>
