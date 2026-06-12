@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
-import { MarginChart } from './MarginChart'
+import { ProfitChart } from './MarginChart'
 
 export const dynamic = 'force-dynamic'
 
@@ -31,7 +31,7 @@ export default async function BuyingGuidePage() {
 
   const { data: products } = await supabase
     .from('products')
-    .select('id, name, purchase_cost, unit, retail_price, is_loss_leader, needs_review')
+    .select('id, name, purchase_cost, unit, retail_price, is_loss_leader, needs_review, weekly_units')
     .eq('is_active', true)
     .gt('purchase_cost', 0)
 
@@ -41,32 +41,48 @@ export default async function BuyingGuidePage() {
   if (!salesRows || salesRows.length === 0) {
     const u = (p: number) => p < 100 ? `${p}p` : `£${(p / 100).toFixed(2)}`
 
-    type M = { name: string; cost: number; retail: number; marginPct: number; ratio: number; lossLeader: boolean; needsReview: boolean }
+    type M = {
+      name: string; cost: number; retail: number; marginPct: number; ratio: number
+      lossLeader: boolean; needsReview: boolean; weeklyUnits: number; weeklyProfit: number
+    }
     const rows: M[] = (products ?? [])
       .filter(p => p.purchase_cost > 0 && p.retail_price > 0)
-      .map(p => ({
-        name:        p.name,
-        cost:        p.purchase_cost,
-        retail:      p.retail_price,
-        marginPct:   (p.retail_price - p.purchase_cost) / p.retail_price,
-        ratio:       p.retail_price / p.purchase_cost,
-        lossLeader:  !!p.is_loss_leader,
-        needsReview: !!p.needs_review,
-      }))
-      .sort((a, b) => b.marginPct - a.marginPct)
+      .map(p => {
+        const weeklyUnits = p.weekly_units ?? 0
+        return {
+          name:         p.name,
+          cost:         p.purchase_cost,
+          retail:       p.retail_price,
+          marginPct:    (p.retail_price - p.purchase_cost) / p.retail_price,
+          ratio:        p.retail_price / p.purchase_cost,
+          lossLeader:   !!p.is_loss_leader,
+          needsReview:  !!p.needs_review,
+          weeklyUnits,
+          // "Where to put your money" = margin × volume, not margin alone.
+          weeklyProfit: (p.retail_price - p.purchase_cost) * weeklyUnits,
+        }
+      })
 
     // Quarantine = the curated needs_review flag, full stop. It's the SINGLE
     // source of truth, kept in lock-step with David's question list, so the two
     // never drift. (A bare >75% margin isn't reliable either way — sack potatoes
     // hit 78% legitimately, while a wrong cost can land at a believable 74%.)
     const needsCheck  = rows.filter(r => !r.lossLeader && r.needsReview)
-    const rest        = rows.filter(r => !r.lossLeader && !needsCheck.includes(r))
-    const winners     = rest.filter(r => r.marginPct >= 0.40)
-    const ok          = rest.filter(r => r.marginPct >= 0.20 && r.marginPct < 0.40)
-    const thin        = rest.filter(r => r.marginPct >= 0 && r.marginPct < 0.20)
+    const rest        = rows.filter(r => !r.lossLeader && !r.needsReview)
     const losing      = rest.filter(r => r.marginPct < 0)
+    // Thin margins ranked by VOLUME — a thin margin on 200/week is urgent,
+    // on 2/week it's trivia.
+    const thin        = rest.filter(r => r.marginPct >= 0 && r.marginPct < 0.20)
+                            .sort((a, b) => b.weeklyUnits - a.weeklyUnits)
+    const healthy     = rest.filter(r => r.marginPct >= 0.20)
+    const byProfit    = (a: M, b: M) => b.weeklyProfit - a.weeklyProfit
+    const big         = healthy.filter(r => r.weeklyUnits > 0 && r.weeklyProfit >= 2500).sort(byProfit)
+    const steady      = healthy.filter(r => r.weeklyUnits > 0 && r.weeklyProfit >= 500 && r.weeklyProfit < 2500).sort(byProfit)
+    const small       = healthy.filter(r => r.weeklyUnits > 0 && r.weeklyProfit < 500).sort(byProfit)
+    const noVolume    = healthy.filter(r => r.weeklyUnits === 0).sort((a, b) => b.marginPct - a.marginPct)
     const lossLeaders = rows.filter(r => r.lossLeader)
-    const chartData   = [...winners, ...ok].slice(0, 12).map(r => ({ name: r.name, marginPct: r.marginPct }))
+    const chartData   = [...big, ...steady].slice(0, 10)
+      .map(r => ({ name: r.name, profitPence: r.weeklyProfit, marginPct: r.marginPct }))
 
     const Line = ({ r, tone }: { r: M; tone: string }) => (
       <div className="card flex items-center justify-between gap-3">
@@ -80,20 +96,43 @@ export default async function BuyingGuidePage() {
       </div>
     )
 
+    // Earner line: the headline number is £/week (margin × volume) — what the
+    // product actually puts in the till — with margin & rate as supporting detail.
+    const EarnLine = ({ r }: { r: M }) => (
+      <div className="card flex items-center justify-between gap-3">
+        <div className="min-w-0">
+          <p className="font-semibold truncate">{r.name}</p>
+          <p className="text-xs text-[var(--text-muted)]">
+            sells ~{r.weeklyUnits}/wk · cost {u(r.cost)} · sell {u(r.retail)}
+          </p>
+        </div>
+        <div className="text-right shrink-0">
+          <p className="font-bold text-lg text-status-green leading-tight">£{Math.round(r.weeklyProfit / 100)}<span className="text-xs font-normal text-[var(--text-muted)]">/wk</span></p>
+          <p className={`text-[10px] ${r.marginPct < 0.20 ? 'text-status-amber' : 'text-[var(--text-muted)]'}`}>{Math.round(r.marginPct * 100)}% margin</p>
+        </div>
+      </div>
+    )
+
+    const totalWeekly = [...big, ...steady, ...small].reduce((s, r) => s + r.weeklyProfit, 0)
+
     return (
       <div className="page pb-24">
         <div className="flex items-center gap-3 mb-4">
           <Link href="/cfo" className="text-brand-accent min-h-[48px] min-w-[48px] flex items-center justify-center text-xl">←</Link>
           <div>
             <h1 className="text-xl font-bold">Where to put your money</h1>
-            <p className="text-xs text-[var(--text-muted)]">Ranked by margin — how much of each sale is profit</p>
+            <p className="text-xs text-[var(--text-muted)]">Ranked by estimated £ profit per week — margin × how fast it sells</p>
           </div>
         </div>
 
         {chartData.length > 0 && (
           <div className="card mb-6">
-            <p className="section-title">Profit margin by product</p>
-            <MarginChart data={chartData} />
+            <p className="section-title">Top earners — estimated profit per week</p>
+            <ProfitChart data={chartData} />
+            <p className="text-[10px] text-[var(--text-muted)] mt-2">
+              Bar length = £ earned per week · colour = margin health (green strong, amber thin).
+              Est. total across all products: <strong>£{Math.round(totalWeekly / 100)}/week</strong>.
+            </p>
           </div>
         )}
 
@@ -108,24 +147,40 @@ export default async function BuyingGuidePage() {
           </section>
         )}
 
-        {winners.length > 0 && (
+        {big.length > 0 && (
           <section className="mb-6">
-            <p className="section-title">💰 Fattest margins — buy with confidence</p>
-            <div className="space-y-2">{winners.map(r => <Line key={r.name} r={r} tone="text-status-green" />)}</div>
+            <p className="section-title">💰 Your big earners — £25+ a week</p>
+            <p className="text-xs text-[var(--text-muted)] mb-3">
+              These pay the bills. Keep them stocked and protect their prices.
+            </p>
+            <div className="space-y-2">{big.map(r => <EarnLine key={r.name} r={r} />)}</div>
           </section>
         )}
 
-        {ok.length > 0 && (
+        {steady.length > 0 && (
           <section className="mb-6">
-            <p className="section-title">Solid earners</p>
-            <div className="space-y-2">{ok.map(r => <Line key={r.name} r={r} tone="text-status-green" />)}</div>
+            <p className="section-title">Steady earners — £5–25 a week</p>
+            <div className="space-y-2">{steady.map(r => <EarnLine key={r.name} r={r} />)}</div>
           </section>
         )}
 
         {thin.length > 0 && (
           <section className="mb-6">
-            <p className="section-title text-status-amber">Thin margins — watch these</p>
-            <div className="space-y-2">{thin.map(r => <Line key={r.name} r={r} tone="text-status-amber" />)}</div>
+            <p className="section-title text-status-amber">Thin margins — biggest sellers first</p>
+            <p className="text-xs text-[var(--text-muted)] mb-3">
+              Under 20% margin. The faster it sells, the more a small price rise is worth.
+            </p>
+            <div className="space-y-2">{thin.map(r => (
+              <div key={r.name} className="card flex items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="font-semibold truncate">{r.name}</p>
+                  <p className="text-xs text-[var(--text-muted)]">
+                    {r.weeklyUnits > 0 ? `sells ~${r.weeklyUnits}/wk · ` : ''}cost {u(r.cost)} · sell {u(r.retail)}
+                  </p>
+                </div>
+                <p className="font-bold text-lg shrink-0 text-status-amber">{Math.round(r.marginPct * 100)}%</p>
+              </div>
+            ))}</div>
           </section>
         )}
 
@@ -133,6 +188,26 @@ export default async function BuyingGuidePage() {
           <section className="mb-6">
             <p className="section-title text-status-red">Losing money — needs a price rise</p>
             <div className="space-y-2">{losing.map(r => <Line key={r.name} r={r} tone="text-status-red" />)}</div>
+          </section>
+        )}
+
+        {small.length > 0 && (
+          <section className="mb-6">
+            <p className="section-title">Small fry — under £5 a week</p>
+            <p className="text-xs text-[var(--text-muted)] mb-3">
+              Healthy margins, just slow sellers — fine to stock, not where the money is.
+            </p>
+            <div className="space-y-2">{small.map(r => <EarnLine key={r.name} r={r} />)}</div>
+          </section>
+        )}
+
+        {noVolume.length > 0 && (
+          <section className="mb-6">
+            <p className="section-title">No sales-rate data yet — ranked by margin</p>
+            <p className="text-xs text-[var(--text-muted)] mb-3">
+              The till doesn&apos;t track how fast these sell, so we can only show the per-sale margin.
+            </p>
+            <div className="space-y-2">{noVolume.map(r => <Line key={r.name} r={r} tone="text-status-green" />)}</div>
           </section>
         )}
 
@@ -144,9 +219,9 @@ export default async function BuyingGuidePage() {
           </section>
         )}
 
-        <Link href="/sync" className="block text-center text-xs text-brand-accent mt-2">
-          Link your EPOS sales to products → total-£ profit, weighted by units sold →
-        </Link>
+        <p className="text-[10px] text-[var(--text-muted)] text-center mt-2">
+          Weekly sales rates are estimates from till history — treat the £/week as a guide, not gospel.
+        </p>
       </div>
     )
   }
