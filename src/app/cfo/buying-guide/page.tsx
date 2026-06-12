@@ -86,30 +86,30 @@ export default async function BuyingGuidePage() {
       .map(r => ({ name: r.name, profitPence: r.weeklyProfit, marginPct: r.marginPct }))
 
     const Line = ({ r, tone }: { r: M; tone: string }) => (
-      <div className="card flex items-center justify-between gap-3">
+      <div className="px-3 py-2 flex items-center justify-between gap-3">
         <div className="min-w-0">
-          <p className="font-semibold truncate">{r.name}</p>
-          <p className="text-xs text-[var(--text-muted)]">
+          <p className="font-medium text-sm truncate">{r.name}</p>
+          <p className="text-[11px] text-[var(--text-muted)]">
             cost {u(r.cost)} · sell {u(r.retail)} · £1 in → £{r.ratio.toFixed(2)} back
           </p>
         </div>
-        <p className={`font-bold text-lg shrink-0 ${tone}`}>{Math.round(r.marginPct * 100)}%</p>
+        <p className={`font-bold text-sm shrink-0 tabular-nums ${tone}`}>{Math.round(r.marginPct * 100)}%</p>
       </div>
     )
 
     // Earner line: the headline number is £/week (margin × volume) — what the
     // product actually puts in the till — with margin & rate as supporting detail.
     const EarnLine = ({ r }: { r: M }) => (
-      <div className="card flex items-center justify-between gap-3">
+      <div className="px-3 py-2 flex items-center justify-between gap-3">
         <div className="min-w-0">
-          <p className="font-semibold truncate">{r.name}</p>
-          <p className="text-xs text-[var(--text-muted)]">
+          <p className="font-medium text-sm truncate">{r.name}</p>
+          <p className="text-[11px] text-[var(--text-muted)]">
             sells ~{r.weeklyUnits}/wk · cost {u(r.cost)} · sell {u(r.retail)}
           </p>
         </div>
         <div className="text-right shrink-0">
-          <p className="font-bold text-lg text-status-green leading-tight">£{Math.round(r.weeklyProfit / 100)}<span className="text-xs font-normal text-[var(--text-muted)]">/wk</span></p>
-          <p className={`text-[10px] ${r.marginPct < 0.20 ? 'text-status-amber' : 'text-[var(--text-muted)]'}`}>{Math.round(r.marginPct * 100)}% margin</p>
+          <p className="font-bold text-sm text-status-green leading-tight tabular-nums">£{Math.round(r.weeklyProfit / 100)}<span className="text-[10px] font-normal text-[var(--text-muted)]">/wk</span></p>
+          <p className={`text-[10px] tabular-nums ${r.marginPct < 0.20 ? 'text-status-amber' : 'text-[var(--text-muted)]'}`}>{Math.round(r.marginPct * 100)}%</p>
         </div>
       </div>
     )
@@ -144,7 +144,7 @@ export default async function BuyingGuidePage() {
               Cost or selling unit still being checked with David — so the margin here
               isn&apos;t reliable yet (even where it looks normal). Don&apos;t act on these %.
             </p>
-            <div className="space-y-2">{needsCheck.map(r => <Line key={r.name} r={r} tone="text-status-amber" />)}</div>
+            <div className="rounded-xl border border-white/10 bg-[var(--bg-card)] divide-y divide-white/5 overflow-hidden">{needsCheck.map(r => <Line key={r.name} r={r} tone="text-status-amber" />)}</div>
           </section>
         )}
 
@@ -154,14 +154,14 @@ export default async function BuyingGuidePage() {
             <p className="text-xs text-[var(--text-muted)] mb-3">
               These pay the bills. Keep them stocked and protect their prices.
             </p>
-            <div className="space-y-2">{big.map(r => <EarnLine key={r.name} r={r} />)}</div>
+            <div className="rounded-xl border border-white/10 bg-[var(--bg-card)] divide-y divide-white/5 overflow-hidden">{big.map(r => <EarnLine key={r.name} r={r} />)}</div>
           </section>
         )}
 
         {steady.length > 0 && (
           <section className="mb-6">
             <p className="section-title">Steady earners — £5–25 a week</p>
-            <div className="space-y-2">{steady.map(r => <EarnLine key={r.name} r={r} />)}</div>
+            <div className="rounded-xl border border-white/10 bg-[var(--bg-card)] divide-y divide-white/5 overflow-hidden">{steady.map(r => <EarnLine key={r.name} r={r} />)}</div>
           </section>
         )}
 
@@ -171,15 +171,15 @@ export default async function BuyingGuidePage() {
             <p className="text-xs text-[var(--text-muted)] mb-3">
               Under 20% margin. The faster it sells, the more a small price rise is worth.
             </p>
-            <div className="space-y-2">{thin.map(r => (
-              <div key={r.name} className="card flex items-center justify-between gap-3">
+            <div className="rounded-xl border border-white/10 bg-[var(--bg-card)] divide-y divide-white/5 overflow-hidden">{thin.map(r => (
+              <div key={r.name} className="px-3 py-2 flex items-center justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="font-semibold truncate">{r.name}</p>
-                  <p className="text-xs text-[var(--text-muted)]">
+                  <p className="font-medium text-sm truncate">{r.name}</p>
+                  <p className="text-[11px] text-[var(--text-muted)]">
                     {r.weeklyUnits > 0 ? `sells ~${r.weeklyUnits}/wk · ` : ''}cost {u(r.cost)} · sell {u(r.retail)}
                   </p>
                 </div>
-                <p className="font-bold text-lg shrink-0 text-status-amber">{Math.round(r.marginPct * 100)}%</p>
+                <p className="font-bold text-sm shrink-0 tabular-nums text-status-amber">{Math.round(r.marginPct * 100)}%</p>
               </div>
             ))}</div>
           </section>
@@ -188,7 +188,7 @@ export default async function BuyingGuidePage() {
         {losing.length > 0 && (
           <section className="mb-6">
             <p className="section-title text-status-red">Losing money — needs a price rise</p>
-            <div className="space-y-2">{losing.map(r => <Line key={r.name} r={r} tone="text-status-red" />)}</div>
+            <div className="rounded-xl border border-white/10 bg-[var(--bg-card)] divide-y divide-white/5 overflow-hidden">{losing.map(r => <Line key={r.name} r={r} tone="text-status-red" />)}</div>
           </section>
         )}
 
@@ -198,7 +198,7 @@ export default async function BuyingGuidePage() {
             <p className="text-xs text-[var(--text-muted)] mb-3">
               Healthy margins, just slow sellers — fine to stock, not where the money is.
             </p>
-            <div className="space-y-2">{small.map(r => <EarnLine key={r.name} r={r} />)}</div>
+            <div className="rounded-xl border border-white/10 bg-[var(--bg-card)] divide-y divide-white/5 overflow-hidden">{small.map(r => <EarnLine key={r.name} r={r} />)}</div>
           </section>
         )}
 
@@ -208,7 +208,7 @@ export default async function BuyingGuidePage() {
             <p className="text-xs text-[var(--text-muted)] mb-3">
               The till doesn&apos;t track how fast these sell, so we can only show the per-sale margin.
             </p>
-            <div className="space-y-2">{noVolume.map(r => <Line key={r.name} r={r} tone="text-status-green" />)}</div>
+            <div className="rounded-xl border border-white/10 bg-[var(--bg-card)] divide-y divide-white/5 overflow-hidden">{noVolume.map(r => <Line key={r.name} r={r} tone="text-status-green" />)}</div>
           </section>
         )}
 
@@ -216,7 +216,7 @@ export default async function BuyingGuidePage() {
           <section className="mb-6">
             <p className="section-title">Loss-leaders (on purpose)</p>
             <p className="text-xs text-[var(--text-muted)] mb-3">Kept cheap to pull customers in — ignored in the alerts above.</p>
-            <div className="space-y-2">{lossLeaders.map(r => <Line key={r.name} r={r} tone="text-[var(--text-muted)]" />)}</div>
+            <div className="rounded-xl border border-white/10 bg-[var(--bg-card)] divide-y divide-white/5 overflow-hidden">{lossLeaders.map(r => <Line key={r.name} r={r} tone="text-[var(--text-muted)]" />)}</div>
           </section>
         )}
 
