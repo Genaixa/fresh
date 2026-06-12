@@ -54,10 +54,11 @@ export default async function BuyingGuidePage() {
       }))
       .sort((a, b) => b.marginPct - a.marginPct)
 
-    // > 72% margin on fresh produce almost always means the cost or unit isn't
-    // confirmed yet (per-kg vs each, or no box size) — quarantine, don't trumpet.
-    const needsCheck  = rows.filter(r => !r.lossLeader && r.marginPct > 0.72)
-    const winners     = rows.filter(r => !r.lossLeader && r.marginPct >= 0.40 && r.marginPct <= 0.72)
+    // > 75% margin on fresh produce usually means the cost or unit isn't confirmed
+    // yet (per-kg vs each, or no box size) — quarantine, don't trumpet. Premium
+    // lines (cherries ~73%, bottled water ~74%) sit just under and read as winners.
+    const needsCheck  = rows.filter(r => !r.lossLeader && r.marginPct > 0.75)
+    const winners     = rows.filter(r => !r.lossLeader && r.marginPct >= 0.40 && r.marginPct <= 0.75)
     const ok          = rows.filter(r => r.marginPct >= 0.20 && r.marginPct < 0.40)
     const thin        = rows.filter(r => !r.lossLeader && r.marginPct >= 0 && r.marginPct < 0.20)
     const losing      = rows.filter(r => !r.lossLeader && r.marginPct < 0)
