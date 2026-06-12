@@ -31,7 +31,7 @@ export default async function BuyingGuidePage() {
 
   const { data: products } = await supabase
     .from('products')
-    .select('id, name, purchase_cost, unit, retail_price, is_loss_leader')
+    .select('id, name, purchase_cost, unit, retail_price, is_loss_leader, needs_review')
     .eq('is_active', true)
     .gt('purchase_cost', 0)
 
@@ -41,27 +41,29 @@ export default async function BuyingGuidePage() {
   if (!salesRows || salesRows.length === 0) {
     const u = (p: number) => p < 100 ? `${p}p` : `£${(p / 100).toFixed(2)}`
 
-    type M = { name: string; cost: number; retail: number; marginPct: number; ratio: number; lossLeader: boolean }
+    type M = { name: string; cost: number; retail: number; marginPct: number; ratio: number; lossLeader: boolean; needsReview: boolean }
     const rows: M[] = (products ?? [])
       .filter(p => p.purchase_cost > 0 && p.retail_price > 0)
       .map(p => ({
-        name:       p.name,
-        cost:       p.purchase_cost,
-        retail:     p.retail_price,
-        marginPct:  (p.retail_price - p.purchase_cost) / p.retail_price,
-        ratio:      p.retail_price / p.purchase_cost,
-        lossLeader: !!p.is_loss_leader,
+        name:        p.name,
+        cost:        p.purchase_cost,
+        retail:      p.retail_price,
+        marginPct:   (p.retail_price - p.purchase_cost) / p.retail_price,
+        ratio:       p.retail_price / p.purchase_cost,
+        lossLeader:  !!p.is_loss_leader,
+        needsReview: !!p.needs_review,
       }))
       .sort((a, b) => b.marginPct - a.marginPct)
 
-    // > 75% margin on fresh produce usually means the cost or unit isn't confirmed
-    // yet (per-kg vs each, or no box size) — quarantine, don't trumpet. Premium
-    // lines (cherries ~73%, bottled water ~74%) sit just under and read as winners.
-    const needsCheck  = rows.filter(r => !r.lossLeader && r.marginPct > 0.75)
-    const winners     = rows.filter(r => !r.lossLeader && r.marginPct >= 0.40 && r.marginPct <= 0.75)
-    const ok          = rows.filter(r => r.marginPct >= 0.20 && r.marginPct < 0.40)
-    const thin        = rows.filter(r => !r.lossLeader && r.marginPct >= 0 && r.marginPct < 0.20)
-    const losing      = rows.filter(r => !r.lossLeader && r.marginPct < 0)
+    // Quarantine by CAUSE (explicitly flagged needs_review = awaiting David) OR by
+    // SYMPTOM (>75% margin = a cost that can't be real) — a wrong cost doesn't
+    // always look impossible (e.g. Red Cabbage's guessed 50p lands at 74%).
+    const needsCheck  = rows.filter(r => !r.lossLeader && (r.needsReview || r.marginPct > 0.75))
+    const rest        = rows.filter(r => !r.lossLeader && !needsCheck.includes(r))
+    const winners     = rest.filter(r => r.marginPct >= 0.40)
+    const ok          = rest.filter(r => r.marginPct >= 0.20 && r.marginPct < 0.40)
+    const thin        = rest.filter(r => r.marginPct >= 0 && r.marginPct < 0.20)
+    const losing      = rest.filter(r => r.marginPct < 0)
     const lossLeaders = rows.filter(r => r.lossLeader)
     const chartData   = [...winners, ...ok].slice(0, 12).map(r => ({ name: r.name, marginPct: r.marginPct }))
 
@@ -96,10 +98,10 @@ export default async function BuyingGuidePage() {
 
         {needsCheck.length > 0 && (
           <section className="mb-6">
-            <p className="section-title text-status-amber">⚠ Cost needs checking ({needsCheck.length})</p>
+            <p className="section-title text-status-amber">⚠ Cost not yet confirmed ({needsCheck.length})</p>
             <p className="text-xs text-[var(--text-muted)] mb-3">
-              These show an unrealistic margin — usually the cost isn&apos;t set, or the unit
-              (per-kg vs each) needs confirming. Ignore the % here until the cost is fixed.
+              Cost or selling unit still being checked with David — so the margin here
+              isn&apos;t reliable yet (even where it looks normal). Don&apos;t act on these %.
             </p>
             <div className="space-y-2">{needsCheck.map(r => <Line key={r.name} r={r} tone="text-status-amber" />)}</div>
           </section>
