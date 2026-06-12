@@ -54,7 +54,10 @@ export default async function BuyingGuidePage() {
       }))
       .sort((a, b) => b.marginPct - a.marginPct)
 
-    const winners     = rows.filter(r => !r.lossLeader && r.marginPct >= 0.40)
+    // > 72% margin on fresh produce almost always means the cost or unit isn't
+    // confirmed yet (per-kg vs each, or no box size) — quarantine, don't trumpet.
+    const needsCheck  = rows.filter(r => !r.lossLeader && r.marginPct > 0.72)
+    const winners     = rows.filter(r => !r.lossLeader && r.marginPct >= 0.40 && r.marginPct <= 0.72)
     const ok          = rows.filter(r => r.marginPct >= 0.20 && r.marginPct < 0.40)
     const thin        = rows.filter(r => !r.lossLeader && r.marginPct >= 0 && r.marginPct < 0.20)
     const losing      = rows.filter(r => !r.lossLeader && r.marginPct < 0)
@@ -88,6 +91,17 @@ export default async function BuyingGuidePage() {
             <p className="section-title">Profit margin by product</p>
             <MarginChart data={chartData} />
           </div>
+        )}
+
+        {needsCheck.length > 0 && (
+          <section className="mb-6">
+            <p className="section-title text-status-amber">⚠ Cost needs checking ({needsCheck.length})</p>
+            <p className="text-xs text-[var(--text-muted)] mb-3">
+              These show an unrealistic margin — usually the cost isn&apos;t set, or the unit
+              (per-kg vs each) needs confirming. Ignore the % here until the cost is fixed.
+            </p>
+            <div className="space-y-2">{needsCheck.map(r => <Line key={r.name} r={r} tone="text-status-amber" />)}</div>
+          </section>
         )}
 
         {winners.length > 0 && (
