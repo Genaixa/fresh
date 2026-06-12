@@ -27,6 +27,8 @@ export async function POST(request: NextRequest) {
     const { rows, errors } = parseEposMonthlyReport(text)
 
     if (rows.length === 0) {
+      // Surface exactly what arrived so format bugs can be diagnosed from logs
+      console.error('[import-sales] rejected upload:', file.name, file.type, file.size, 'bytes; first 600 chars:', JSON.stringify(text.slice(0, 600)))
       const msg = errors.length > 0 ? errors[0] : 'No valid rows found — check file format'
       return seeOther(`/sync?error=${encodeURIComponent(msg)}`)
     }
