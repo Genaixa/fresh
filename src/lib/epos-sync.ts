@@ -57,12 +57,31 @@ export function parseEposMonthlyReport(text: string): {
     return { rows, errors }
   }
 
-  const sep = lines[0].includes('\t') ? '\t' : ','
+  // Locate the header row FIRST — separator detection must probe the header,
+  // not line 0 (exports sometimes carry a title line above it).
+  const headerIdx = lines.findIndex(l =>
+    l.replace(/\s+/g, '').toLowerCase().includes('productid')
+  )
+  const probe = lines[headerIdx >= 0 ? headerIdx : 0]
+
+  // EPOS exports appear in the wild as tab-, comma-, semicolon- AND
+  // run-of-spaces-separated. In the spaces flavour, empty columns (Barcode,
+  // Brand…) collapse away entirely, so positions shift per row.
+  type SepKind = 'tab' | 'comma' | 'semi' | 'spaces'
+  const sepKind: SepKind =
+    probe.includes('\t')                    ? 'tab'
+    : (probe.match(/,/g)?.length ?? 0) >= 5 ? 'comma'
+    : (probe.match(/;/g)?.length ?? 0) >= 5 ? 'semi'
+    : /\s{2,}/.test(probe)                  ? 'spaces'
+    : 'comma'
+  const sep = sepKind // for the diagnostic message
 
   // Quote-aware splitter — EPOS CSVs quote names containing commas; a naive
   // split(',') shreds those rows so every row gets rejected.
   const splitLine = (line: string): string[] => {
-    if (sep === '\t') return line.split('\t').map(c => c.trim())
+    if (sepKind === 'tab')    return line.split('\t').map(c => c.trim())
+    if (sepKind === 'spaces') return line.trim().split(/\s{2,}/).map(c => c.trim())
+    const SEP = sepKind === 'semi' ? ';' : ','
     const out: string[] = []
     let cur = ''
     let inQ = false
@@ -70,7 +89,7 @@ export function parseEposMonthlyReport(text: string): {
       const ch = line[i]
       if (ch === '"') {
         if (inQ && line[i + 1] === '"') { cur += '"'; i++ } else inQ = !inQ
-      } else if (ch === ',' && !inQ) {
+      } else if (ch === SEP && !inQ) {
         out.push(cur.trim()); cur = ''
       } else cur += ch
     }
@@ -80,9 +99,6 @@ export function parseEposMonthlyReport(text: string): {
 
   // Column positions: read from the header row when present (EPOS column order
   // varies between report versions); fall back to the classic fixed layout.
-  const headerIdx = lines.findIndex(l =>
-    l.replace(/\s+/g, '').toLowerCase().includes('productid')
-  )
   let col = { id: 0, name: 1, qty: 7, measured: 8, value: 9 }
   if (headerIdx >= 0) {
     const h = splitLine(lines[headerIdx]).map(c => c.replace(/[^a-z]/gi, '').toLowerCase())
@@ -105,22 +121,43 @@ export function parseEposMonthlyReport(text: string): {
 
   for (let i = startIdx; i < lines.length; i++) {
     const cols = splitLine(lines[i])
-    if (cols.length <= Math.max(col.value, col.measured)) continue
 
-    const productId = cols[col.id]
+    let productId: string, name: string, valueStr: string, qtyStr: string, measuredQtyStr: string
+
+    if (sepKind === 'spaces') {
+      // Empty columns collapsed away — anchor on the fixed numeric TAIL instead:
+      // … Qty [MeasuredQty?] Value Discount IncVAT ExcVAT TotCost Margin MarginPerc
+      // Value is always 7th-from-end; the token before it is MeasuredQty when it
+      // ends in "kg", otherwise it's Qty.
+      if (cols.length < 9) continue
+      productId = cols[0]
+      name      = cols[1]
+      valueStr  = cols[cols.length - 7] ?? ''
+      const t8  = cols[cols.length - 8] ?? ''
+      if (/kg$/i.test(t8)) {
+        measuredQtyStr = t8
+        qtyStr         = cols[cols.length - 9] ?? '0'
+      } else {
+        measuredQtyStr = ''
+        qtyStr         = t8
+      }
+    } else {
+      if (cols.length <= Math.max(col.value, col.measured)) continue
+      productId      = cols[col.id]
+      name           = cols[col.name]
+      valueStr       = cols[col.value]?.trim() ?? ''
+      qtyStr         = cols[col.qty]?.trim() ?? '0'
+      measuredQtyStr = cols[col.measured]?.trim() ?? ''
+    }
+
     if (!productId || productId.toLowerCase().startsWith('total') || productId === '') continue
-
-    const name = cols[col.name]
     if (!name) continue
-
-    const valueStr = cols[col.value]?.trim() ?? ''
     if (!valueStr) continue
 
     const value = parseFloat(valueStr.replace(/[£,]/g, ''))
     if (isNaN(value) || value <= 0) continue
 
-    const transactionCount = parseInt(cols[col.qty]?.trim() ?? '0') || 0
-    const measuredQtyStr = cols[col.measured]?.trim() ?? ''
+    const transactionCount = parseInt(qtyStr) || 0
 
     let quantitySold = transactionCount
     let isByWeight = false
@@ -149,7 +186,7 @@ export function parseEposMonthlyReport(text: string): {
   }
 
   if (rows.length === 0 && errors.length === 0) {
-    errors.push(`Couldn't recognise any data rows (${sep === '\t' ? 'tab' : 'comma'}-separated, ${lines.length} lines). Expected the EPOS "Sales by Product" report with ProductID / Name / Qty / MeasuredQty / Value columns.`)
+    errors.push(`Couldn't recognise any data rows (${sep}-separated, ${lines.length} lines). Expected the EPOS "Sales by Product" report with ProductID / Name / Qty / MeasuredQty / Value columns.`)
   }
 
   return { rows, errors }
