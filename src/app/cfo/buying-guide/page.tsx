@@ -55,10 +55,11 @@ export default async function BuyingGuidePage() {
       }))
       .sort((a, b) => b.marginPct - a.marginPct)
 
-    // Quarantine by CAUSE (explicitly flagged needs_review = awaiting David) OR by
-    // SYMPTOM (>75% margin = a cost that can't be real) — a wrong cost doesn't
-    // always look impossible (e.g. Red Cabbage's guessed 50p lands at 74%).
-    const needsCheck  = rows.filter(r => !r.lossLeader && (r.needsReview || r.marginPct > 0.75))
+    // Quarantine = the curated needs_review flag, full stop. It's the SINGLE
+    // source of truth, kept in lock-step with David's question list, so the two
+    // never drift. (A bare >75% margin isn't reliable either way — sack potatoes
+    // hit 78% legitimately, while a wrong cost can land at a believable 74%.)
+    const needsCheck  = rows.filter(r => !r.lossLeader && r.needsReview)
     const rest        = rows.filter(r => !r.lossLeader && !needsCheck.includes(r))
     const winners     = rest.filter(r => r.marginPct >= 0.40)
     const ok          = rest.filter(r => r.marginPct >= 0.20 && r.marginPct < 0.40)
