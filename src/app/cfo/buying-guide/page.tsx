@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
+import { MarginChart } from './MarginChart'
 
 export const dynamic = 'force-dynamic'
 
@@ -30,29 +31,104 @@ export default async function BuyingGuidePage() {
 
   const { data: products } = await supabase
     .from('products')
-    .select('id, name, purchase_cost, unit, retail_price')
+    .select('id, name, purchase_cost, unit, retail_price, is_loss_leader')
     .eq('is_active', true)
     .gt('purchase_cost', 0)
 
+  // No EPOS sales volumes yet → rank by per-item margin (retail vs cost).
+  // Still real, useful guidance: which products earn most per sale. Total-£
+  // profit (volume-weighted) needs an EPOS sales upload.
   if (!salesRows || salesRows.length === 0) {
+    const u = (p: number) => p < 100 ? `${p}p` : `£${(p / 100).toFixed(2)}`
+
+    type M = { name: string; cost: number; retail: number; marginPct: number; ratio: number; lossLeader: boolean }
+    const rows: M[] = (products ?? [])
+      .filter(p => p.purchase_cost > 0 && p.retail_price > 0)
+      .map(p => ({
+        name:       p.name,
+        cost:       p.purchase_cost,
+        retail:     p.retail_price,
+        marginPct:  (p.retail_price - p.purchase_cost) / p.retail_price,
+        ratio:      p.retail_price / p.purchase_cost,
+        lossLeader: !!p.is_loss_leader,
+      }))
+      .sort((a, b) => b.marginPct - a.marginPct)
+
+    const winners     = rows.filter(r => !r.lossLeader && r.marginPct >= 0.40)
+    const ok          = rows.filter(r => r.marginPct >= 0.20 && r.marginPct < 0.40)
+    const thin        = rows.filter(r => !r.lossLeader && r.marginPct >= 0 && r.marginPct < 0.20)
+    const losing      = rows.filter(r => !r.lossLeader && r.marginPct < 0)
+    const lossLeaders = rows.filter(r => r.lossLeader)
+    const chartData   = [...winners, ...ok].slice(0, 12).map(r => ({ name: r.name, marginPct: r.marginPct }))
+
+    const Line = ({ r, tone }: { r: M; tone: string }) => (
+      <div className="card flex items-center justify-between gap-3">
+        <div className="min-w-0">
+          <p className="font-semibold truncate">{r.name}</p>
+          <p className="text-xs text-[var(--text-muted)]">
+            cost {u(r.cost)} · sell {u(r.retail)} · £1 in → £{r.ratio.toFixed(2)} back
+          </p>
+        </div>
+        <p className={`font-bold text-lg shrink-0 ${tone}`}>{Math.round(r.marginPct * 100)}%</p>
+      </div>
+    )
+
     return (
       <div className="page pb-24">
-        <div className="flex items-center gap-3 mb-6">
-          <Link href="/cfo" className="text-brand-accent min-h-[48px] min-w-[48px]
-                                        flex items-center justify-center text-xl">←</Link>
-          <h1 className="text-xl font-bold">Where to put your money</h1>
+        <div className="flex items-center gap-3 mb-4">
+          <Link href="/cfo" className="text-brand-accent min-h-[48px] min-w-[48px] flex items-center justify-center text-xl">←</Link>
+          <div>
+            <h1 className="text-xl font-bold">Where to put your money</h1>
+            <p className="text-xs text-[var(--text-muted)]">Ranked by margin — how much of each sale is profit</p>
+          </div>
         </div>
-        <div className="card text-center py-12">
-          <p className="text-4xl mb-4">📊</p>
-          <p className="font-semibold mb-2">No sales data yet</p>
-          <p className="text-sm text-[var(--text-muted)] mb-6">
-            Upload a Sales by Product report from EPOS Now and this page will show
-            you exactly which products are making you money and which aren't.
-          </p>
-          <Link href="/sync" className="btn-primary px-6 py-3">
-            Go to EPOS Sync →
-          </Link>
-        </div>
+
+        {chartData.length > 0 && (
+          <div className="card mb-6">
+            <p className="section-title">Profit margin by product</p>
+            <MarginChart data={chartData} />
+          </div>
+        )}
+
+        {winners.length > 0 && (
+          <section className="mb-6">
+            <p className="section-title">💰 Fattest margins — buy with confidence</p>
+            <div className="space-y-2">{winners.map(r => <Line key={r.name} r={r} tone="text-status-green" />)}</div>
+          </section>
+        )}
+
+        {ok.length > 0 && (
+          <section className="mb-6">
+            <p className="section-title">Solid earners</p>
+            <div className="space-y-2">{ok.map(r => <Line key={r.name} r={r} tone="text-status-green" />)}</div>
+          </section>
+        )}
+
+        {thin.length > 0 && (
+          <section className="mb-6">
+            <p className="section-title text-status-amber">Thin margins — watch these</p>
+            <div className="space-y-2">{thin.map(r => <Line key={r.name} r={r} tone="text-status-amber" />)}</div>
+          </section>
+        )}
+
+        {losing.length > 0 && (
+          <section className="mb-6">
+            <p className="section-title text-status-red">Losing money — needs a price rise</p>
+            <div className="space-y-2">{losing.map(r => <Line key={r.name} r={r} tone="text-status-red" />)}</div>
+          </section>
+        )}
+
+        {lossLeaders.length > 0 && (
+          <section className="mb-6">
+            <p className="section-title">Loss-leaders (on purpose)</p>
+            <p className="text-xs text-[var(--text-muted)] mb-3">Kept cheap to pull customers in — ignored in the alerts above.</p>
+            <div className="space-y-2">{lossLeaders.map(r => <Line key={r.name} r={r} tone="text-[var(--text-muted)]" />)}</div>
+          </section>
+        )}
+
+        <Link href="/sync" className="block text-center text-xs text-brand-accent mt-2">
+          Link your EPOS sales to products → total-£ profit, weighted by units sold →
+        </Link>
       </div>
     )
   }
