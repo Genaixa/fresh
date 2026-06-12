@@ -2,18 +2,25 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { parseEposMonthlyReport } from '@/lib/epos-sync'
 
+// Relative redirect — building absolute URLs from request.url can carry the
+// wrong host (it once bounced the browser to localhost:3100), so send a bare
+// Location header and let the browser resolve it against the current origin.
+function seeOther(path: string) {
+  return new NextResponse(null, { status: 303, headers: { Location: path } })
+}
+
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return NextResponse.redirect(new URL('/login', request.url))
+    if (!user) return seeOther('/login')
 
     const form = await request.formData()
     const file = form.get('csv') as File | null
     const periodStr = form.get('period') as string | null  // "YYYY-MM"
 
     if (!file) {
-      return NextResponse.redirect(new URL('/sync?error=No+file+uploaded', request.url))
+      return seeOther('/sync?error=No+file+uploaded')
     }
 
     const text = await file.text()
@@ -21,7 +28,7 @@ export async function POST(request: NextRequest) {
 
     if (rows.length === 0) {
       const msg = errors.length > 0 ? errors[0] : 'No valid rows found — check file format'
-      return NextResponse.redirect(new URL(`/sync?error=${encodeURIComponent(msg)}`, request.url))
+      return seeOther(`/sync?error=${encodeURIComponent(msg)}`)
     }
 
     // Determine period start (first of the month)
@@ -66,16 +73,12 @@ export async function POST(request: NextRequest) {
 
     if (insertError) {
       console.error('Sales import error:', insertError)
-      return NextResponse.redirect(
-        new URL(`/sync?error=${encodeURIComponent(insertError.message)}`, request.url)
-      )
+      return seeOther(`/sync?error=${encodeURIComponent(insertError.message)}`)
     }
 
-    return NextResponse.redirect(new URL(`/epos-compare?period=${periodStart}`, request.url))
+    return seeOther(`/epos-compare?period=${periodStart}`)
   } catch (err) {
     console.error('Import sales unhandled error:', err)
-    return NextResponse.redirect(
-      new URL('/sync?error=Import+failed.+Please+try+again.', request.url)
-    )
+    return seeOther('/sync?error=Import+failed.+Please+try+again.')
   }
 }

@@ -41,9 +41,16 @@ export function parseEposMonthlyReport(text: string): {
   rows: EposMonthlyRow[]
   errors: string[]
 } {
-  const lines = text.trim().split('\n').filter(l => l.trim())
   const errors: string[] = []
   const rows: EposMonthlyRow[] = []
+
+  // Excel workbooks are zip archives — file.text() on one yields binary soup
+  if (text.startsWith('PK')) {
+    errors.push('That looks like an Excel (.xlsx) file — in EPOS Now export the report as CSV and upload that instead')
+    return { rows, errors }
+  }
+
+  const lines = text.replace(/\r/g, '').trim().split('\n').filter(l => l.trim())
 
   if (lines.length < 2) {
     errors.push('File appears empty')
@@ -52,30 +59,68 @@ export function parseEposMonthlyReport(text: string): {
 
   const sep = lines[0].includes('\t') ? '\t' : ','
 
-  // Find header row
+  // Quote-aware splitter — EPOS CSVs quote names containing commas; a naive
+  // split(',') shreds those rows so every row gets rejected.
+  const splitLine = (line: string): string[] => {
+    if (sep === '\t') return line.split('\t').map(c => c.trim())
+    const out: string[] = []
+    let cur = ''
+    let inQ = false
+    for (let i = 0; i < line.length; i++) {
+      const ch = line[i]
+      if (ch === '"') {
+        if (inQ && line[i + 1] === '"') { cur += '"'; i++ } else inQ = !inQ
+      } else if (ch === ',' && !inQ) {
+        out.push(cur.trim()); cur = ''
+      } else cur += ch
+    }
+    out.push(cur.trim())
+    return out
+  }
+
+  // Column positions: read from the header row when present (EPOS column order
+  // varies between report versions); fall back to the classic fixed layout.
   const headerIdx = lines.findIndex(l =>
     l.replace(/\s+/g, '').toLowerCase().includes('productid')
   )
+  let col = { id: 0, name: 1, qty: 7, measured: 8, value: 9 }
+  if (headerIdx >= 0) {
+    const h = splitLine(lines[headerIdx]).map(c => c.replace(/[^a-z]/gi, '').toLowerCase())
+    const find = (...names: string[]) => {
+      for (const n of names) { const idx = h.indexOf(n); if (idx >= 0) return idx }
+      return -1
+    }
+    const idCol = find('productid'), nameCol = find('name', 'productname')
+    const qtyCol = find('qty', 'quantity'), measuredCol = find('measuredqty')
+    const valueCol = find('value', 'valueincvat', 'totalvalue')
+    if (idCol >= 0 && nameCol >= 0 && valueCol >= 0) {
+      col = {
+        id: idCol, name: nameCol, value: valueCol,
+        qty:      qtyCol >= 0 ? qtyCol : 7,
+        measured: measuredCol >= 0 ? measuredCol : 8,
+      }
+    }
+  }
   const startIdx = headerIdx >= 0 ? headerIdx + 1 : 1
 
   for (let i = startIdx; i < lines.length; i++) {
-    const cols = lines[i].split(sep).map(c => c.trim())
-    if (cols.length < 9) continue
+    const cols = splitLine(lines[i])
+    if (cols.length <= Math.max(col.value, col.measured)) continue
 
-    const productId = cols[0]
+    const productId = cols[col.id]
     if (!productId || productId.toLowerCase().startsWith('total') || productId === '') continue
 
-    const name = cols[1]
+    const name = cols[col.name]
     if (!name) continue
 
-    const valueStr = cols[9]?.trim() ?? ''
+    const valueStr = cols[col.value]?.trim() ?? ''
     if (!valueStr) continue
 
-    const value = parseFloat(valueStr)
+    const value = parseFloat(valueStr.replace(/[£,]/g, ''))
     if (isNaN(value) || value <= 0) continue
 
-    const transactionCount = parseInt(cols[7]?.trim() ?? '0') || 0
-    const measuredQtyStr = cols[8]?.trim() ?? ''
+    const transactionCount = parseInt(cols[col.qty]?.trim() ?? '0') || 0
+    const measuredQtyStr = cols[col.measured]?.trim() ?? ''
 
     let quantitySold = transactionCount
     let isByWeight = false
@@ -101,6 +146,10 @@ export function parseEposMonthlyReport(text: string): {
       is_by_weight: isByWeight,
       revenue_pence: Math.round(value * 100),
     })
+  }
+
+  if (rows.length === 0 && errors.length === 0) {
+    errors.push(`Couldn't recognise any data rows (${sep === '\t' ? 'tab' : 'comma'}-separated, ${lines.length} lines). Expected the EPOS "Sales by Product" report with ProductID / Name / Qty / MeasuredQty / Value columns.`)
   }
 
   return { rows, errors }
