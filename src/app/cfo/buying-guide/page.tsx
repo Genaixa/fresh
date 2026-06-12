@@ -31,7 +31,7 @@ export default async function BuyingGuidePage() {
 
   const { data: products } = await supabase
     .from('products')
-    .select('id, name, purchase_cost, unit, retail_price, is_loss_leader, needs_review, weekly_units')
+    .select('id, name, purchase_cost, unit, retail_price, is_loss_leader, needs_review, weekly_units, weekly_units_recent')
     .eq('is_active', true)
     .gt('purchase_cost', 0)
 
@@ -48,7 +48,8 @@ export default async function BuyingGuidePage() {
     const rows: M[] = (products ?? [])
       .filter(p => p.purchase_cost > 0 && p.retail_price > 0)
       .map(p => {
-        const weeklyUnits = p.weekly_units ?? 0
+        // Prefer the in-season rate (June 2026 till data) over the 283-week blend.
+        const weeklyUnits = p.weekly_units_recent ?? p.weekly_units ?? 0
         return {
           name:         p.name,
           cost:         p.purchase_cost,
@@ -220,7 +221,8 @@ export default async function BuyingGuidePage() {
         )}
 
         <p className="text-[10px] text-[var(--text-muted)] text-center mt-2">
-          Weekly sales rates are estimates from till history — treat the £/week as a guide, not gospel.
+          Sales rates: June 2026 till data where available (1–12 Jun), else long-run average.
+          Treat the £/week as a guide, not gospel.
         </p>
       </div>
     )
