@@ -15,11 +15,13 @@
     --text-muted:    #6B7280;
   }
 
+  :root  { --bg-main: var(--bg); }
   .dark {
     --bg:         #0F1A0F;
     --bg-card:    #1E2E1E;
     --text:       #F0F4F0;
     --text-muted: #9CA3AF;
+    --bg-main:    var(--bg);
   }
 
   * { box-sizing: border-box; }
@@ -74,10 +76,20 @@
   .dot-amber     { @apply w-2.5 h-2.5 rounded-full bg-status-amber inline-block; }
   .dot-red       { @apply w-2.5 h-2.5 rounded-full bg-status-red inline-block; }
 
-  .input-field {
+  .input-field,
+  .input {
     @apply w-full rounded-xl border border-white/10 bg-[var(--bg-card)]
            px-4 py-3 text-base text-[var(--text)] min-h-[48px]
+           placeholder:text-[var(--text-muted)]
            focus:outline-none focus:ring-2 focus:ring-brand-accent;
+  }
+
+  /* Make native date/time controls (text + calendar icon) legible on dark theme */
+  .dark .input,
+  .dark .input-field { color-scheme: dark; }
+
+  .label {
+    @apply block text-sm font-medium text-[var(--text-muted)] mb-1.5;
   }
 
   /* Page wrapper — consistent padding for mobile */

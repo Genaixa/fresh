@@ -19,6 +19,17 @@ export default function OrderBuilder({ customerName, favourites, lastOrder }: {
   const [notes, setNotes]   = useState('')
   const [qty, setQty]       = useState<Record<string, number>>({})
   const [extras, setExtras] = useState<{ id: string; name: string; unit: string }[]>([])
+  // How each line is being ordered: a whole box, or loose in the product's own
+  // unit. Seeded from the way the product was last bought so the default matches
+  // the customer's habit; they can flip it per item.
+  const [unitSel, setUnitSel] = useState<Record<string, 'box' | 'retail_unit'>>(() => {
+    const s: Record<string, 'box' | 'retail_unit'> = {}
+    for (const f of favourites) s[f.product_id] = f.unit_type === 'box' ? 'box' : 'retail_unit'
+    for (const l of lastOrder)  s[l.product_id] = l.unit_type === 'box' ? 'box' : 'retail_unit'
+    return s
+  })
+  const setUnit = (pid: string, ut: 'box' | 'retail_unit') =>
+    setUnitSel(prev => ({ ...prev, [pid]: ut }))
   const [search, setSearch] = useState('')
   const [results, setResults] = useState<{ id: string; name: string; unit: string }[]>([])
   const [saving, setSaving] = useState(false)
@@ -41,8 +52,13 @@ export default function OrderBuilder({ customerName, favourites, lastOrder }: {
 
   function repeatLast() {
     const next: Record<string, number> = {}
-    for (const l of lastOrder) next[l.product_id] = l.quantity
+    const units: Record<string, 'box' | 'retail_unit'> = {}
+    for (const l of lastOrder) {
+      next[l.product_id]  = l.quantity
+      units[l.product_id] = l.unit_type === 'box' ? 'box' : 'retail_unit'
+    }
     setQty(next)
+    setUnitSel(prev => ({ ...prev, ...units }))
   }
 
   async function runSearch(term: string) {
@@ -50,9 +66,15 @@ export default function OrderBuilder({ customerName, favourites, lastOrder }: {
     if (term.trim().length < 2) { setResults([]); return }
     const res = await fetch('/api/portal/products')
     const data = await res.json()
+    const t = term.trim().toLowerCase()
     setResults(
       (data as any[])
-        .filter(p => p.is_active && p.name.toLowerCase().includes(term.toLowerCase()))
+        .filter(p => {
+          const n = p.name.toLowerCase()
+          // Bidirectional match so plurals/extra letters still hit:
+          // "aubergines" → "Aubergine", "tomatoes" → "Tomato", etc.
+          return p.is_active && (n.includes(t) || (n.length >= 3 && t.includes(n)))
+        })
         .slice(0, 8)
         .map(p => ({ id: p.id, name: p.name, unit: p.unit }))
     )
@@ -80,7 +102,11 @@ export default function OrderBuilder({ customerName, favourites, lastOrder }: {
           notes: notes.trim() || null,
           items: Object.entries(qty)
             .filter(([, q]) => q > 0)
-            .map(([pid, q]) => ({ product_id: pid, quantity: q, unit_type: meta[pid]?.unit_type ?? 'retail_unit' })),
+            .map(([pid, q]) => ({
+              product_id: pid,
+              quantity: q,
+              unit_type: unitSel[pid] ?? (meta[pid]?.unit_type === 'box' ? 'box' : 'retail_unit'),
+            })),
         }),
       })
       const data = await res.json()
@@ -133,7 +159,8 @@ export default function OrderBuilder({ customerName, favourites, lastOrder }: {
           <h2 className="font-semibold mb-3">Your usuals</h2>
           <div className="grid grid-cols-2 gap-3 mb-6">
             {favourites.map(f => (
-              <Tile key={f.product_id} name={f.name} unit={f.unit} q={qty[f.product_id] ?? 0}
+              <Tile key={f.product_id} name={f.name} looseUnit={f.unit} q={qty[f.product_id] ?? 0}
+                sel={unitSel[f.product_id] ?? 'retail_unit'} onUnit={ut => setUnit(f.product_id, ut)}
                 onMinus={() => bump(f.product_id, -1)} onPlus={() => bump(f.product_id, 1)} />
             ))}
           </div>
@@ -145,7 +172,8 @@ export default function OrderBuilder({ customerName, favourites, lastOrder }: {
           <h2 className="font-semibold mb-3">Added items</h2>
           <div className="grid grid-cols-2 gap-3 mb-6">
             {extraTiles.map(e => (
-              <Tile key={e.id} name={e.name} unit={e.unit} q={qty[e.id] ?? 0}
+              <Tile key={e.id} name={e.name} looseUnit={e.unit} q={qty[e.id] ?? 0}
+                sel={unitSel[e.id] ?? 'retail_unit'} onUnit={ut => setUnit(e.id, ut)}
                 onMinus={() => bump(e.id, -1)} onPlus={() => bump(e.id, 1)} />
             ))}
           </div>
@@ -194,20 +222,30 @@ export default function OrderBuilder({ customerName, favourites, lastOrder }: {
   )
 }
 
-function Tile({ name, unit, q, onMinus, onPlus }: {
-  name: string; unit: string; q: number; onMinus: () => void; onPlus: () => void
+function Tile({ name, looseUnit, sel, onUnit, q, onMinus, onPlus }: {
+  name: string; looseUnit: string; sel: 'box' | 'retail_unit'
+  onUnit: (ut: 'box' | 'retail_unit') => void
+  q: number; onMinus: () => void; onPlus: () => void
 }) {
+  const seg = (active: boolean) =>
+    `flex-1 !min-h-0 h-9 rounded-md text-xs font-semibold transition-colors ${
+      active ? 'bg-brand-accent text-white' : 'text-[var(--text-muted)]'
+    }`
   return (
     <div className={`card !p-3 flex flex-col justify-between ${q > 0 ? 'ring-2 ring-brand-accent' : ''}`}>
       <div className="mb-3">
-        <p className="font-medium text-sm leading-tight">{name}</p>
-        <p className="text-[var(--text-muted)] text-xs">{unit}</p>
+        <p className="font-medium text-sm leading-tight mb-2">{name}</p>
+        {/* Order as a whole box, or loose in the product's own unit */}
+        <div className="flex gap-1 p-0.5 rounded-lg bg-black/20 border border-white/10">
+          <button onClick={() => onUnit('box')} aria-pressed={sel === 'box'} className={seg(sel === 'box')}>Box</button>
+          <button onClick={() => onUnit('retail_unit')} aria-pressed={sel === 'retail_unit'} className={seg(sel === 'retail_unit')}>{looseUnit}</button>
+        </div>
       </div>
       <div className="flex items-center justify-between">
-        <button onClick={onMinus} disabled={q <= 0}
+        <button onClick={onMinus} disabled={q <= 0} aria-label={`Decrease ${name}`}
           className="h-11 w-11 rounded-lg border border-white/20 text-xl leading-none disabled:opacity-30">−</button>
         <span className="text-lg font-bold w-8 text-center">{q}</span>
-        <button onClick={onPlus}
+        <button onClick={onPlus} aria-label={`Increase ${name}`}
           className="h-11 w-11 rounded-lg bg-white/10 text-xl leading-none">+</button>
       </div>
     </div>
