@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import Link from 'next/link'
 
 interface Fav { product_id: string; name: string; unit: string; unit_type: string; times: number }
@@ -50,6 +50,15 @@ export default function OrderBuilder({ customerName, favourites, lastOrder }: {
       return next
     })
 
+  // Set a quantity directly (typed in), so a customer wanting 10 doesn't tap +10×.
+  const setExact = (pid: string, n: number) =>
+    setQty(prev => {
+      const v = Math.max(0, n)
+      const next = { ...prev }
+      if (!v) delete next[pid]; else next[pid] = v
+      return next
+    })
+
   function repeatLast() {
     const next: Record<string, number> = {}
     const units: Record<string, 'box' | 'retail_unit'> = {}
@@ -61,25 +70,37 @@ export default function OrderBuilder({ customerName, favourites, lastOrder }: {
     setUnitSel(prev => ({ ...prev, ...units }))
   }
 
+  // Fetched once, then filtered locally — avoids re-hitting the API per keystroke.
+  const productCache = useRef<any[] | null>(null)
+
   async function runSearch(term: string) {
     setSearch(term)
-    if (term.trim().length < 2) { setResults([]); return }
-    const res = await fetch('/api/portal/products')
-    const data = await res.json()
     const t = term.trim().toLowerCase()
-    setResults(
-      (data as any[])
-        .filter(p => {
-          const n = p.name.toLowerCase()
-          // Bidirectional match so plurals/extra letters still hit:
-          // "aubergines" → "Aubergine", "tomatoes" → "Tomato", etc.
-          return p.is_active && (n.includes(t) || (n.length >= 3 && t.includes(n)))
-        })
-        .slice(0, 8)
-        // Seed the line's default from how the product is most commonly bought
-        // across all customers; loose/each only when it's never been ordered.
-        .map(p => ({ id: p.id, name: p.name, unit: p.unit, unit_type: p.default_unit_type === 'box' ? 'box' : 'retail_unit' as 'box' | 'retail_unit' }))
-    )
+    if (t.length < 2) { setResults([]); return }
+    try {
+      if (!productCache.current) {
+        const res = await fetch('/api/portal/products')
+        if (!res.ok) throw new Error(`products ${res.status}`)
+        const data = await res.json()
+        productCache.current = Array.isArray(data) ? data : []
+      }
+      setResults(
+        productCache.current
+          .filter(p => {
+            const n = p.name.toLowerCase()
+            // Bidirectional match so plurals/extra letters still hit:
+            // "aubergines" → "Aubergine", "tomatoes" → "Tomato", etc.
+            return p.is_active && (n.includes(t) || (n.length >= 3 && t.includes(n)))
+          })
+          .slice(0, 8)
+          // Seed the line's default from how the product is most commonly bought
+          // across all customers; loose/each only when it's never been ordered.
+          .map(p => ({ id: p.id, name: p.name, unit: p.unit, unit_type: p.default_unit_type === 'box' ? 'box' : 'retail_unit' as 'box' | 'retail_unit' }))
+      )
+    } catch {
+      // Never let a transient fetch failure silently swallow the search box.
+      setResults([])
+    }
   }
 
   function addExtra(p: { id: string; name: string; unit: string; unit_type: 'box' | 'retail_unit' }) {
@@ -164,7 +185,8 @@ export default function OrderBuilder({ customerName, favourites, lastOrder }: {
             {favourites.map(f => (
               <Tile key={f.product_id} name={f.name} looseUnit={f.unit} q={qty[f.product_id] ?? 0}
                 sel={unitSel[f.product_id] ?? 'retail_unit'} onUnit={ut => setUnit(f.product_id, ut)}
-                onMinus={() => bump(f.product_id, -1)} onPlus={() => bump(f.product_id, 1)} />
+                onMinus={() => bump(f.product_id, -1)} onPlus={() => bump(f.product_id, 1)}
+                onSet={n => setExact(f.product_id, n)} />
             ))}
           </div>
         </>
@@ -177,7 +199,8 @@ export default function OrderBuilder({ customerName, favourites, lastOrder }: {
             {extraTiles.map(e => (
               <Tile key={e.id} name={e.name} looseUnit={e.unit} q={qty[e.id] ?? 0}
                 sel={unitSel[e.id] ?? e.unit_type} onUnit={ut => setUnit(e.id, ut)}
-                onMinus={() => bump(e.id, -1)} onPlus={() => bump(e.id, 1)} />
+                onMinus={() => bump(e.id, -1)} onPlus={() => bump(e.id, 1)}
+                onSet={n => setExact(e.id, n)} />
             ))}
           </div>
         </>
@@ -225,10 +248,10 @@ export default function OrderBuilder({ customerName, favourites, lastOrder }: {
   )
 }
 
-function Tile({ name, looseUnit, sel, onUnit, q, onMinus, onPlus }: {
+function Tile({ name, looseUnit, sel, onUnit, q, onMinus, onPlus, onSet }: {
   name: string; looseUnit: string; sel: 'box' | 'retail_unit'
   onUnit: (ut: 'box' | 'retail_unit') => void
-  q: number; onMinus: () => void; onPlus: () => void
+  q: number; onMinus: () => void; onPlus: () => void; onSet: (n: number) => void
 }) {
   const seg = (active: boolean) =>
     `flex-1 !min-h-0 h-9 rounded-md text-xs font-semibold transition-colors ${
@@ -247,7 +270,11 @@ function Tile({ name, looseUnit, sel, onUnit, q, onMinus, onPlus }: {
       <div className="flex items-center justify-between">
         <button onClick={onMinus} disabled={q <= 0} aria-label={`Decrease ${name}`}
           className="h-11 w-11 rounded-lg border border-white/20 text-xl leading-none disabled:opacity-30">−</button>
-        <span className="text-lg font-bold w-8 text-center">{q}</span>
+        <input type="text" inputMode="numeric" aria-label={`Quantity ${name}`}
+          value={q || ''} placeholder="0"
+          onChange={e => onSet(Math.max(0, Number(e.target.value.replace(/[^\d.]/g, '')) || 0))}
+          onFocus={e => e.target.select()}
+          className="w-12 h-11 text-center text-lg font-bold bg-transparent border border-white/15 rounded-lg focus:outline-none focus:border-brand-accent" />
         <button onClick={onPlus} aria-label={`Increase ${name}`}
           className="h-11 w-11 rounded-lg bg-white/10 text-xl leading-none">+</button>
       </div>

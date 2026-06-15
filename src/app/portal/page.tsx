@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
+import { logout } from '@/app/login/actions'
 
 function pence(p: number) { return `£${(p / 100).toFixed(2)}` }
 
@@ -54,7 +55,7 @@ export default async function PortalPage() {
           <h1 className="text-xl font-bold">{customer.name}</h1>
           <p className="text-[var(--text-muted)] text-sm">Customer portal</p>
         </div>
-        <form action="/auth/signout" method="POST">
+        <form action={logout}>
           <button className="text-[var(--text-muted)] text-sm">Sign out</button>
         </form>
       </div>
