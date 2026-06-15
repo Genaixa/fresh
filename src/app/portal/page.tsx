@@ -59,6 +59,12 @@ export default async function PortalPage() {
         </form>
       </div>
 
+      {/* Place an order */}
+      <Link href="/portal/order"
+        className="btn-primary block text-center py-3.5 font-semibold mb-6">
+        + Place an order
+      </Link>
+
       {/* Balance summary */}
       <div className="grid grid-cols-2 gap-3 mb-6">
         <div className="card text-center">

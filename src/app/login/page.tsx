@@ -36,13 +36,14 @@ function LoginContent() {
         <form className="space-y-4">
           <div>
             <label htmlFor="email" className="block text-sm font-medium mb-1.5">
-              Email
+              Username or email
             </label>
             <input
               id="email"
               name="email"
-              type="email"
-              autoComplete="email"
+              type="text"
+              autoComplete="username"
+              autoCapitalize="none"
               required
               className="w-full rounded-xl border border-white/10 bg-[var(--bg-card)]
                          px-4 py-3 text-base text-[var(--text)] min-h-[48px]
