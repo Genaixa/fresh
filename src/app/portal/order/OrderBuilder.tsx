@@ -18,7 +18,7 @@ export default function OrderBuilder({ customerName, favourites, lastOrder }: {
   const [deliveryDate, setDeliveryDate] = useState(nextDay())
   const [notes, setNotes]   = useState('')
   const [qty, setQty]       = useState<Record<string, number>>({})
-  const [extras, setExtras] = useState<{ id: string; name: string; unit: string }[]>([])
+  const [extras, setExtras] = useState<{ id: string; name: string; unit: string; unit_type: 'box' | 'retail_unit' }[]>([])
   // How each line is being ordered: a whole box, or loose in the product's own
   // unit. Seeded from the way the product was last bought so the default matches
   // the customer's habit; they can flip it per item.
@@ -31,7 +31,7 @@ export default function OrderBuilder({ customerName, favourites, lastOrder }: {
   const setUnit = (pid: string, ut: 'box' | 'retail_unit') =>
     setUnitSel(prev => ({ ...prev, [pid]: ut }))
   const [search, setSearch] = useState('')
-  const [results, setResults] = useState<{ id: string; name: string; unit: string }[]>([])
+  const [results, setResults] = useState<{ id: string; name: string; unit: string; unit_type: 'box' | 'retail_unit' }[]>([])
   const [saving, setSaving] = useState(false)
   const [error, setError]   = useState('')
   const [done, setDone]     = useState(false)
@@ -40,7 +40,7 @@ export default function OrderBuilder({ customerName, favourites, lastOrder }: {
   const meta: Record<string, Meta> = {}
   for (const f of favourites) meta[f.product_id] = { name: f.name, unit: f.unit, unit_type: f.unit_type }
   for (const l of lastOrder) if (!meta[l.product_id]) meta[l.product_id] = { name: l.name, unit: l.unit, unit_type: l.unit_type }
-  for (const e of extras)    if (!meta[e.id]) meta[e.id] = { name: e.name, unit: e.unit, unit_type: 'retail_unit' }
+  for (const e of extras)    if (!meta[e.id]) meta[e.id] = { name: e.name, unit: e.unit, unit_type: e.unit_type }
 
   const bump = (pid: string, d: number) =>
     setQty(prev => {
@@ -76,14 +76,17 @@ export default function OrderBuilder({ customerName, favourites, lastOrder }: {
           return p.is_active && (n.includes(t) || (n.length >= 3 && t.includes(n)))
         })
         .slice(0, 8)
-        .map(p => ({ id: p.id, name: p.name, unit: p.unit }))
+        // Seed the line's default from how the product is most commonly bought
+        // across all customers; loose/each only when it's never been ordered.
+        .map(p => ({ id: p.id, name: p.name, unit: p.unit, unit_type: p.default_unit_type === 'box' ? 'box' : 'retail_unit' as 'box' | 'retail_unit' }))
     )
   }
 
-  function addExtra(p: { id: string; name: string; unit: string }) {
+  function addExtra(p: { id: string; name: string; unit: string; unit_type: 'box' | 'retail_unit' }) {
     if (!favourites.find(f => f.product_id === p.id) && !extras.find(e => e.id === p.id)) {
       setExtras(es => [...es, p])
     }
+    setUnitSel(prev => prev[p.id] ? prev : { ...prev, [p.id]: p.unit_type })
     bump(p.id, 1)
     setSearch(''); setResults([])
   }
@@ -173,7 +176,7 @@ export default function OrderBuilder({ customerName, favourites, lastOrder }: {
           <div className="grid grid-cols-2 gap-3 mb-6">
             {extraTiles.map(e => (
               <Tile key={e.id} name={e.name} looseUnit={e.unit} q={qty[e.id] ?? 0}
-                sel={unitSel[e.id] ?? 'retail_unit'} onUnit={ut => setUnit(e.id, ut)}
+                sel={unitSel[e.id] ?? e.unit_type} onUnit={ut => setUnit(e.id, ut)}
                 onMinus={() => bump(e.id, -1)} onPlus={() => bump(e.id, 1)} />
             ))}
           </div>

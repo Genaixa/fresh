@@ -29,6 +29,10 @@ export default async function PortalOrderPage() {
     .order('order_date', { ascending: false })
 
   const orderIds = (orders ?? []).map(o => o.id)
+  // order_date drives "last bought", not the row's created_at: the historical
+  // orders were bulk-imported and share clustered created_at values, which would
+  // make "most recent unit" arbitrary among them.
+  const orderDate = new Map((orders ?? []).map(o => [o.id, o.order_date as string]))
 
   type Fav = { product_id: string; name: string; unit: string; unit_type: string; times: number }
   type LastLine = { product_id: string; name: string; unit: string; unit_type: string; quantity: number }
@@ -38,17 +42,19 @@ export default async function PortalOrderPage() {
   if (orderIds.length) {
     const { data: items } = await supabase
       .from('wholesale_order_items')
-      .select('order_id, product_id, quantity, unit_type, created_at, product:products(id, name, unit, is_active)')
+      .select('order_id, product_id, quantity, unit_type, product:products(id, name, unit, is_active)')
       .in('order_id', orderIds)
 
-    const byProduct = new Map<string, { p: any; orders: Set<string>; latestUnit: string; latestAt: string }>()
+    const byProduct = new Map<string, { p: any; orders: Set<string>; latestUnit: string; latestDate: string }>()
     for (const it of items ?? []) {
       const p = it.product as any
       if (!p || !p.is_active) continue
+      const d = orderDate.get(it.order_id) ?? ''
       let rec = byProduct.get(it.product_id)
-      if (!rec) { rec = { p, orders: new Set(), latestUnit: it.unit_type, latestAt: it.created_at }; byProduct.set(it.product_id, rec) }
+      if (!rec) { rec = { p, orders: new Set(), latestUnit: it.unit_type, latestDate: d }; byProduct.set(it.product_id, rec) }
       rec.orders.add(it.order_id)
-      if (it.created_at > rec.latestAt) { rec.latestAt = it.created_at; rec.latestUnit = it.unit_type }
+      // Seed the line's default unit from however it was last actually bought.
+      if (d > rec.latestDate) { rec.latestDate = d; rec.latestUnit = it.unit_type }
     }
     favourites = [...byProduct.values()]
       .sort((a, b) => b.orders.size - a.orders.size)
