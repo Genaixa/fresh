@@ -41,6 +41,8 @@ export default async function PortalPage() {
     .select('*, items:wholesale_invoice_items(*), payments:wholesale_payments(*)')
     .eq('customer_id', customer.id)
     .order('invoice_date', { ascending: false })
+    // Tie-break same-date invoices by number so they read newest-first.
+    .order('invoice_number', { ascending: false })
 
   const total_invoiced = (invoices ?? []).reduce((s, i) => s + i.total_amount, 0)
   const total_paid     = (invoices ?? []).reduce((s, i) => s + i.amount_paid, 0)
