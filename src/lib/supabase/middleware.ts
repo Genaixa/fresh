@@ -60,5 +60,18 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
+  // Wholesale customers are confined to their ordering portal — never David's
+  // back-office pages or staff APIs. (RLS is the real boundary; this just keeps
+  // them out of UI/endpoints that aren't theirs.)
+  if (
+    profile?.role === 'wholesale_customer' &&
+    !pathname.startsWith('/portal') &&
+    !pathname.startsWith('/api/portal')
+  ) {
+    const url = request.nextUrl.clone()
+    url.pathname = '/portal'
+    return NextResponse.redirect(url)
+  }
+
   return supabaseResponse
 }

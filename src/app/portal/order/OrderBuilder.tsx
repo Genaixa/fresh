@@ -48,7 +48,7 @@ export default function OrderBuilder({ customerName, favourites, lastOrder }: {
   async function runSearch(term: string) {
     setSearch(term)
     if (term.trim().length < 2) { setResults([]); return }
-    const res = await fetch('/api/products')
+    const res = await fetch('/api/portal/products')
     const data = await res.json()
     setResults(
       (data as any[])

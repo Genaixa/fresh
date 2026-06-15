@@ -24,14 +24,17 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'No wholesale account linked to this login' }, { status: 403 })
   }
 
-  const body = await req.json()
-  const items = (Array.isArray(body.items) ? body.items : [])
+  let body: any
+  try { body = await req.json() } catch { return NextResponse.json({ error: 'Invalid request' }, { status: 400 }) }
+
+  const note = String(body?.notes ?? '').trim().slice(0, 1000)
+  const items = (Array.isArray(body?.items) ? body.items : [])
     .map((i: any) => ({
-      product_id: i.product_id as string,
-      quantity:   Number(i.quantity) || 0,
-      unit_type:  i.unit_type === 'box' ? 'box' : 'retail_unit',
+      product_id: i?.product_id as string,
+      quantity:   Math.round((Number(i?.quantity) || 0) * 1000) / 1000, // up to 3dp
+      unit_type:  i?.unit_type === 'box' ? 'box' : 'retail_unit',
     }))
-    .filter((i: any) => i.product_id && i.quantity > 0)
+    .filter((i: any) => i.product_id && i.quantity > 0 && i.quantity <= 999)
 
   if (items.length === 0) return NextResponse.json({ error: 'Your order is empty' }, { status: 400 })
 
@@ -42,9 +45,13 @@ export async function POST(req: Request) {
   const admin = createServiceClient()
   const { data: prods } = await admin
     .from('products')
-    .select('id, name, retail_price, case_size')
+    .select('id, name, retail_price, case_size, is_active')
     .in('id', productIds)
-  const prodMap = new Map((prods ?? []).map(p => [p.id, p]))
+  const prodMap = new Map((prods ?? []).filter(p => p.is_active).map(p => [p.id, p]))
+
+  // Reject unknown / inactive products instead of silently pricing them at 0
+  const badId = productIds.find(id => !prodMap.has(id))
+  if (badId) return NextResponse.json({ error: 'One or more items are no longer available' }, { status: 400 })
 
   // David's latest (cheapest) supplier box cost per product
   const { data: lastPrices } = await admin
@@ -81,7 +88,7 @@ export async function POST(req: Request) {
     .insert({
       customer_id:   customer.id,
       delivery_date: body.delivery_date || null,
-      notes:         body.notes || null,
+      notes:         note || null,
       status:        'confirmed',
       created_by:    user.id,
     })
@@ -98,9 +105,13 @@ export async function POST(req: Request) {
   }))
 
   const { error: itemErr } = await supabase.from('wholesale_order_items').insert(lineItems)
-  if (itemErr) return NextResponse.json({ error: itemErr.message }, { status: 500 })
+  if (itemErr) {
+    // Roll back the now-orphaned order (via admin — customers have no DELETE
+    // policy) so David never sees an empty confirmed order.
+    await admin.from('wholesale_orders').delete().eq('id', order.id)
+    return NextResponse.json({ error: itemErr.message }, { status: 500 })
+  }
 
-  const note = (body.notes || '').trim()
   const estWarn = estimated.length
     ? `\n⚠️ <b>Check price</b> (no known cost): ${[...new Set(estimated)].join(', ')}`
     : ''
