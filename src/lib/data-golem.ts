@@ -407,6 +407,80 @@ async function checkOrderFulfillment(
   return { findings, telegramLines }
 }
 
+// ─── Check 10: Invoice reconciliation — lines must sum to printed total ───────
+// Catches the failure that silently dropped JR Holland ticket 2745255 on
+// 15 Jun: a parser truncation that lost a line (or a whole invoice's worth).
+// Works at the DB level so it catches the EFFECT regardless of cause.
+async function checkReconciliation(
+  supabase: SupabaseClient,
+  source: GolemFinding['source'],
+): Promise<GolemFinding[]> {
+  const today = new Date().toISOString().slice(0, 10)
+  const { data: invoices } = await supabase
+    .from('purchase_invoices')
+    .select('id, invoice_number, supplier_name, total_amount')
+    .eq('invoice_date', today)
+    .neq('status', 'error')
+
+  if (!invoices?.length) return []
+
+  const findings: GolemFinding[] = []
+  for (const inv of invoices) {
+    if (inv.total_amount == null) continue
+    const { data: items } = await supabase
+      .from('purchase_invoice_items')
+      .select('total_cost')
+      .eq('invoice_id', inv.id)
+
+    const lineSum = (items ?? []).reduce((s, i) => s + (i.total_cost ?? 0), 0)
+    const gap = inv.total_amount - lineSum
+    if (Math.abs(gap) <= 1) continue  // matches (allow 1p rounding)
+
+    const ref = inv.invoice_number ?? '(no number)'
+    findings.push({
+      alert_type:  'reconcile_gap',
+      severity:    'critical' as const,
+      message:  `${inv.supplier_name} ${ref}: lines sum to £${(lineSum / 100).toFixed(2)} but invoice total is £${(inv.total_amount / 100).toFixed(2)} — £${(Math.abs(gap) / 100).toFixed(2)} ${gap > 0 ? 'MISSING (a line was dropped or misread)' : 'extra (a line was double-counted)'}.`,
+      action:   'Open the invoice and add/fix the line so it reconciles.',
+      source,
+    })
+  }
+  return findings
+}
+
+// ─── Check 11: Suspicious ingest — small-hours / pre-market arrivals ──────────
+// Flags notes ingested before the market opened (e.g. the 03:05 BST Thomas Baty
+// DN258597/DN258305 re-sends deleted on 15 Jun) — almost always a re-sent or
+// mis-dated old note rather than a real same-day delivery.
+async function checkSuspiciousIngest(
+  supabase: SupabaseClient,
+  source: GolemFinding['source'],
+): Promise<GolemFinding[]> {
+  const today = new Date().toISOString().slice(0, 10)
+  const { data: invoices } = await supabase
+    .from('purchase_invoices')
+    .select('invoice_number, supplier_name, created_at')
+    .eq('invoice_date', today)
+    .neq('status', 'error')
+
+  if (!invoices?.length) return []
+
+  const findings: GolemFinding[] = []
+  for (const inv of invoices) {
+    const ts = new Date(inv.created_at)
+    if (ts.getUTCHours() >= 5) continue  // 00:00–05:00 UTC = before the market
+    const hhmm = ts.toISOString().slice(11, 16)
+    findings.push({
+      alert_type:  'suspicious_ingest',
+      severity:    'warning' as const,
+      message:  `${inv.supplier_name} ${inv.invoice_number ?? ''} was ingested at ${hhmm} UTC — before the market opened. Likely a re-sent/mis-dated old note (cf. the 3am Baty DN258597/DN258305 removed 15 Jun), not a real delivery.`,
+      action:   'Check against the paper ticket; delete if it is a re-send polluting cost data.',
+      source,
+    })
+  }
+  return findings
+}
+
 // ─── LLM briefing synthesis ───────────────────────────────────────────────────
 async function generateBriefing(findings: GolemFinding[]): Promise<string | null> {
   const apiKey = process.env.OPENROUTER_API_KEY
@@ -515,17 +589,19 @@ export async function runPostInvoiceGolem(
 export async function runDailySweep(supabase: SupabaseClient): Promise<string | null> {
   const findings: GolemFinding[] = []
 
-  const [unmatched, stale, expired, gaps, arbitrage, holidays, ordersBriefing] = await Promise.all([
+  const [unmatched, stale, expired, gaps, arbitrage, holidays, reconcile, suspicious, ordersBriefing] = await Promise.all([
     checkUnmatchedItems(supabase, 'daily_sweep'),
     checkStaleCosts(supabase, null, 'daily_sweep'),
     expireOldSuggestions(supabase, 'daily_sweep'),
     checkDeliveryGap(supabase, 'daily_sweep'),
     checkArbitrage(supabase, 'daily_sweep'),
     checkHolidayPrep(supabase, 'daily_sweep'),
+    checkReconciliation(supabase, 'daily_sweep'),
+    checkSuspiciousIngest(supabase, 'daily_sweep'),
     buildOrdersBriefing(supabase),
   ])
 
-  findings.push(...unmatched, ...stale, ...expired, ...gaps, ...arbitrage, ...holidays)
+  findings.push(...unmatched, ...stale, ...expired, ...gaps, ...arbitrage, ...holidays, ...reconcile, ...suspicious)
   await storeFindings(supabase, findings)
 
   const briefing = await generateBriefing(findings.filter(f => f.severity !== 'info'))
