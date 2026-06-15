@@ -82,12 +82,48 @@ Box spec rules — read BOTH Product Description AND Brand column:
 - "18.2KG" → unit_type="weight", box_weight_kg=18.2
 - If you cannot determine box spec, set unit_type="count", units_per_case=1, box_weight_kg=null`
 
+// How many times to ask the model before giving up. The LLM occasionally
+// returns a truncated / non-JSON response (a transient provider hiccup, e.g.
+// the J.R. Holland ticket 2745255 on 15 Jun that got cut off mid-field). A
+// couple of retries clears almost all of these.
+//
+// IMPORTANT: retrying here is SAFE against duplicate invoices because this
+// function ONLY parses — it never writes to the database. The caller inserts
+// the invoice once, after a successful parse returns. Retries are also strictly
+// BOUNDED by PARSE_MAX_ATTEMPTS, so a permanently-bad PDF fails fast (it does
+// not loop forever); the caller's catch block then skips that one attachment.
+const PARSE_MAX_ATTEMPTS = 3
+
 /**
  * Parse a market invoice PDF or photo using OpenRouter vision.
  * base64Content: the file as a base64-encoded string.
  * mimeType: the file MIME type (default: application/pdf).
+ *
+ * Retries up to PARSE_MAX_ATTEMPTS times on a truncated / unparseable model
+ * response. Does NOT write to the DB, so retries cannot create duplicates.
  */
 export async function parseInvoicePdf(base64Content: string, mimeType = 'application/pdf'): Promise<ParsedInvoice> {
+  let lastErr: unknown
+  for (let attempt = 1; attempt <= PARSE_MAX_ATTEMPTS; attempt++) {
+    try {
+      return await parseInvoiceOnce(base64Content, mimeType)
+    } catch (err) {
+      lastErr = err
+      const msg = err instanceof Error ? err.message : String(err)
+      console.warn(`[invoice-parser] parse attempt ${attempt}/${PARSE_MAX_ATTEMPTS} failed: ${msg}`)
+      if (attempt < PARSE_MAX_ATTEMPTS) {
+        // brief backoff before re-asking the model
+        await new Promise(r => setTimeout(r, 800 * attempt))
+      }
+    }
+  }
+  throw lastErr instanceof Error
+    ? new Error(`Parse failed after ${PARSE_MAX_ATTEMPTS} attempts: ${lastErr.message}`)
+    : new Error(`Parse failed after ${PARSE_MAX_ATTEMPTS} attempts`)
+}
+
+/** Single parse attempt — one model call, throws on empty/truncated/unparseable output. */
+async function parseInvoiceOnce(base64Content: string, mimeType: string): Promise<ParsedInvoice> {
   const model = process.env.OPENROUTER_MODEL ?? DEFAULT_MODEL
 
   const response = await getClient().chat.completions.create({
@@ -113,6 +149,12 @@ export async function parseInvoicePdf(base64Content: string, mimeType = 'applica
   })
 
   const text = response.choices[0]?.message?.content ?? ''
+  // A 'length' finish means the response was cut off mid-JSON — treat as a
+  // retryable failure rather than trying to parse half an object.
+  const finishReason = response.choices[0]?.finish_reason
+  if (finishReason === 'length') {
+    throw new Error(`Model response truncated (finish_reason=length): ${text.slice(0, 300)}`)
+  }
 
   // Extract the outermost JSON object — handles markdown fences, leading text, etc.
   const jsonMatch = text.match(/\{[\s\S]*\}/)
