@@ -40,7 +40,7 @@ export default function MarkPaidButton({
       <button
         onClick={pay}
         disabled={saving}
-        className={`text-xs font-semibold whitespace-nowrap transition-colors disabled:opacity-50 ${
+        className={`text-xs font-semibold whitespace-nowrap transition-colors disabled:opacity-50 min-h-0 min-w-0 py-0.5 ${
           confirming ? 'text-amber-400' : 'text-brand-accent hover:underline'
         }`}
       >
