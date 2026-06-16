@@ -92,5 +92,7 @@ export function invoiceCsv(d: InvoiceExport): string {
     [],
     ['', '', 'Total (£)', (d.total / 100).toFixed(2)],
   ]
-  return rows.map(r => r.map(esc).join(',')).join('\n')
+  // Lead with a UTF-8 BOM so Excel reads £ (and any non-ASCII) as UTF-8 rather
+  // than Windows-1252, which otherwise renders "£" as "Â£".
+  return '﻿' + rows.map(r => r.map(esc).join(',')).join('\n')
 }
