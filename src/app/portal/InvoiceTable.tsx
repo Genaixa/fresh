@@ -110,9 +110,12 @@ export default function InvoiceTable({
               <td className="px-3 py-2.5 text-right font-bold whitespace-nowrap">{pence(inv.total_amount)}</td>
               <td className="px-3 py-2.5 text-right">
                 <div className="inline-flex flex-col items-end gap-1.5">
-                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${STATUS_STYLE[inv.payment_status] ?? ''}`}>
-                    {inv.payment_status}
-                  </span>
+                  {/* "unpaid"/"paid" are implied by which list this is; only flag exceptions. */}
+                  {(inv.payment_status === 'overdue' || inv.payment_status === 'partial') && (
+                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${STATUS_STYLE[inv.payment_status] ?? ''}`}>
+                      {inv.payment_status}
+                    </span>
+                  )}
                   {inv.payment_status !== 'paid' && (
                     <MarkPaidButton invoiceId={inv.id} variant="row" />
                   )}

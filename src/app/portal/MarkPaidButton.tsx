@@ -43,7 +43,7 @@ export default function MarkPaidButton({
           confirming ? 'bg-green-600 text-white' : 'bg-zinc-700 text-zinc-200 hover:bg-zinc-600'
         }`}
       >
-        {saving ? 'Saving…' : confirming ? 'Confirm' : 'Mark paid'}
+        {saving ? 'Saving…' : confirming ? 'Confirm' : 'Pay'}
       </button>
     )
   }
