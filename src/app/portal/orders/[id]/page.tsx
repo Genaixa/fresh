@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect, notFound } from 'next/navigation'
 import Link from 'next/link'
+import OrderItemsTable from './OrderItemsTable'
 
 function fmtDate(d: string) { return new Date(d).toLocaleDateString('en-GB') }
 
@@ -58,19 +59,18 @@ export default async function PortalOrderDetailPage({ params }: { params: Promis
         </div>
       </div>
 
-      <div className="space-y-2 mb-4">
-        {(order.items ?? []).map((it: any) => (
-          <div key={it.id} className="card flex items-center justify-between">
-            <p className="font-medium text-sm">{it.product?.name ?? 'Item'}</p>
-            <p className="text-sm text-[var(--text-muted)]">
-              {Number(it.quantity)} × {unitLabel(it)}
-            </p>
-          </div>
-        ))}
-        {(order.items ?? []).length === 0 && (
-          <div className="card text-center py-6 text-[var(--text-muted)]">No items</div>
-        )}
-      </div>
+      {(order.items ?? []).length > 0 ? (
+        <OrderItemsTable
+          items={(order.items as any[]).map(it => ({
+            id: it.id,
+            name: it.product?.name ?? 'Item',
+            quantity: Number(it.quantity),
+            unit: unitLabel(it),
+          }))}
+        />
+      ) : (
+        <div className="card text-center py-6 text-[var(--text-muted)] mb-4">No items</div>
+      )}
 
       {order.notes && (
         <div className="card mb-4 text-sm">
