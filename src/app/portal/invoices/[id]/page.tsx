@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect, notFound } from 'next/navigation'
 import Link from 'next/link'
 import InvoiceItemsTable from './InvoiceItemsTable'
+import MarkPaidButton from '../../MarkPaidButton'
 
 function pence(p: number) { return `£${(p / 100).toFixed(2)}` }
 function fmtDate(d: string) { return new Date(d).toLocaleDateString('en-GB') }
@@ -106,10 +107,16 @@ export default async function PortalInvoicePage({ params }: { params: Promise<{ 
         </div>
       )}
 
+      {inv.payment_status !== 'paid' && balance > 0 && (
+        <div className="mb-4">
+          <MarkPaidButton invoiceId={id} variant="full" />
+        </div>
+      )}
+
       <div className="grid grid-cols-2 gap-2">
-        <a href={`/api/invoices/${id}/export?format=pdf`}
+        <a href={`/api/portal/invoices/${id}/export?format=pdf`}
           className="card block text-center text-brand-accent text-sm py-3 font-medium">⬇ PDF</a>
-        <a href={`/api/invoices/${id}/export?format=csv`}
+        <a href={`/api/portal/invoices/${id}/export?format=csv`}
           className="card block text-center text-brand-accent text-sm py-3 font-medium">⬇ CSV / Excel</a>
       </div>
 

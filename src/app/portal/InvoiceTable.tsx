@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import MarkPaidButton from './MarkPaidButton'
 
 export type PortalInvoice = {
   id: string
@@ -61,7 +62,7 @@ export default function InvoiceTable({
   const btnCls = 'inline-flex items-center hover:text-[var(--text)] transition-colors'
 
   return (
-    <div className="card p-0 overflow-hidden">
+    <div className="card p-0 overflow-x-auto">
       <table className="w-full text-sm">
         <thead>
           <tr className="border-b border-zinc-700 text-left">
@@ -75,7 +76,7 @@ export default function InvoiceTable({
                 Issued{arrow('invoice_date')}
               </button>
             </th>
-            <th className={`${headCls} px-3 py-2`}>
+            <th className={`${headCls} px-3 py-2 hidden sm:table-cell`}>
               <button className={btnCls} onClick={() => toggle('due_date')} aria-label="Sort by due date">
                 Due{arrow('due_date')}
               </button>
@@ -103,14 +104,19 @@ export default function InvoiceTable({
               <td className="px-3 py-2.5 text-[var(--text-muted)] text-xs whitespace-nowrap hidden sm:table-cell">
                 {fmtDate(inv.invoice_date)}
               </td>
-              <td className="px-3 py-2.5 text-[var(--text-muted)] text-xs whitespace-nowrap">
+              <td className="px-3 py-2.5 text-[var(--text-muted)] text-xs whitespace-nowrap hidden sm:table-cell">
                 {fmtDate(inv.due_date)}
               </td>
               <td className="px-3 py-2.5 text-right font-bold whitespace-nowrap">{pence(inv.total_amount)}</td>
               <td className="px-3 py-2.5 text-right">
-                <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${STATUS_STYLE[inv.payment_status] ?? ''}`}>
-                  {inv.payment_status}
-                </span>
+                <div className="inline-flex flex-col items-end gap-1.5">
+                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${STATUS_STYLE[inv.payment_status] ?? ''}`}>
+                    {inv.payment_status}
+                  </span>
+                  {inv.payment_status !== 'paid' && (
+                    <MarkPaidButton invoiceId={inv.id} variant="row" />
+                  )}
+                </div>
               </td>
             </tr>
           ))}
