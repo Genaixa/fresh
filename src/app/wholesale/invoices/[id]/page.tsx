@@ -152,6 +152,9 @@ export default function InvoiceDetailPage() {
                     {p.method.replace('_', ' ')}
                     {p.reference ? ` · ${p.reference}` : ''}
                   </p>
+                  {p.notes && (
+                    <p className="text-amber-400/80 text-xs mt-0.5 normal-case">{p.notes}</p>
+                  )}
                 </div>
                 <p className="text-green-400 font-medium">{pence(p.amount)}</p>
               </div>
