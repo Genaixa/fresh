@@ -45,7 +45,7 @@ export async function POST(req: Request) {
   const admin = createServiceClient()
   const { data: prods } = await admin
     .from('products')
-    .select('id, name, retail_price, case_size, is_active')
+    .select('id, name, unit, retail_price, case_size, is_active')
     .in('id', productIds)
   const prodMap = new Map((prods ?? []).filter(p => p.is_active).map(p => [p.id, p]))
 
@@ -115,8 +115,18 @@ export async function POST(req: Request) {
   const estWarn = estimated.length
     ? `\n⚠️ <b>Check price</b> (no known cost): ${[...new Set(estimated)].join(', ')}`
     : ''
+  // Spell out the order so David sees what to pick without opening the portal.
+  const itemLines = lineItems
+    .map((l: any) => {
+      const p = prodMap.get(l.product_id)
+      const unitLabel = l.unit_type === 'box' ? 'box' : (p?.unit ?? '')
+      return { name: p?.name ?? 'Unknown', text: `• ${p?.name ?? 'Unknown'} — ${l.quantity} ${unitLabel}`.trimEnd() }
+    })
+    .sort((a: { name: string }, b: { name: string }) => a.name.localeCompare(b.name))
+    .map((l: { text: string }) => l.text)
+    .join('\n')
   sendTelegram(
-    `🧺 <b>Portal order — ${customer.name}</b>\nDelivery: ${body.delivery_date || 'not set'}\n${lineItems.length} item${lineItems.length === 1 ? '' : 's'}` +
+    `🧺 <b>Portal order — ${customer.name}</b>\nDelivery: ${body.delivery_date || 'not set'}\n${lineItems.length} item${lineItems.length === 1 ? '' : 's'}\n${itemLines}` +
     (note ? `\n📝 ${note}` : '') +
     estWarn
   ).catch(() => {})
