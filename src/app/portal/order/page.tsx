@@ -73,5 +73,7 @@ export default async function PortalOrderPage() {
       }))
   }
 
-  return <OrderBuilder customerName={customer.name} favourites={favourites} lastOrder={lastOrder} />
+  const lastOrderDate = orderIds.length ? orderDate.get(orderIds[0]) ?? null : null
+
+  return <OrderBuilder customerName={customer.name} favourites={favourites} lastOrder={lastOrder} lastOrderDate={lastOrderDate} />
 }

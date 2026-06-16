@@ -7,15 +7,27 @@ interface Fav { product_id: string; name: string; unit: string; unit_type: strin
 interface LastLine { product_id: string; name: string; unit: string; unit_type: string; quantity: number }
 interface Meta { name: string; unit: string; unit_type: string }
 
-function nextDay() {
+// Next deliverable day = tomorrow, skipping Sat/Sun (David delivers Mon–Fri).
+function nextWeekday() {
   const d = new Date(); d.setDate(d.getDate() + 1)
+  while (d.getDay() === 0 || d.getDay() === 6) d.setDate(d.getDate() + 1)
   return d.toISOString().split('T')[0]
 }
 
-export default function OrderBuilder({ customerName, favourites, lastOrder }: {
-  customerName: string; favourites: Fav[]; lastOrder: LastLine[]
+// Parse a YYYY-MM-DD as local midnight so the weekday/label never drift a day.
+function asLocal(iso: string) { return new Date(iso + 'T00:00:00') }
+function isWeekend(iso: string) { const g = asLocal(iso).getDay(); return g === 0 || g === 6 }
+function weekdayLabel(iso: string) {
+  if (!iso) return ''
+  return asLocal(iso).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })
+}
+
+export default function OrderBuilder({ customerName, favourites, lastOrder, lastOrderDate }: {
+  customerName: string; favourites: Fav[]; lastOrder: LastLine[]; lastOrderDate?: string | null
 }) {
-  const [deliveryDate, setDeliveryDate] = useState(nextDay())
+  const todayISO = new Date().toISOString().split('T')[0]
+  const [deliveryDate, setDeliveryDate] = useState(nextWeekday())
+  const [confirming, setConfirming] = useState(false)
   const [notes, setNotes]   = useState('')
   const [qty, setQty]       = useState<Record<string, number>>({})
   const [extras, setExtras] = useState<{ id: string; name: string; unit: string; unit_type: 'box' | 'retail_unit' }[]>([])
@@ -114,6 +126,23 @@ export default function OrderBuilder({ customerName, favourites, lastOrder }: {
 
   const lineCount = Object.values(qty).filter(v => v > 0).length
 
+  // Reset the whole order in one tap (e.g. after an accidental "repeat last").
+  function clearAll() { setQty({}); setConfirming(false) }
+
+  // The order spelled out, for the confirm sheet — built from current state only.
+  const orderLines = Object.entries(qty)
+    .filter(([, q]) => q > 0)
+    .map(([pid, q]) => {
+      const m = meta[pid]
+      const ut = unitSel[pid] ?? (m?.unit_type === 'box' ? 'box' : 'retail_unit')
+      return { pid, name: m?.name ?? '', q, unitLabel: ut === 'box' ? 'box' : (m?.unit ?? '') }
+    })
+    .sort((a, b) => a.name.localeCompare(b.name))
+
+  const dateError = isWeekend(deliveryDate)
+    ? 'David delivers Monday–Friday — please pick a weekday.'
+    : deliveryDate < todayISO ? "Delivery date can't be in the past." : ''
+
   async function submit() {
     if (lineCount === 0) { setError('Add at least one item'); return }
     setSaving(true); setError('')
@@ -168,19 +197,27 @@ export default function OrderBuilder({ customerName, favourites, lastOrder }: {
 
       <div className="card mb-4">
         <label className="label">Delivery date</label>
-        <input className="input" type="date" value={deliveryDate}
+        <input className="input" type="date" value={deliveryDate} min={todayISO}
           onChange={e => setDeliveryDate(e.target.value)} />
+        {dateError
+          ? <p className="text-amber-400 text-xs mt-2">{dateError}</p>
+          : <p className="text-[var(--text-muted)] text-xs mt-2">{weekdayLabel(deliveryDate)}</p>}
       </div>
 
       {lastOrder.length > 0 && (
         <button onClick={repeatLast} className="btn-primary w-full py-3 mb-5 font-semibold">
-          ↻ Repeat last order ({lastOrder.length} item{lastOrder.length === 1 ? '' : 's'})
+          ↻ Repeat last order{lastOrderDate ? ` — ${weekdayLabel(lastOrderDate)}` : ''} ({lastOrder.length} item{lastOrder.length === 1 ? '' : 's'})
         </button>
       )}
 
       {favourites.length > 0 && (
         <>
-          <h2 className="font-semibold mb-3">Your usuals</h2>
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="font-semibold">Your usuals</h2>
+            {lineCount > 0 && (
+              <button onClick={clearAll} className="text-[var(--text-muted)] text-xs underline">Clear all</button>
+            )}
+          </div>
           <div className="grid grid-cols-2 gap-3 mb-6">
             {favourites.map(f => (
               <Tile key={f.product_id} name={f.name} looseUnit={f.unit} q={qty[f.product_id] ?? 0}
@@ -237,13 +274,48 @@ export default function OrderBuilder({ customerName, favourites, lastOrder }: {
       {error && <p className="text-red-400 text-sm mb-3">{error}</p>}
 
       <div className="fixed bottom-0 left-0 right-0 max-w-lg mx-auto p-4 bg-[var(--bg-main)] border-t border-white/10">
-        <button onClick={submit} disabled={saving || lineCount === 0}
+        <button onClick={() => { if (dateError) { setError(dateError); return } setError(''); setConfirming(true) }}
+          disabled={lineCount === 0}
           className="btn-primary w-full py-3.5 font-semibold disabled:opacity-50">
-          {saving ? 'Placing…'
-            : lineCount === 0 ? 'Add items to order'
-            : `Place order · ${lineCount} item${lineCount === 1 ? '' : 's'}`}
+          {lineCount === 0 ? 'Add items to order'
+            : `Review order · ${lineCount} item${lineCount === 1 ? '' : 's'}`}
         </button>
       </div>
+
+      {confirming && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 p-4"
+          onClick={() => !saving && setConfirming(false)}>
+          <div className="card w-full max-w-md max-h-[85vh] flex flex-col" onClick={e => e.stopPropagation()}>
+            <h2 className="text-lg font-bold mb-1">Confirm your order</h2>
+            <p className="text-[var(--text-muted)] text-sm mb-3">
+              Delivery <span className="text-[var(--text)] font-medium">{weekdayLabel(deliveryDate)}</span>
+            </p>
+            <div className="flex-1 overflow-y-auto -mx-1 px-1 divide-y divide-white/10">
+              {orderLines.map(l => (
+                <div key={l.pid} className="flex items-center justify-between py-2 text-sm">
+                  <span>{l.name}</span>
+                  <span className="font-semibold tabular-nums">{l.q} <span className="text-[var(--text-muted)] font-normal">{l.unitLabel}</span></span>
+                </div>
+              ))}
+            </div>
+            {notes.trim() && (
+              <p className="text-[var(--text-muted)] text-xs mt-3 border-t border-white/10 pt-3">
+                Note: <span className="text-[var(--text)]">{notes.trim()}</span>
+              </p>
+            )}
+            <p className="text-[var(--text-muted)] text-xs mt-3">Once placed, your order is final.</p>
+            {error && <p className="text-red-400 text-sm mt-2">{error}</p>}
+            <div className="flex gap-3 mt-4">
+              <button onClick={() => setConfirming(false)} disabled={saving}
+                className="flex-1 py-3 rounded-lg border border-white/20 font-semibold disabled:opacity-50">Back</button>
+              <button onClick={submit} disabled={saving}
+                className="btn-primary flex-1 py-3 font-semibold disabled:opacity-50">
+                {saving ? 'Placing…' : `Confirm · ${lineCount}`}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
