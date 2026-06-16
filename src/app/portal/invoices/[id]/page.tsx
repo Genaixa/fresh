@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect, notFound } from 'next/navigation'
 import Link from 'next/link'
+import InvoiceItemsTable from './InvoiceItemsTable'
 
 function pence(p: number) { return `£${(p / 100).toFixed(2)}` }
 function fmtDate(d: string) { return new Date(d).toLocaleDateString('en-GB') }
@@ -64,19 +65,7 @@ export default async function PortalInvoicePage({ params }: { params: Promise<{ 
       </div>
 
       {/* Items */}
-      <div className="space-y-2 mb-4">
-        {(inv.items ?? []).map((item: any) => (
-          <div key={item.id} className="card flex items-center justify-between">
-            <div>
-              <p className="font-medium text-sm">{item.description}</p>
-              <p className="text-[var(--text-muted)] text-xs">
-                {item.quantity} × {pence(item.unit_price)}
-              </p>
-            </div>
-            <p className="font-bold">{pence(item.total_price)}</p>
-          </div>
-        ))}
-      </div>
+      <InvoiceItemsTable items={inv.items ?? []} />
 
       {/* Totals */}
       <div className="card mb-4 space-y-2 text-sm">
