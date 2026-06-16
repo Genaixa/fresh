@@ -35,15 +35,16 @@ export default function MarkPaidButton({
   }
 
   if (variant === 'row') {
+    // Plain text action (no pill/circle) so it reads like the status column.
     return (
       <button
         onClick={pay}
         disabled={saving}
-        className={`text-[11px] px-2 py-0.5 rounded-full font-medium whitespace-nowrap transition-colors disabled:opacity-50 ${
-          confirming ? 'bg-green-600 text-white' : 'bg-zinc-700 text-zinc-200 hover:bg-zinc-600'
+        className={`text-xs font-semibold whitespace-nowrap transition-colors disabled:opacity-50 ${
+          confirming ? 'text-amber-400' : 'text-brand-accent hover:underline'
         }`}
       >
-        {saving ? 'Saving…' : confirming ? 'Confirm' : 'Pay'}
+        {saving ? 'Saving…' : confirming ? 'Confirm?' : 'Pay'}
       </button>
     )
   }

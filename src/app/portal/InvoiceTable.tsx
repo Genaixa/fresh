@@ -110,8 +110,9 @@ export default function InvoiceTable({
               <td className="px-3 py-2.5 text-right font-bold whitespace-nowrap">{pence(inv.total_amount)}</td>
               <td className="px-3 py-2.5 text-right">
                 <div className="inline-flex flex-col items-end gap-1.5">
-                  {/* "unpaid"/"paid" are implied by which list this is; only flag exceptions. */}
-                  {(inv.payment_status === 'overdue' || inv.payment_status === 'partial') && (
+                  {/* "unpaid" is implied by the Outstanding list, so it's suppressed;
+                      paid/overdue/partial are worth showing. */}
+                  {inv.payment_status !== 'unpaid' && (
                     <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${STATUS_STYLE[inv.payment_status] ?? ''}`}>
                       {inv.payment_status}
                     </span>
