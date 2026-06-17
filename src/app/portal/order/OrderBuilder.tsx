@@ -128,6 +128,13 @@ export default function OrderBuilder({ customerName, favourites, lastOrder, last
     setSearch(''); setResults([])
   }
 
+  // Remove an added item outright (the ✕). Reducing qty to 0 leaves the tile in
+  // place — only the ✕ takes it off the list, so an adjustment can't lose it.
+  function removeExtra(id: string) {
+    setExtras(es => es.filter(e => e.id !== id))
+    setQty(prev => { const n = { ...prev }; delete n[id]; return n })
+  }
+
   const lineCount = Object.values(qty).filter(v => v > 0).length
 
   // Reset the whole order in one tap (e.g. after an accidental "repeat last").
@@ -251,7 +258,7 @@ export default function OrderBuilder({ customerName, favourites, lastOrder, last
               <Tile key={e.id} name={e.name} looseUnit={e.unit} q={qty[e.id] ?? 0}
                 sel={unitSel[e.id] ?? e.unit_type} onUnit={ut => setUnit(e.id, ut)}
                 onMinus={() => bump(e.id, -1)} onPlus={() => bump(e.id, 1)}
-                onSet={n => setExact(e.id, n)} />
+                onSet={n => setExact(e.id, n)} onRemove={() => removeExtra(e.id)} />
             ))}
           </div>
         </>
@@ -333,19 +340,25 @@ export default function OrderBuilder({ customerName, favourites, lastOrder, last
   )
 }
 
-function Tile({ name, looseUnit, sel, onUnit, q, onMinus, onPlus, onSet }: {
+function Tile({ name, looseUnit, sel, onUnit, q, onMinus, onPlus, onSet, onRemove }: {
   name: string; looseUnit: string; sel: 'box' | 'retail_unit'
   onUnit: (ut: 'box' | 'retail_unit') => void
   q: number; onMinus: () => void; onPlus: () => void; onSet: (n: number) => void
+  onRemove?: () => void
 }) {
   const seg = (active: boolean) =>
     `flex-1 !min-h-0 h-9 rounded-md text-xs font-semibold transition-colors ${
       active ? 'bg-brand-accent text-white' : 'text-[var(--text-muted)]'
     }`
   return (
-    <div className={`card !p-3 flex flex-col justify-between ${q > 0 ? 'ring-2 ring-brand-accent' : ''}`}>
+    <div className={`card !p-3 flex flex-col justify-between relative ${q > 0 ? 'ring-2 ring-brand-accent' : ''}`}>
+      {onRemove && (
+        <button onClick={onRemove} aria-label={`Remove ${name}`}
+          className="absolute top-1 right-1 h-7 w-7 rounded-full flex items-center justify-center
+                     text-[var(--text-muted)] hover:text-white hover:bg-white/10 text-base leading-none">✕</button>
+      )}
       <div className="mb-3">
-        <p className="font-medium text-sm leading-tight mb-2">{name}</p>
+        <p className="font-medium text-sm leading-tight mb-2 pr-6">{name}</p>
         {/* Order as a whole box, or loose in the product's own unit */}
         <div className="flex gap-1 p-0.5 rounded-lg bg-black/20 border border-white/10">
           <button onClick={() => onUnit('box')} aria-pressed={sel === 'box'} className={seg(sel === 'box')}>Box</button>
