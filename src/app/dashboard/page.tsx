@@ -227,6 +227,7 @@ export default async function DashboardPage() {
       <div className="grid grid-cols-3 gap-3 mb-6">
         <QuickAction href="/products"         icon="🥦" label="Products" />
         <QuickAction href="/invoices"         icon="📋" label="Invoices" />
+        <QuickAction href="/shop-order"       icon="🧺" label="Shop Order" />
         <QuickAction href="/market-run"        icon="🛒" label="Market Run" />
         <QuickAction href="/waste"            icon="🗑️" label="Waste Log" />
       </div>
