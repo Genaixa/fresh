@@ -276,7 +276,6 @@ export default function OrderBuilder({ customerName, favourites, lastOrder, last
       <div className="card mb-4">
         <label className="label">Note for David <span className="text-[var(--text-muted)] font-normal">(optional)</span></label>
         <textarea className="input min-h-[88px] resize-none" rows={3}
-          placeholder="Anything David should know — delivery time, where to leave it…"
           value={notes} onChange={e => setNotes(e.target.value)} />
       </div>
 
