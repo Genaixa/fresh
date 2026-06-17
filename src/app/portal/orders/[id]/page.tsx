@@ -28,7 +28,7 @@ export default async function PortalOrderDetailPage({ params }: { params: Promis
 
   const { data: order } = await supabase
     .from('wholesale_orders')
-    .select('id, order_date, delivery_date, status, notes, items:wholesale_order_items(id, quantity, unit_type, product:products(name, unit))')
+    .select('id, order_date, delivery_date, status, notes, placed_by_name, items:wholesale_order_items(id, quantity, unit_type, product:products(name, unit))')
     .eq('id', id)
     .eq('customer_id', customer.id)
     .single()
@@ -57,6 +57,12 @@ export default async function PortalOrderDetailPage({ params }: { params: Promis
           <p className="text-[var(--text-muted)] text-xs">{isDelivered ? 'Delivered' : 'Delivery date'}</p>
           <p>{order.delivery_date ? fmtDate(order.delivery_date) : '—'}</p>
         </div>
+        {order.placed_by_name && (
+          <div>
+            <p className="text-[var(--text-muted)] text-xs">Ordered by</p>
+            <p>{order.placed_by_name}</p>
+          </div>
+        )}
       </div>
 
       {(order.items ?? []).length > 0 ? (

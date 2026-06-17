@@ -22,12 +22,16 @@ function weekdayLabel(iso: string) {
   return asLocal(iso).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })
 }
 
-export default function OrderBuilder({ customerName, favourites, lastOrder, lastOrderDate }: {
-  customerName: string; favourites: Fav[]; lastOrder: LastLine[]; lastOrderDate?: string | null
+export default function OrderBuilder({ customerName, favourites, lastOrder, lastOrderDate, orderContacts = [] }: {
+  customerName: string; favourites: Fav[]; lastOrder: LastLine[]; lastOrderDate?: string | null; orderContacts?: string[]
 }) {
   const todayISO = new Date().toISOString().split('T')[0]
   const [deliveryDate, setDeliveryDate] = useState(nextWeekday())
   const [confirming, setConfirming] = useState(false)
+  // When a customer has more than one orderer (e.g. Yeshiva Gedola's two cooks
+  // sharing one login), they pick who's ordering — purely a label; all orders
+  // still sit under the one customer and amalgamate.
+  const [placedBy, setPlacedBy] = useState(orderContacts.length > 1 ? orderContacts[0] : '')
   const [notes, setNotes]   = useState('')
   const [qty, setQty]       = useState<Record<string, number>>({})
   const [extras, setExtras] = useState<{ id: string; name: string; unit: string; unit_type: 'box' | 'retail_unit' }[]>([])
@@ -153,6 +157,7 @@ export default function OrderBuilder({ customerName, favourites, lastOrder, last
         body: JSON.stringify({
           delivery_date: deliveryDate || null,
           notes: notes.trim() || null,
+          placed_by_name: placedBy || null,
           items: Object.entries(qty)
             .filter(([, q]) => q > 0)
             .map(([pid, q]) => ({
@@ -194,6 +199,15 @@ export default function OrderBuilder({ customerName, favourites, lastOrder, last
         <Link href="/portal" className="text-[var(--text-muted)] text-sm">Account</Link>
       </div>
       <p className="text-[var(--text-muted)] text-sm mb-4">{customerName}</p>
+
+      {orderContacts.length > 1 && (
+        <div className="card mb-4">
+          <label className="label">Ordering as</label>
+          <select className="input" value={placedBy} onChange={e => setPlacedBy(e.target.value)}>
+            {orderContacts.map(n => <option key={n} value={n}>{n}</option>)}
+          </select>
+        </div>
+      )}
 
       <div className="card mb-4">
         <label className="label">Delivery date</label>

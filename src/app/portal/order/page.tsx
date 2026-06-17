@@ -9,7 +9,7 @@ export default async function PortalOrderPage() {
 
   const { data: customer } = await supabase
     .from('wholesale_customers')
-    .select('id, name')
+    .select('id, name, order_contacts')
     .eq('portal_user_id', user.id)
     .single()
 
@@ -75,5 +75,5 @@ export default async function PortalOrderPage() {
 
   const lastOrderDate = orderIds.length ? orderDate.get(orderIds[0]) ?? null : null
 
-  return <OrderBuilder customerName={customer.name} favourites={favourites} lastOrder={lastOrder} lastOrderDate={lastOrderDate} />
+  return <OrderBuilder customerName={customer.name} favourites={favourites} lastOrder={lastOrder} lastOrderDate={lastOrderDate} orderContacts={(customer.order_contacts as string[] | null) ?? []} />
 }

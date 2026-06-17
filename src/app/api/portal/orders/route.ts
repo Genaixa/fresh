@@ -17,7 +17,7 @@ export async function POST(req: Request) {
 
   const { data: customer } = await supabase
     .from('wholesale_customers')
-    .select('id, name')
+    .select('id, name, order_contacts')
     .eq('portal_user_id', user.id)
     .single()
   if (!customer) {
@@ -28,6 +28,10 @@ export async function POST(req: Request) {
   try { body = await req.json() } catch { return NextResponse.json({ error: 'Invalid request' }, { status: 400 }) }
 
   const note = String(body?.notes ?? '').trim().slice(0, 1000)
+  // Only accept a name that's actually one of this customer's listed contacts.
+  const contacts = (customer.order_contacts as string[] | null) ?? []
+  const rawPlacedBy = String(body?.placed_by_name ?? '').trim()
+  const placedBy = contacts.includes(rawPlacedBy) ? rawPlacedBy : null
   const items = (Array.isArray(body?.items) ? body.items : [])
     .map((i: any) => ({
       product_id: i?.product_id as string,
@@ -86,11 +90,12 @@ export async function POST(req: Request) {
   const { data: order, error: orderErr } = await supabase
     .from('wholesale_orders')
     .insert({
-      customer_id:   customer.id,
-      delivery_date: body.delivery_date || null,
-      notes:         note || null,
-      status:        'confirmed',
-      created_by:    user.id,
+      customer_id:    customer.id,
+      delivery_date:  body.delivery_date || null,
+      notes:          note || null,
+      placed_by_name: placedBy,
+      status:         'confirmed',
+      created_by:     user.id,
     })
     .select('id')
     .single()
@@ -126,7 +131,7 @@ export async function POST(req: Request) {
     .map((l: { text: string }) => l.text)
     .join('\n')
   sendTelegram(
-    `🧺 <b>Portal order — ${customer.name}</b>\nDelivery: ${body.delivery_date || 'not set'}\n${lineItems.length} item${lineItems.length === 1 ? '' : 's'}\n${itemLines}` +
+    `🧺 <b>Portal order — ${customer.name}</b>${placedBy ? ` (${placedBy})` : ''}\nDelivery: ${body.delivery_date || 'not set'}\n${lineItems.length} item${lineItems.length === 1 ? '' : 's'}\n${itemLines}` +
     (note ? `\n📝 ${note}` : '') +
     estWarn
   ).catch(() => {})
