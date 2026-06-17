@@ -88,7 +88,7 @@ export default async function PortalOrderDetailPage({ params }: { params: Promis
       <p className="text-[var(--text-muted)] text-xs text-center">
         {isDelivered
           ? 'Prices will appear on your invoice once this delivery is invoiced.'
-          : 'This order is with David. To change it, call or text him.'}
+          : 'This order is with us. To change it, please call or text.'}
       </p>
 
       <div className="mt-6 text-center text-[var(--text-muted)] text-xs">

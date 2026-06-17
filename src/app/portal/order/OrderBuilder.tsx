@@ -144,7 +144,7 @@ export default function OrderBuilder({ customerName, favourites, lastOrder, last
     .sort((a, b) => a.name.localeCompare(b.name))
 
   const dateError = isWeekend(deliveryDate)
-    ? 'David delivers Monday–Friday — please pick a weekday.'
+    ? 'We deliver Monday–Friday — please pick a weekday.'
     : deliveryDate < todayISO ? "Delivery date can't be in the past." : ''
 
   async function submit() {
@@ -179,11 +179,11 @@ export default function OrderBuilder({ customerName, favourites, lastOrder, last
         <div className="text-5xl mb-4">✅</div>
         <h1 className="text-xl font-bold mb-2">Order placed</h1>
         <p className="text-[var(--text-muted)] mb-6">
-          Thanks {customerName} — David has your order for{' '}
+          Thanks {customerName} — we've got your order for{' '}
           {new Date(deliveryDate).toLocaleDateString('en-GB')}.
         </p>
         <p className="text-[var(--text-muted)] text-xs mb-6 max-w-xs mx-auto">
-          Need to add something? Just place another order. To change this one, call or text David.
+          Need to add something? Just place another order. To change this one, call or text us.
         </p>
         <Link href="/portal" className="btn-primary inline-block px-6 py-3">Back to account</Link>
       </div>
@@ -274,14 +274,14 @@ export default function OrderBuilder({ customerName, favourites, lastOrder, last
       </div>
 
       <div className="card mb-4">
-        <label className="label">Note for David <span className="text-[var(--text-muted)] font-normal">(optional)</span></label>
+        <label className="label">Note <span className="text-[var(--text-muted)] font-normal">(optional)</span></label>
         <textarea className="input min-h-[88px] resize-none" rows={3}
           value={notes} onChange={e => setNotes(e.target.value)} />
       </div>
 
       <p className="text-[var(--text-muted)] text-xs mb-4 leading-relaxed">
         Once placed, your order is final. To add more, just start another order.
-        To change or cancel something, call or text David as soon as you can.
+        To change or cancel something, call or text us as soon as you can.
       </p>
 
       {error && <p className="text-red-400 text-sm mb-3">{error}</p>}
