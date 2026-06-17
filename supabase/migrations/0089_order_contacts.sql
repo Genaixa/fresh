@@ -9,5 +9,5 @@ alter table wholesale_orders    add column if not exists placed_by_name text;
 -- Yeshiva Gedola has two cooks ordering on one login (placeholder names — replace
 -- with the real ones). Everyone else stays null = single orderer, no dropdown.
 update wholesale_customers
-set order_contacts = array['Cook 1', 'Cook 2']
+set order_contacts = array['E Serfaty', 'Mrs Freudiger']
 where name = 'Yeshiva Gedola' and order_contacts is null;
