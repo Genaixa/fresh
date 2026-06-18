@@ -14,13 +14,17 @@ export type GolemResult = {
 const EMPTY: GolemResult = { briefing: null, tips: {} }
 
 // All tried in parallel — first to succeed wins, rest are cancelled.
-// Cheap, reliable paid models (the :free tiers kept getting discontinued —
-// e.g. OpenRouter pulled gemma-*:free, which broke this golem). gemini-2.5-flash
-// is the same model the invoice parser uses, so it's proven on this key.
+// These three are each verified live + fast (~1.3s) on this key (18 Jun). The old
+// list was failing because gemini-2.0-flash-001 returns "No endpoints found" (dead)
+// and the :free tiers return "Provider returned error" — leaving only gemini-2.5-flash,
+// so any single slow response tripped "all models failed" at the timeout. Across
+// two providers now (Google + DeepSeek) for genuine redundancy.
+// NB: not all of these honour json_object response_format, so we don't request it
+// and parse the outermost {...} defensively instead (below).
 const MODELS = [
   'google/gemini-2.5-flash',
-  'google/gemini-2.0-flash-001',
-  'meta-llama/llama-3.3-70b-instruct',
+  'google/gemini-2.5-flash-lite',
+  'deepseek/deepseek-chat-v3-0324',
 ]
 
 function cacheFile(suffix = '') {
@@ -74,21 +78,27 @@ export async function generateMarketInsights(products: MarketProduct[]): Promise
     { role: 'user'   as const, content: userPrompt   },
   ]
 
-  // Race all models in parallel — 8s hard limit
+  // Race all models in parallel — 15s hard limit (8s was too tight for the big
+  // product prompt + JSON generation, which caused the morning timeouts).
   const result = await Promise.race([
     Promise.any(
       MODELS.map(model =>
-        client.chat.completions.create({ model, messages, response_format: { type: 'json_object' }, temperature: 0.2, stream: false })
+        client.chat.completions.create({ model, messages, temperature: 0.2, stream: false })
           .then(r => {
             const content = r.choices[0]?.message?.content
             if (!content) throw new Error('empty')
-            const parsed = JSON.parse(content)
+            // Parse defensively: free models often wrap JSON in ```json fences or
+            // add prose. Take the outermost {...} object before JSON.parse.
+            const start = content.indexOf('{')
+            const end   = content.lastIndexOf('}')
+            if (start === -1 || end <= start) throw new Error('no JSON object')
+            const parsed = JSON.parse(content.slice(start, end + 1))
             console.log(`[MarketGolem] success: ${model}`)
             return parsed
           })
       )
     ).catch(() => null),
-    new Promise<null>(resolve => setTimeout(() => resolve(null), 8000)),
+    new Promise<null>(resolve => setTimeout(() => resolve(null), 15000)),
   ])
 
   if (!result) {
