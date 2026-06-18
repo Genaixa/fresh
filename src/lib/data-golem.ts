@@ -632,12 +632,12 @@ async function storeFindings(
   findings: GolemFinding[],
 ): Promise<void> {
   if (!findings.length) return
-  // Avoid duplicates: skip alerts for same product + type already raised today
-  const today = new Date().toISOString().slice(0, 10)
+  // Avoid duplicates: skip alerts for a product + type that is ALREADY OPEN (any
+  // date, not just today) — a persistent issue shouldn't pile up a new row daily.
+  // Stale ones get auto-resolved by expireGolemAlerts, so this stays bounded.
   const { data: existing } = await supabase
     .from('golem_alerts')
     .select('alert_type, product_name')
-    .gte('created_at', today)
     .eq('resolved', false)
 
   const existingKeys = new Set(
@@ -689,6 +689,68 @@ async function runMappingGolem(
   return findings
 }
 
+// ─── Housekeeping: expire / resolve stale golem alerts ───────────────────────
+// Nothing ever cleared golem_alerts, so it grew unbounded (mostly cross-day dupes
+// of the same open issue). This: (a) collapses duplicates to the newest per
+// type+product, (b) resolves alerts whose condition is gone (unmatched line now
+// matched, zero-cost product now costed), (c) time-expires anything > 14 days.
+async function expireGolemAlerts(supabase: SupabaseClient): Promise<number> {
+  let resolved = 0
+  const resolveIds = async (ids: string[]) => {
+    for (let i = 0; i < ids.length; i += 200) {
+      await supabase.from('golem_alerts').update({ resolved: true }).in('id', ids.slice(i, i + 200))
+    }
+    resolved += ids.length
+  }
+
+  // (a) Collapse cross-day duplicates — keep the newest per (alert_type, product_name).
+  const { data: open } = await supabase
+    .from('golem_alerts').select('id, alert_type, product_name')
+    .eq('resolved', false).order('created_at', { ascending: false })
+  if (open?.length) {
+    const seen = new Set<string>(); const dupes: string[] = []
+    for (const a of open) {
+      const key = `${a.alert_type}::${a.product_name ?? ''}`
+      if (seen.has(key)) dupes.push(a.id); else seen.add(key)
+    }
+    if (dupes.length) await resolveIds(dupes)
+  }
+
+  // (b1) unmatched_item alerts where the line is now matched.
+  const { data: openUnmatched } = await supabase
+    .from('golem_alerts').select('id, product_name')
+    .eq('resolved', false).eq('alert_type', 'unmatched_item')
+  if (openUnmatched?.length) {
+    const { data: stillUnmatched } = await supabase
+      .from('purchase_invoice_items').select('product_name_raw').eq('is_matched', false)
+    const stillSet = new Set((stillUnmatched ?? []).map(r => r.product_name_raw))
+    const ids = openUnmatched.filter(a => a.product_name && !stillSet.has(a.product_name)).map(a => a.id)
+    if (ids.length) await resolveIds(ids)
+  }
+
+  // (b2) zero_cost alerts where the product now has a cost.
+  const { data: openZero } = await supabase
+    .from('golem_alerts').select('id, product_id')
+    .eq('resolved', false).eq('alert_type', 'zero_cost').not('product_id', 'is', null)
+  if (openZero?.length) {
+    const { data: prods } = await supabase
+      .from('products').select('id, purchase_cost').in('id', openZero.map(a => a.product_id))
+    const costed = new Set((prods ?? []).filter(p => (p.purchase_cost ?? 0) > 0).map(p => p.id))
+    const ids = openZero.filter(a => costed.has(a.product_id)).map(a => a.id)
+    if (ids.length) await resolveIds(ids)
+  }
+
+  // (c) Time-expire anything older than 14 days that nobody acted on.
+  const cutoff = new Date(Date.now() - 14 * 86400000).toISOString()
+  const { data: old } = await supabase
+    .from('golem_alerts').update({ resolved: true })
+    .eq('resolved', false).lt('created_at', cutoff).select('id')
+  resolved += old?.length ?? 0
+
+  if (resolved > 0) console.log(`[DataGolem] expired/resolved ${resolved} stale alerts`)
+  return resolved
+}
+
 // ─── Main entry points ────────────────────────────────────────────────────────
 
 /** Run after a specific invoice is confirmed. */
@@ -727,7 +789,10 @@ export async function runPostInvoiceGolem(
 export async function runDailySweep(supabase: SupabaseClient): Promise<string | null> {
   const findings: GolemFinding[] = []
 
-  // Map first so freshly auto-mapped lines aren't re-nagged below.
+  // Tidy stale/duplicate alerts first, so today's dedup sees a clean table.
+  await expireGolemAlerts(supabase)
+
+  // Map next so freshly auto-mapped lines aren't re-nagged below.
   findings.push(...await runMappingGolem(supabase, 'daily_sweep'))
 
   const [unmatched, stale, expired, gaps, arbitrage, holidays, reconcile, suspicious, plausibility, ordersBriefing] = await Promise.all([
