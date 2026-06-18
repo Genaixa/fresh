@@ -2,6 +2,7 @@ import OpenAI from 'openai'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { sendTelegram } from './telegram'
 import { CONFIG } from '@/app/market/config'
+import { runMappingSuggester } from './mapping-golem'
 
 export interface GolemFinding {
   alert_type: string
@@ -653,6 +654,41 @@ async function storeFindings(
   }
 }
 
+// ─── Check 13: Mapping suggester — auto-map obvious lines, queue the rest ─────
+// Runs the mapping golem and turns its result into findings. Must run BEFORE the
+// unmatched-item check so freshly auto-mapped lines aren't also nagged.
+async function runMappingGolem(
+  supabase: SupabaseClient,
+  source: GolemFinding['source'],
+): Promise<GolemFinding[]> {
+  const { autoApplied, suggested, decisions } = await runMappingSuggester(supabase)
+  const findings: GolemFinding[] = []
+  const list = (a: 'auto' | 'suggest') =>
+    decisions.filter(d => d.action === a).map(d => `${d.raw.trim()} → ${d.productName}`)
+
+  if (autoApplied > 0) {
+    const names = list('auto')
+    findings.push({
+      alert_type: 'mapping_auto',
+      severity:   'info',
+      message:  `Auto-mapped ${autoApplied} supplier line${autoApplied > 1 ? 's' : ''} from confirmed mappings: ${names.slice(0, 6).join('; ')}${names.length > 6 ? '…' : ''}.`,
+      action:   'Costs are re-checked by the plausibility sentinel — no action needed unless flagged.',
+      source,
+    })
+  }
+  if (suggested > 0) {
+    const names = list('suggest')
+    findings.push({
+      alert_type: 'mapping_review',
+      severity:   'warning',
+      message:  `${suggested} supplier line${suggested > 1 ? 's' : ''} have a suggested mapping awaiting your OK: ${names.slice(0, 6).join('; ')}${names.length > 6 ? '…' : ''}.`,
+      action:   'Confirm or fix on /invoice-mapping — product + box size are pre-filled, one tap each.',
+      source,
+    })
+  }
+  return findings
+}
+
 // ─── Main entry points ────────────────────────────────────────────────────────
 
 /** Run after a specific invoice is confirmed. */
@@ -662,6 +698,9 @@ export async function runPostInvoiceGolem(
   supplierName: string,
 ): Promise<void> {
   const findings: GolemFinding[] = []
+
+  // Map first so freshly auto-mapped lines aren't re-nagged below.
+  findings.push(...await runMappingGolem(supabase, 'data_golem'))
 
   const [unmatched, stale, drift, expired, fulfillment, plausibility] = await Promise.all([
     checkUnmatchedItems(supabase, 'data_golem'),
@@ -687,6 +726,9 @@ export async function runPostInvoiceGolem(
 /** Full daily sweep — run once a day (e.g., 10am). */
 export async function runDailySweep(supabase: SupabaseClient): Promise<string | null> {
   const findings: GolemFinding[] = []
+
+  // Map first so freshly auto-mapped lines aren't re-nagged below.
+  findings.push(...await runMappingGolem(supabase, 'daily_sweep'))
 
   const [unmatched, stale, expired, gaps, arbitrage, holidays, reconcile, suspicious, plausibility, ordersBriefing] = await Promise.all([
     checkUnmatchedItems(supabase, 'daily_sweep'),
