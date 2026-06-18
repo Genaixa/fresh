@@ -436,6 +436,13 @@ async function checkReconciliation(
     const gap = inv.total_amount - lineSum
     if (Math.abs(gap) <= 1) continue  // matches (allow 1p rounding)
 
+    // total_amount is inc-VAT but lines are ex-VAT, and there's no per-line VAT
+    // flag. A positive gap up to 20% of goods is just VAT on standard-rated lines
+    // (water, drinks, packaging) — don't cry wolf (e.g. Dole 11244548: £3.60 on
+    // the bottled water). A genuinely dropped line shows up as a much bigger
+    // positive gap; a double-counted line shows up as a negative gap. Both still fire.
+    if (gap > 0 && gap <= Math.round(lineSum * 0.20)) continue
+
     const ref = inv.invoice_number ?? '(no number)'
     findings.push({
       alert_type:  'reconcile_gap',
@@ -478,6 +485,97 @@ async function checkSuspiciousIngest(
       source,
     })
   }
+  return findings
+}
+
+// ─── Check 12: Price-suggestion plausibility sentinel ────────────────────────
+// Guards the failure class behind the 18 Jun "£14 lychee" incident: a per-case or
+// per-kg cost read as per-unit contaminates product_weighted_costs, and the ×2
+// markup explodes it into a nonsense suggestion that can slip past the withhold
+// ceiling (esp. for cheap items where the category-median anchor is loose).
+//
+// Three signals, cheapest/strongest first:
+//   (a) cost-above-shelf — weighted cost ≥ current retail: the per-case signature.
+//   (b) implausible pending suggestion — suggested ≥ 2.5× the live shelf price.
+//   (c) zero-cost active seller — purchase_cost 0 ⇒ "infinite margin" suggestions.
+async function checkSuggestionPlausibility(
+  supabase: SupabaseClient,
+  source: GolemFinding['source'],
+): Promise<GolemFinding[]> {
+  const gbp = (p: number) => `£${(p / 100).toFixed(2)}`
+  const findings: GolemFinding[] = []
+
+  // (a) Weighted cost at/above shelf price — almost always a per-case/per-kg cost
+  //     read as per-unit. retail_price ≥ 20p so we only judge trustworthy anchors.
+  const { data: costs } = await supabase
+    .from('product_weighted_costs')
+    .select('product_id, weighted_unit_cost_pence, products!inner(name, retail_price, purchase_cost, case_size, is_active)')
+
+  for (const row of (costs ?? []) as any[]) {
+    const p = row.products
+    if (!p?.is_active) continue
+    const wcost  = row.weighted_unit_cost_pence as number
+    const retail = p.retail_price as number
+    if (!wcost || retail < 20) continue
+
+    if (wcost >= retail) {
+      const caseSize = p.case_size ?? 1
+      const hint = caseSize > 1 ? ` (÷ case of ${caseSize} ≈ ${gbp(Math.round(wcost / caseSize))}/unit)` : ''
+      findings.push({
+        alert_type:  'implausible_cost',
+        severity:    'warning',
+        product_id:   row.product_id,
+        product_name: p.name,
+        message:  `${p.name}: weighted cost ${gbp(wcost)} is at/above shelf ${gbp(retail)}${hint} — almost certainly a per-case/per-kg price read as per-unit. Suggestions off this cost will be wrong.`,
+        action:   'Check units_per_case / unit_type on the recent invoice lines (cf. migration 0090).',
+        source,
+      })
+    }
+  }
+
+  // (b) Implausible pending suggestion — a big jump off a trustworthy shelf price.
+  const { data: sugg } = await supabase
+    .from('price_suggestions')
+    .select('current_retail_price, suggested_retail_price, products!inner(name)')
+    .eq('status', 'pending')
+
+  for (const s of (sugg ?? []) as any[]) {
+    const cur = s.current_retail_price as number
+    const sug = s.suggested_retail_price as number
+    if (cur < 20 || sug < cur * 2.5) continue
+    findings.push({
+      alert_type:  'implausible_suggestion',
+      severity:    'warning',
+      product_name: s.products?.name,
+      message:  `${s.products?.name}: suggested ${gbp(sug)} is ${(sug / cur).toFixed(1)}× the shelf price ${gbp(cur)} — looks wrong, do not "Approve All".`,
+      action:   'Open the suggestion; if the cost behind it is a box price, fix units_per_case.',
+      source,
+    })
+  }
+
+  // (c) Zero-cost active sellers that are ACTUALLY being bought (have a weighted-cost
+  //     row) — these produce "infinite margin" suggestions. Bought-in finished goods
+  //     (milk, eggs, nuts) legitimately have no produce cost, so the inner join to
+  //     product_weighted_costs keeps this to genuine pipeline products only.
+  const { data: zero } = await supabase
+    .from('product_weighted_costs')
+    .select('product_id, products!inner(name, retail_price, purchase_cost, is_active)')
+
+  for (const row of (zero ?? []) as any[]) {
+    const z = row.products
+    if (!z?.is_active || !z.retail_price || z.retail_price <= 0) continue
+    if (z.purchase_cost != null && z.purchase_cost > 0) continue
+    findings.push({
+      alert_type:  'zero_cost',
+      severity:    'warning',
+      product_id:   row.product_id,
+      product_name: z.name,
+      message:  `${z.name}: bought through the pipeline and on sale at ${gbp(z.retail_price)} but purchase_cost is 0 — margin/suggestions can't be trusted.`,
+      action:   'Set the correct per-unit cost, or confirm the supplier mapping is right.',
+      source,
+    })
+  }
+
   return findings
 }
 
@@ -565,15 +663,16 @@ export async function runPostInvoiceGolem(
 ): Promise<void> {
   const findings: GolemFinding[] = []
 
-  const [unmatched, stale, drift, expired, fulfillment] = await Promise.all([
+  const [unmatched, stale, drift, expired, fulfillment, plausibility] = await Promise.all([
     checkUnmatchedItems(supabase, 'data_golem'),
     checkStaleCosts(supabase, supplierName, 'data_golem'),
     checkCostDrift(supabase, invoiceId, 'data_golem'),
     expireOldSuggestions(supabase, 'data_golem'),
     checkOrderFulfillment(supabase, 'data_golem'),
+    checkSuggestionPlausibility(supabase, 'data_golem'),
   ])
 
-  findings.push(...unmatched, ...stale, ...drift, ...expired, ...fulfillment.findings)
+  findings.push(...unmatched, ...stale, ...drift, ...expired, ...fulfillment.findings, ...plausibility)
   await storeFindings(supabase, findings)
 
   if (fulfillment.telegramLines.length > 0) {
@@ -589,7 +688,7 @@ export async function runPostInvoiceGolem(
 export async function runDailySweep(supabase: SupabaseClient): Promise<string | null> {
   const findings: GolemFinding[] = []
 
-  const [unmatched, stale, expired, gaps, arbitrage, holidays, reconcile, suspicious, ordersBriefing] = await Promise.all([
+  const [unmatched, stale, expired, gaps, arbitrage, holidays, reconcile, suspicious, plausibility, ordersBriefing] = await Promise.all([
     checkUnmatchedItems(supabase, 'daily_sweep'),
     checkStaleCosts(supabase, null, 'daily_sweep'),
     expireOldSuggestions(supabase, 'daily_sweep'),
@@ -598,10 +697,11 @@ export async function runDailySweep(supabase: SupabaseClient): Promise<string | 
     checkHolidayPrep(supabase, 'daily_sweep'),
     checkReconciliation(supabase, 'daily_sweep'),
     checkSuspiciousIngest(supabase, 'daily_sweep'),
+    checkSuggestionPlausibility(supabase, 'daily_sweep'),
     buildOrdersBriefing(supabase),
   ])
 
-  findings.push(...unmatched, ...stale, ...expired, ...gaps, ...arbitrage, ...holidays, ...reconcile, ...suspicious)
+  findings.push(...unmatched, ...stale, ...expired, ...gaps, ...arbitrage, ...holidays, ...reconcile, ...suspicious, ...plausibility)
   await storeFindings(supabase, findings)
 
   const briefing = await generateBriefing(findings.filter(f => f.severity !== 'info'))
