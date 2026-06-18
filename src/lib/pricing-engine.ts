@@ -228,6 +228,87 @@ export function checkPlausibility(
   }
 }
 
+/**
+ * Rebuild pending/withheld suggestions for a set of products (or all active priced
+ * products when productIds is omitted) from their CURRENT cost × multiplier.
+ *
+ * This is the single source of truth for "what should the pending list contain".
+ * Called both on demand (Recalculate button) and automatically whenever a product's
+ * cost / multiplier / ceiling changes — so a suggestion can never go stale: if a
+ * cost correction resolves the problem, the now-unwarranted row is deleted; if it
+ * doesn't, the row is re-priced to the correct value.
+ *
+ * Pure data operation — does not revalidate any route (callers do that).
+ */
+export async function regenerateSuggestions(
+  supabase: SupabaseClient,
+  productIds?: string[],
+): Promise<void> {
+  let q = supabase
+    .from('products')
+    .select('id, name, category, purchase_cost, retail_price, price_multiplier, market_ceiling, margin_floor, case_size')
+    .eq('is_active', true)
+    .gt('purchase_cost', 0)
+  const scoped = productIds && productIds.length > 0
+  if (scoped) q = q.in('id', productIds!)
+  const { data: products } = await q
+
+  // Clear stale pending/withheld first, scoped to the products we're rebuilding
+  // (or everything for a full rebuild). A product whose problem has resolved loses
+  // its row here and gets no replacement below.
+  let del = supabase.from('price_suggestions').delete().in('status', ['pending', 'withheld'])
+  if (scoped) del = del.in('product_id', productIds!)
+  await del
+
+  if (!products?.length) return
+
+  const ctx = await buildPlausibilityContext(supabase, products.map(p => p.id))
+  const now = new Date().toISOString()
+  const toInsert = []
+
+  for (const p of products) {
+    const unit_cost = p.purchase_cost
+    const suggested = Math.round(unit_cost * p.price_multiplier)
+    const capped    = p.market_ceiling ? Math.min(suggested, p.market_ceiling) : suggested
+
+    // Never suggest a price at or below cost
+    if (capped <= unit_cost) continue
+
+    const currentMargin = p.retail_price > 0
+      ? (p.retail_price - unit_cost) / p.retail_price
+      : -1
+    const isUnpriced     = p.retail_price === 0
+    const isBelowFloor   = currentMargin < p.margin_floor
+    const isAboveCeiling = p.market_ceiling !== null && p.retail_price > p.market_ceiling
+
+    // Only suggest when there's actually a problem — not just because multiplier differs
+    if (!isUnpriced && !isBelowFloor && !isAboveCeiling) continue
+
+    // Skip if already at the right price (within 5p)
+    if (Math.abs(capped - p.retail_price) <= 5) continue
+
+    const margin = capped > 0 ? (capped - unit_cost) / capped : 0
+    const pl = checkPlausibility(p as unknown as Product, capped, unit_cost, ctx)
+
+    toInsert.push({
+      product_id:             p.id,
+      current_retail_price:   p.retail_price,
+      suggested_retail_price: capped,
+      rule_applied:           p.market_ceiling && suggested > p.market_ceiling ? 'ceiling' : margin < p.margin_floor ? 'floor' : 'multiplier',
+      margin_percentage:      margin,
+      margin_warning:         margin < p.margin_floor,
+      status:                 pl.plausible ? 'pending' : 'withheld',
+      block_reason:           pl.reason,
+      plausibility_ceiling:   pl.ceiling === Number.MAX_SAFE_INTEGER ? null : pl.ceiling,
+      created_at:             now,
+    })
+  }
+
+  if (toInsert.length) {
+    await supabase.from('price_suggestions').insert(toInsert)
+  }
+}
+
 /** Simulate the effect of changing retail price by delta pence */
 export function simulatePriceChange(
   product: Product,

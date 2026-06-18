@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { regenerateSuggestions } from '@/lib/pricing-engine'
 
 export async function upsertProduct(formData: FormData) {
   const supabase = await createClient()
@@ -29,13 +30,20 @@ export async function upsertProduct(formData: FormData) {
     default_supplier_id:   (formData.get('default_supplier_id') as string) || null,
   }
 
+  let productId = id
   if (id) {
     await supabase.from('products').update(payload).eq('id', id)
   } else {
-    await supabase.from('products').insert(payload)
+    const { data: inserted } = await supabase.from('products').insert(payload).select('id').single()
+    productId = inserted?.id ?? null
   }
 
+  // Refresh this product's pending suggestions against the just-saved cost /
+  // multiplier / ceiling so the /pricing list can never show a stale figure for it.
+  if (productId) await regenerateSuggestions(supabase, [productId])
+
   revalidatePath('/products')
+  revalidatePath('/pricing')
   redirect('/products')
 }
 

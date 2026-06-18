@@ -141,6 +141,11 @@ export function SuggestionCard({
                   held
                 </span>
               )}
+              {!isHeld && !isWithheld && marginWarning && (
+                <span className="text-xs bg-status-amber/15 text-status-amber px-1.5 py-0.5 rounded-md whitespace-nowrap">
+                  not in Approve All
+                </span>
+              )}
             </div>
             <p className="text-xs text-[var(--text-muted)]">
               was {formatPrice(currentRetailPrice)}

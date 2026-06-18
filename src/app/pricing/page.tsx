@@ -78,7 +78,11 @@ export default async function PricingSuggestionsPage({
 
   const pending = (suggestions ?? []) as S[]
   const withheld = (withheldData ?? []) as S[]
-  const pendingCount = pending.filter(s => s.status === 'pending').length
+  // "Ready" = approvable in bulk. Below-floor (margin_warning) rows are excluded —
+  // they need an explicit individual ✓ and must never be swept up by Approve All.
+  const readyCount        = pending.filter(s => s.status === 'pending' && !s.margin_warning).length
+  const belowFloorPending = pending.filter(s => s.status === 'pending' &&  s.margin_warning).length
+  const onHoldCount       = pending.filter(s => s.status === 'on_hold').length
 
   // Look up most recent confirmed invoice per product (suggestions don't store invoice_id)
   const productIds = [...pending, ...withheld].map(s => s.product_id).filter(Boolean)
@@ -353,15 +357,15 @@ export default async function PricingSuggestionsPage({
                 <form action={approveAll} className="flex-1">
                   <button
                     className="btn-primary w-full py-3 text-sm disabled:opacity-40"
-                    disabled={pendingCount === 0}
+                    disabled={readyCount === 0}
                   >
-                    ✓ Approve All{pendingCount > 0 ? ` (${pendingCount})` : ''}
+                    ✓ {belowFloorPending > 0 ? `Approve ${readyCount} ready` : `Approve All${readyCount > 0 ? ` (${readyCount})` : ''}`}
                   </button>
                 </form>
                 <form action={rejectAll} className="flex-1">
                   <button
                     className="w-full py-3 rounded-xl border border-status-red/40 text-status-red text-sm active:bg-status-red/10 transition-colors disabled:opacity-40"
-                    disabled={pendingCount === 0}
+                    disabled={readyCount === 0 && belowFloorPending === 0}
                   >
                     ✗ Reject All
                   </button>
@@ -369,8 +373,17 @@ export default async function PricingSuggestionsPage({
               </div>
 
               <p className="text-center text-xs text-[var(--text-muted)] mt-4">
-                {displayed.length} shown · {pendingCount} ready · {pending.length - pendingCount} on hold · {floorCount} below floor
+                {displayed.length} shown · {readyCount} ready · {onHoldCount} on hold · {belowFloorPending} below floor (needs ✓)
               </p>
+
+              {/* Manual refresh — re-check every product against its CURRENT cost.
+                  Suggestions auto-refresh on cost change, but this is the one-tap
+                  fix if anything ever looks stale. */}
+              <form action={recalculateSuggestions} className="mt-4">
+                <button className="w-full py-2 text-xs text-[var(--text-muted)] underline underline-offset-2">
+                  Recalculate all from current costs
+                </button>
+              </form>
             </>
           )}
         </>
