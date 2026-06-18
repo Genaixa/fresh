@@ -13,19 +13,15 @@ export type GolemResult = {
 
 const EMPTY: GolemResult = { briefing: null, tips: {} }
 
-// All tried in parallel — first to succeed wins, rest are cancelled.
-// These three are each verified live + fast (~1.3s) on this key (18 Jun). The old
-// list was failing because gemini-2.0-flash-001 returns "No endpoints found" (dead)
-// and the :free tiers return "Provider returned error" — leaving only gemini-2.5-flash,
-// so any single slow response tripped "all models failed" at the timeout. Across
-// two providers now (Google + DeepSeek) for genuine redundancy.
-// NB: not all of these honour json_object response_format, so we don't request it
-// and parse the outermost {...} defensively instead (below).
-const MODELS = [
-  'google/gemini-2.5-flash',
-  'google/gemini-2.5-flash-lite',
-  'deepseek/deepseek-chat-v3-0324',
-]
+// Quality first: the full gemini-2.5-flash (same model the invoice parser uses) is
+// tried on its own and only falls back to the lighter/alt-provider models if it
+// fails or stalls — so tip quality matches the original, which always used this
+// model. The old list failed because gemini-2.0-flash-001 is dead ("No endpoints
+// found") and the :free tiers return "Provider returned error".
+// All three verified live + fast (~1.3s) on this key (18 Jun). NB: not all honour
+// json_object response_format, so we don't request it and parse {...} defensively.
+const QUALITY_MODEL   = 'google/gemini-2.5-flash'
+const FALLBACK_MODELS = ['google/gemini-2.5-flash-lite', 'deepseek/deepseek-chat-v3-0324']
 
 function cacheFile(suffix = '') {
   const today = new Date().toISOString().split('T')[0]
@@ -78,26 +74,31 @@ export async function generateMarketInsights(products: MarketProduct[]): Promise
     { role: 'user'   as const, content: userPrompt   },
   ]
 
-  // Race all models in parallel — 15s hard limit (8s was too tight for the big
-  // product prompt + JSON generation, which caused the morning timeouts).
+  // One model call → parsed JSON (or throws). Parse defensively: take the outermost
+  // {...} so ```json fences / stray prose don't break it.
+  const callModel = async (model: string) => {
+    const r = await client.chat.completions.create({ model, messages, temperature: 0.2, stream: false })
+    const content = r.choices[0]?.message?.content
+    if (!content) throw new Error('empty')
+    const start = content.indexOf('{')
+    const end   = content.lastIndexOf('}')
+    if (start === -1 || end <= start) throw new Error('no JSON object')
+    const parsed = JSON.parse(content.slice(start, end + 1))
+    console.log(`[MarketGolem] success: ${model}`)
+    return parsed
+  }
+
+  // Quality first: try gemini-2.5-flash on its own; only race the lighter fallbacks
+  // if it errors. Whole thing capped at 15s (8s was too tight for the big prompt).
+  const attempt = (async () => {
+    try { return await callModel(QUALITY_MODEL) }
+    catch (e) {
+      console.warn(`[MarketGolem] ${QUALITY_MODEL} failed (${(e as Error).message}) — trying fallbacks`)
+      return await Promise.any(FALLBACK_MODELS.map(callModel))
+    }
+  })()
   const result = await Promise.race([
-    Promise.any(
-      MODELS.map(model =>
-        client.chat.completions.create({ model, messages, temperature: 0.2, stream: false })
-          .then(r => {
-            const content = r.choices[0]?.message?.content
-            if (!content) throw new Error('empty')
-            // Parse defensively: free models often wrap JSON in ```json fences or
-            // add prose. Take the outermost {...} object before JSON.parse.
-            const start = content.indexOf('{')
-            const end   = content.lastIndexOf('}')
-            if (start === -1 || end <= start) throw new Error('no JSON object')
-            const parsed = JSON.parse(content.slice(start, end + 1))
-            console.log(`[MarketGolem] success: ${model}`)
-            return parsed
-          })
-      )
-    ).catch(() => null),
+    attempt.catch(() => null),
     new Promise<null>(resolve => setTimeout(() => resolve(null), 15000)),
   ])
 
