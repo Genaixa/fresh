@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { confirmMapping, skipMapping, deleteMapping } from './actions'
 
-type FilterValue = 'pending' | 'confirmed' | 'skipped' | 'all'
+type FilterValue = 'pending' | 'confirmed' | 'skipped' | 'all' | 'recent'
 type SortKey = 'description' | 'supplier' | 'product'
 type SortDir = 'asc' | 'desc'
 
@@ -30,6 +30,8 @@ interface Props {
   items: MappingItem[]
   catalogue: Product[]
   suggestions: Record<string, string | null>
+  recentRaws?: string[]
+  focusRecent?: boolean
 }
 
 const COLS = '2.5fr 0.6fr 1.8fr 1fr 0.75fr 0.6fr 1fr 120px'
@@ -41,8 +43,13 @@ const SUPPLIER_SHORT: Record<string, string> = {
 
 const PAGE_SIZES = [10, 20, 50]
 
-export function MappingTable({ items, catalogue, suggestions }: Props) {
-  const [filter,   setFilter]   = useState<FilterValue>('pending')
+export function MappingTable({ items, catalogue, suggestions, recentRaws = [], focusRecent = false }: Props) {
+  const recentSet = new Set(recentRaws.map(r => r.toLowerCase()))
+  const isRecent  = (i: MappingItem) => recentSet.has(i.raw_description.toLowerCase())
+  const recentCount = items.filter(i => i.status === 'pending' && isRecent(i)).length
+  // Arriving from the dashboard's "needs mapping" nudge → focus the recent arrivals
+  // (the ones it was counting), not the whole backlog. Falls back to pending if none.
+  const [filter,   setFilter]   = useState<FilterValue>(focusRecent && recentCount > 0 ? 'recent' : 'pending')
   const [sort,     setSort]     = useState<{ key: SortKey; dir: SortDir }>({ key: 'description', dir: 'asc' })
   const [page,     setPage]     = useState(1)
   const [pageSize, setPageSize] = useState(10)
@@ -67,7 +74,11 @@ export function MappingTable({ items, catalogue, suggestions }: Props) {
     all:       items.length,
   }
 
-  const filtered = items.filter(i => filter === 'all' || i.status === filter)
+  const filtered = items.filter(i => {
+    if (filter === 'all')    return true
+    if (filter === 'recent') return i.status === 'pending' && isRecent(i)
+    return i.status === filter
+  })
 
   const sorted = [...filtered].sort((a, b) => {
     let av: string | number = 0
@@ -125,6 +136,19 @@ export function MappingTable({ items, catalogue, suggestions }: Props) {
         ))}
       </div>
 
+      {filter === 'recent' && (
+        <div className="mb-4 flex items-center justify-between gap-3 rounded-xl border border-amber-300
+                        bg-amber-50 px-4 py-3 text-sm">
+          <span className="text-amber-800">
+            Showing <b>{recentCount}</b> {recentCount === 1 ? 'product' : 'products'} from recent deliveries — what the dashboard flagged.
+          </span>
+          <button onClick={() => changeFilter('pending')}
+            className="font-semibold text-amber-800 underline whitespace-nowrap">
+            Show all {counts.pending} pending
+          </button>
+        </div>
+      )}
+
       {sorted.length === 0 ? (
         <div className="bg-white rounded-2xl p-8 text-center shadow-sm border border-gray-100">
           <p className="text-3xl mb-3">✓</p>
@@ -171,6 +195,7 @@ export function MappingTable({ items, catalogue, suggestions }: Props) {
                   suggestedProductId={resolvedId}
                   supplierShort={SUPPLIER_SHORT[item.supplier_name] ?? item.supplier_name}
                   eposId={eposId}
+                  recent={isRecent(item)}
                 />
               )
             })}
@@ -217,12 +242,13 @@ export function MappingTable({ items, catalogue, suggestions }: Props) {
 // Cell base class shared by all data cells
 const tdClass = 'px-2 py-2 border-b border-gray-100 text-sm flex items-center'
 
-function MappingRow({ item, catalogue, suggestedProductId, supplierShort, eposId }: {
+function MappingRow({ item, catalogue, suggestedProductId, supplierShort, eposId, recent }: {
   item: MappingItem
   catalogue: Product[]
   suggestedProductId: string | null
   supplierShort: string
   eposId: string | null
+  recent?: boolean
 }) {
   const defaultUnitType: 'weight' | 'count' =
     item.unit_type === 'weight' ? 'weight' :
@@ -237,7 +263,8 @@ function MappingRow({ item, catalogue, suggestedProductId, supplierShort, eposId
     <form action={confirmMapping} style={{ display: 'contents' }} className={dimClass}>
       <input type="hidden" name="id" value={item.id} />
 
-      <div className={`${tdClass} font-mono break-all leading-snug text-gray-800`}>{item.raw_description}</div>
+      <div className={`${tdClass} font-mono break-all leading-snug text-gray-800
+        ${recent ? 'border-l-4 border-amber-400 bg-amber-50/60 pl-2' : ''}`}>{item.raw_description}</div>
       <div className={`${tdClass} text-gray-400`}>{supplierShort}</div>
 
       <div className={tdClass}>

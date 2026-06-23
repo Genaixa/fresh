@@ -5,7 +5,12 @@ import Link from 'next/link'
 import { fuzzyMatchProduct } from '@/lib/invoice-parser'
 import { MappingTable } from './MappingTable'
 
-export default async function InvoiceMappingPage() {
+export default async function InvoiceMappingPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ recent?: string }>
+}) {
+  const { recent } = await searchParams
   const supabase = await createClient()
 
   // Load ALL statuses so user can come back and re-edit anything
@@ -14,6 +19,18 @@ export default async function InvoiceMappingPage() {
     .select('id, raw_description, supplier_name, status, product_id, unit_type, units_per_case, box_weight_kg, last_price_p, appearances')
     .order('appearances', { ascending: false })
     .range(0, 9999)
+
+  // Which pending descriptions actually arrived on a delivery in the last 14 days —
+  // the same "recent" set the dashboard counts. Lets the table focus/highlight the
+  // item the dashboard nudge is referring to, instead of the whole backlog.
+  const mappingCutoff = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10)
+  const { data: recentUnmatched } = await supabase
+    .from('purchase_invoice_items')
+    .select('product_name_raw, purchase_invoices!inner(invoice_date)')
+    .is('product_id', null)
+    .gte('purchase_invoices.invoice_date', mappingCutoff)
+    .limit(5000)
+  const recentRaws = [...new Set((recentUnmatched ?? []).map(r => r.product_name_raw.toLowerCase()))]
 
   const { data: products } = await supabase
     .from('products')
@@ -55,7 +72,8 @@ export default async function InvoiceMappingPage() {
         )}
       </div>
 
-      <MappingTable items={items} catalogue={catalogue} suggestions={suggestions} />
+      <MappingTable items={items} catalogue={catalogue} suggestions={suggestions}
+        recentRaws={recentRaws} focusRecent={recent === '1'} />
     </div>
     </div>
   )
