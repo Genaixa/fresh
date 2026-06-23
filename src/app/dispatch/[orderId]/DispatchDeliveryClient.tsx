@@ -201,7 +201,7 @@ export default function DispatchDeliveryClient({
                           disabled={!isChecked}
                           className="w-20 px-2 py-1 rounded-md border border-white/25 bg-white/10 text-[var(--text)] text-sm font-mono outline-none focus:border-brand-accent disabled:opacity-40 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
                         />
-                        <span className="text-xs text-[var(--text-muted)]">each</span>
+                        <span className="text-xs text-[var(--text-muted)]">{item.unit_type === 'box' ? 'box' : 'each'}</span>
                         <button
                           onClick={() => setPriceStr(p => ({ ...p, [item.id]: (item.unit_price / 100).toFixed(2) }))}
                           aria-label="Reset price"
