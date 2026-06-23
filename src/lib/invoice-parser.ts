@@ -208,6 +208,23 @@ export function normaliseSupplierName(name: string): string {
   return name.toLowerCase().replace(/\./g, '').trim().replace(/\s+/g, ' ')
 }
 
+/**
+ * Normalise a raw invoice description for matching — case / punctuation /
+ * whitespace insensitive, so the same product under different spellings
+ * ("ONION . SPAIN 1 20KG ." vs "ONION. SPAIN 1 20KG.") collapses to one mapping
+ * key and stops generating punctuation-only re-asks. Decimals are preserved
+ * (2.27KG stays 2.27KG — only separator dots/commas are dropped). Result is the
+ * value stored in supplier_product_mappings.normalised_description and the key
+ * every lookup matches on. MUST stay identical to the backfill script.
+ */
+export function normaliseDescription(desc: string): string {
+  return desc
+    .toUpperCase()
+    .replace(/(?<!\d)[.,](?!\d)/g, ' ')  // drop separator . and , but keep 2.27
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
 export interface MappingResult {
   product_id: string
   unit_type: 'count' | 'weight' | null
@@ -224,11 +241,12 @@ export async function lookupMapping(
   supplierName: string,
   rawDescription: string
 ): Promise<MappingResult | null> {
+  const norm = normaliseDescription(rawDescription)
   const { data } = await supabase
     .from('supplier_product_mappings')
     .select('product_id, match_count, unit_type, units_per_case, box_weight_kg')
     .eq('supplier_name', normaliseSupplierName(supplierName))
-    .eq('raw_description', rawDescription)
+    .eq('normalised_description', norm)
     .eq('status', 'confirmed')
     .not('product_id', 'is', null)
     .single()
@@ -240,7 +258,7 @@ export async function lookupMapping(
     .from('supplier_product_mappings')
     .update({ match_count: data.match_count + 1 })
     .eq('supplier_name', normaliseSupplierName(supplierName))
-    .eq('raw_description', rawDescription)
+    .eq('normalised_description', norm)
     .then(() => {})
 
   return {
@@ -276,6 +294,7 @@ export async function saveMapping(
       {
         supplier_name:   normaliseSupplierName(supplierName),
         raw_description: rawDescription,
+        normalised_description: normaliseDescription(rawDescription),
         product_id:      productId,
         confirmed_by:    confirmedBy,
         status:          confirmedBy ? 'confirmed' : 'confirmed',
@@ -285,7 +304,7 @@ export async function saveMapping(
         ...(boxSpec?.last_price_p   !== undefined && { last_price_p:   boxSpec.last_price_p }),
       },
       {
-        onConflict: 'supplier_name,raw_description',
+        onConflict: 'supplier_name,normalised_description',
         ignoreDuplicates: false,
       }
     )

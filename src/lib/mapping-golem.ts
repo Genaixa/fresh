@@ -1,5 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
-import { normaliseSupplierName } from './invoice-parser'
+import { normaliseSupplierName, normaliseDescription } from './invoice-parser'
 
 // ─── Mapping-suggester golem ──────────────────────────────────────────────────
 //
@@ -225,10 +225,11 @@ export async function runMappingSuggester(
     if (d.action === 'auto' && d.productId) {
       // Confirm the mapping (so future lines exact-match) …
       await supabase.from('supplier_product_mappings').upsert({
-        supplier_name: normaliseSupplierName(d.supplier), raw_description: d.raw, product_id: d.productId,
+        supplier_name: normaliseSupplierName(d.supplier), raw_description: d.raw,
+        normalised_description: normaliseDescription(d.raw), product_id: d.productId,
         status: 'confirmed', unit_type: d.unitType, units_per_case: d.unitsPerCase ?? null,
         box_weight_kg: d.boxWeightKg ?? null, updated_at: new Date().toISOString(),
-      }, { onConflict: 'supplier_name,raw_description' })
+      }, { onConflict: 'supplier_name,normalised_description' })
       // … and match the invoice line(s) with the inherited basis.
       await supabase.from('purchase_invoice_items').update({
         product_id: d.productId, is_matched: true, unit_type: d.unitType,
@@ -237,10 +238,11 @@ export async function runMappingSuggester(
     } else if (d.action === 'suggest' && d.productId) {
       // Pre-fill a PENDING mapping for one-tap review on /invoice-mapping.
       await supabase.from('supplier_product_mappings').upsert({
-        supplier_name: normaliseSupplierName(d.supplier), raw_description: d.raw, product_id: d.productId,
+        supplier_name: normaliseSupplierName(d.supplier), raw_description: d.raw,
+        normalised_description: normaliseDescription(d.raw), product_id: d.productId,
         status: 'pending', unit_type: d.unitType ?? null, units_per_case: d.unitsPerCase ?? null,
         box_weight_kg: d.boxWeightKg ?? null, updated_at: new Date().toISOString(),
-      }, { onConflict: 'supplier_name,raw_description', ignoreDuplicates: true })
+      }, { onConflict: 'supplier_name,normalised_description', ignoreDuplicates: true })
     }
   }
 
