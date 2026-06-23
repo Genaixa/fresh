@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/service'
 import { checkPricingInvariants } from '@/lib/pricing-invariants'
+import { checkInvoiceHygiene } from '@/lib/invoice-hygiene'
 import { sendTelegram } from '@/lib/telegram'
 
 export async function GET() {
@@ -33,7 +34,21 @@ export async function POST(request: NextRequest) {
       ).catch(() => {})
     }
 
-    return NextResponse.json({ ok: true, violations })
+    // ── Invoice / mapping data-hygiene golem (misdated tickets, stale caches, bad arithmetic) ──
+    const hygiene = await checkInvoiceHygiene(supabase)
+    if (hygiene.length > 0) {
+      const shown = hygiene.slice(0, 30)
+      const lines = shown
+        .map(f => `• [${f.check}] <b>${f.ref}</b>\n  ${f.detail}`)
+        .join('\n')
+      const more = hygiene.length > shown.length ? `\n…and ${hygiene.length - shown.length} more.` : ''
+      await sendTelegram(
+        `🧹 <b>Invoice hygiene — ${hygiene.length} issue${hygiene.length === 1 ? '' : 's'}</b>\n` +
+        `Recorded delivery-note data looks off. Review on /invoices (and supplier mappings).\n\n${lines}${more}`,
+      ).catch(() => {})
+    }
+
+    return NextResponse.json({ ok: true, violations, hygiene })
   } catch (err) {
     const errMsg = err instanceof Error ? err.message : String(err)
     console.error('[IntegrityCheck] crashed:', err)
