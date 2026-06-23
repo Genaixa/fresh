@@ -106,34 +106,12 @@ export default async function DashboardPage() {
   const dateStr = now.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })
   const displayName = profile?.full_name?.split(' ')[0] ?? 'David'
 
-  const hasPending         = (pendingCount ?? 0) > 0
-  const hasUnmapped        = (unmappedCount ?? 0) > 0
-  const hasPendingDelivery = (pendingDeliveryCount ?? 0) > 0
-  const hasDeliveries      = (confirmedOrderCount ?? 0) > 0
-
-  // Everything that needs David's eye, collapsed behind one flag instead of a
-  // stack of banners. Each row still deep-links to where it gets fixed.
-  const attention: { key: string; href: string; title: string; sub: string; urgent?: boolean }[] = []
-  if (hasPending) attention.push({ key: 'pricing', href: '/pricing',
-    title: `${pendingCount} price${pendingCount !== 1 ? 's' : ''} need approval`, sub: 'Review & approve →' })
-  if (hasPendingDelivery) attention.push({ key: 'confirm', href: '/invoices',
-    title: `${pendingDeliveryCount} delivery ${pendingDeliveryCount === 1 ? 'note' : 'notes'} to confirm`, sub: 'Check costs →' })
-  if (hasUnmapped) attention.push({ key: 'mapping', href: '/invoice-mapping?recent=1',
-    title: `${unmappedCount} delivery ${unmappedCount === 1 ? 'product' : 'products'} need mapping`, sub: 'Match once, automatic after →' })
-  for (const b of blockedCosts) attention.push({ key: `cost-${b.product_id}`, href: `/products/${b.product_id}`,
-    title: `Wrong cost — ${b.product_name}`, sub: 'Fix now →', urgent: true })
-  if (atLossCount + belowFloorCount + unpricedCount > 0) {
-    const total = atLossCount + belowFloorCount + unpricedCount
-    const parts = [
-      atLossCount     > 0 ? `${atLossCount} at a loss`        : null,
-      belowFloorCount > 0 ? `${belowFloorCount} below floor`  : null,
-      unpricedCount   > 0 ? `${unpricedCount} unpriced`       : null,
-    ].filter(Boolean)
-    attention.push({ key: 'health', href: '/products?category=issues',
-      title: `${total} ${total === 1 ? 'product' : 'products'} need attention`, sub: `${parts.join(' · ')} →`, urgent: atLossCount > 0 })
-  }
-  const attentionCount  = attention.length
-  const attentionUrgent = attention.some(a => a.urgent)
+  // Each alert surfaces as an attention badge on its relevant tile — no top cards.
+  const pricingBadge   = pendingCount                                  // prices to approve
+  const invoicesBadge  = (pendingDeliveryCount ?? 0) + unmappedCount   // notes to confirm + needs mapping
+  const productsBadge  = blockedCosts.length + atLossCount + belowFloorCount + unpricedCount
+  const productsUrgent = blockedCosts.length > 0 || atLossCount > 0    // at-loss / wrong-cost ⇒ red
+  const dispatchBadge  = confirmedOrderCount ?? 0                      // deliveries ready
 
   return (
     <div className="light min-h-screen bg-[var(--bg)] text-[var(--text)]">
@@ -152,78 +130,21 @@ export default async function DashboardPage() {
         </form>
       </div>
 
-      {/* Grouped attention — one flag instead of a stack of banners */}
-      {attentionCount > 0 && (
-        <details open className={`card mb-4 border ${attentionUrgent
-          ? 'border-status-red/50 bg-status-red/5'
-          : 'border-status-amber/40 bg-status-amber/5'}`}>
-          <summary className="flex items-center justify-between cursor-pointer list-none
-                              select-none [&::-webkit-details-marker]:hidden">
-            <div className="flex items-center gap-3">
-              <span className="text-2xl">🚩</span>
-              <div>
-                <p className={`font-bold text-sm ${attentionUrgent ? 'text-status-red' : ''}`}>
-                  Needs attention
-                </p>
-                <p className="text-xs text-[var(--text-muted)] mt-0.5">Tap to expand / collapse</p>
-              </div>
-            </div>
-            <span className={`text-white text-sm font-bold rounded-full w-8 h-8 flex items-center
-                             justify-center flex-shrink-0 ml-3
-                             ${attentionUrgent ? 'bg-status-red' : 'bg-status-amber'}`}>
-              {attentionCount}
-            </span>
-          </summary>
-          <div className="mt-3 space-y-2">
-            {attention.map(a => (
-              <Link key={a.key} href={a.href}
-                className="flex items-center justify-between rounded-xl bg-[var(--bg)] px-3 py-2.5
-                           active:scale-[0.99] transition-transform">
-                <div>
-                  <p className={`text-sm font-medium ${a.urgent ? 'text-status-red' : ''}`}>{a.title}</p>
-                  <p className="text-xs text-[var(--text-muted)] mt-0.5">{a.sub}</p>
-                </div>
-                <span className="text-[var(--text-muted)] text-lg flex-shrink-0 ml-3">›</span>
-              </Link>
-            ))}
-          </div>
-        </details>
-      )}
-
-      {/* Deliveries ready — its own flag, same treatment */}
-      {hasDeliveries && (
-        <Link href="/dispatch" className="block mb-4">
-          <div className="card border border-brand-accent/50 bg-brand-accent/10
-                          flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <span className="text-2xl">🚐</span>
-              <div>
-                <p className="font-bold text-sm">Deliveries ready</p>
-                <p className="text-xs text-[var(--text-muted)] mt-0.5">Tap to start dispatch →</p>
-              </div>
-            </div>
-            <span className="bg-brand-accent text-white text-sm font-bold rounded-full w-8 h-8
-                             flex items-center justify-center flex-shrink-0 ml-3">
-              {confirmedOrderCount}
-            </span>
-          </div>
-        </Link>
-      )}
-
       {/* Products & stock */}
       <p className="section-title">Products</p>
       <div className="grid grid-cols-3 gap-3 mb-6">
-        <QuickAction href="/products"         icon="🥦" label="Products" />
-        <QuickAction href="/invoices"         icon="📋" label="Invoices" />
+        <QuickAction href="/products"         icon="🥦" label="Products" badge={productsBadge} tone={productsUrgent ? 'red' : 'amber'} />
         <QuickAction href="/shop-order"       icon="🧺" label="Shop Order" />
         <QuickAction href="/market-run"        icon="🛒" label="Market Run" />
+        <QuickAction href="/dispatch"         icon="🚐" label="Dispatch" badge={dispatchBadge} tone="green" />
+        <QuickAction href="/invoices"         icon="📋" label="Invoices" badge={invoicesBadge} tone="amber" />
         <QuickAction href="/waste"            icon="🗑️" label="Waste Log" />
       </div>
 
       {/* Pricing & analysis */}
       <p className="section-title">Pricing</p>
       <div className="grid grid-cols-3 gap-3 mb-6">
-        <QuickAction href="/pricing"          icon="💰" label="Pricing" />
+        <QuickAction href="/pricing"          icon="💰" label="Pricing" badge={pricingBadge} tone="amber" />
         <QuickAction href="/epos-compare"     icon="📈" label="Price Check" />
         <QuickAction href="/price-history"    icon="🔍" label="Price History" />
         <QuickAction href="/margins"          icon="📊" label="Margins" />
@@ -243,10 +164,24 @@ export default async function DashboardPage() {
   )
 }
 
-function QuickAction({ href, icon, label }: { href: string; icon: string; label: string }) {
+const TONE_BADGE = { red: 'bg-status-red', amber: 'bg-status-amber', green: 'bg-brand-accent' } as const
+const TONE_RING  = { red: 'ring-2 ring-status-red/50', amber: 'ring-2 ring-status-amber/50', green: 'ring-2 ring-brand-accent/40' } as const
+
+function QuickAction({ href, icon, label, badge = 0, tone = 'amber' }: {
+  href: string; icon: string; label: string; badge?: number; tone?: 'red' | 'amber' | 'green'
+}) {
+  const show = badge > 0
   return (
-    <Link href={href} className="card flex flex-col items-center justify-center
-                                  gap-2 min-h-[80px] active:scale-95 transition-transform text-center">
+    <Link href={href} className={`card relative flex flex-col items-center justify-center
+                                  gap-2 min-h-[80px] active:scale-95 transition-transform text-center
+                                  ${show ? TONE_RING[tone] : ''}`}>
+      {show && (
+        <span className={`absolute -top-1.5 -right-1.5 min-w-[22px] h-[22px] px-1.5 rounded-full
+                          text-xs font-bold text-white flex items-center justify-center shadow
+                          ${TONE_BADGE[tone]}`}>
+          {badge}
+        </span>
+      )}
       <span className="text-2xl">{icon}</span>
       <span className="text-sm font-medium">{label}</span>
     </Link>
