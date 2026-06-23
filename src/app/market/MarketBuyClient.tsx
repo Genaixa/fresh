@@ -625,9 +625,9 @@ export default function MarketBuyClient({ session, products, existingItems, supp
 
       {/* Market Golem briefing */}
       {briefing && showBriefing && (
-        <div className="mb-4 rounded-xl border border-green-800 bg-[#0F1A0F] px-3 py-2.5 flex gap-2 items-start">
-          <span className="text-[10px] font-bold text-green-400 mt-0.5 shrink-0">AI</span>
-          <p className="text-xs text-green-100 flex-1 leading-relaxed">{briefing}</p>
+        <div className="mb-4 rounded-xl border border-green-200 bg-green-50 px-3 py-2.5 flex gap-2 items-start">
+          <span className="text-[10px] font-bold text-green-700 mt-0.5 shrink-0">AI</span>
+          <p className="text-xs text-green-900 flex-1 leading-relaxed">{briefing}</p>
           <button onClick={() => setShowBriefing(false)} className="text-green-600 text-xs shrink-0 mt-0.5">✕</button>
         </div>
       )}

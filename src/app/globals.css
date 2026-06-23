@@ -13,6 +13,7 @@
     --bg-card:       #FFFFFF;
     --text:          #1A1A1A;
     --text-muted:    #6B7280;
+    --border:        #E5E7EB;
   }
 
   :root  { --bg-main: var(--bg); }
@@ -21,17 +22,19 @@
     --bg-card:    #1E2E1E;
     --text:       #F0F4F0;
     --text-muted: #9CA3AF;
+    --border:     rgba(255,255,255,0.08);
     --bg-main:    var(--bg);
   }
 
-  /* Light-theme island: re-declares the light palette for a subtree even when the
-     global .dark class is active. Lets us prototype one screen in light without
-     flipping the whole app. (Custom properties resolve to the nearest ancestor.) */
+  /* Dark-theme island: re-declares the dark palette for a subtree even when the app
+     is light by default. Used to keep full-screen surfaces (till POS, customer portal)
+     intentionally dark. (Custom properties resolve to the nearest ancestor.) */
   .light {
     --bg:         #F5F5F0;
     --bg-card:    #FFFFFF;
     --text:       #1A1A1A;
     --text-muted: #6B7280;
+    --border:     #E5E7EB;
     --bg-main:    var(--bg);
   }
 
@@ -76,7 +79,7 @@
   }
 
   .card {
-    @apply bg-[var(--bg-card)] rounded-2xl p-4 shadow-sm;
+    @apply bg-[var(--bg-card)] rounded-2xl p-4 shadow-sm border border-[var(--border)];
   }
 
   .status-green  { @apply text-status-green; }

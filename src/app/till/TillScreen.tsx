@@ -244,7 +244,7 @@ export function TillScreen({ products }: { products: TillProduct[] }) {
   }
 
   return (
-    <div className="fixed inset-0 bg-[var(--bg-primary)] flex flex-col overflow-hidden select-none">
+    <div className="dark fixed inset-0 bg-[var(--bg-primary)] flex flex-col overflow-hidden select-none">
 
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-2.5 border-b border-white/10 shrink-0">

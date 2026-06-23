@@ -37,7 +37,7 @@ export default async function OrderIndexPage() {
             href={`/order/${c.id}`}
             className={`flex items-center justify-between rounded-xl border px-4 py-3.5 active:opacity-70 transition-opacity ${
               c.is_internal
-                ? 'bg-[#0F1A0F] border-green-800 text-white'
+                ? 'bg-green-50 border-green-300 text-green-900'
                 : 'bg-white border-gray-200 text-gray-900'
             }`}
           >

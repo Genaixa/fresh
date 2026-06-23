@@ -17,12 +17,10 @@ const NAV_ITEMS = [
 export function NavBar() {
   const pathname = usePathname()
   if (HIDDEN_ROUTES.some(r => pathname.startsWith(r))) return null
-  // Light-theme prototype: the dashboard runs the light palette, so the nav follows it.
-  const isLight = pathname.startsWith('/dashboard')
   return (
-    <nav className={`fixed bottom-0 left-0 right-0 bg-[var(--bg-card)] border-t
-                    flex justify-around items-center h-16 z-50 max-w-lg mx-auto
-                    ${isLight ? 'light border-black/10' : 'border-white/10'}`}>
+    <nav className="fixed bottom-3 left-3 right-3 max-w-lg mx-auto h-16 z-50
+                    bg-[var(--bg-card)] border border-[var(--border)] rounded-2xl shadow-lg
+                    flex justify-around items-center">
       {NAV_ITEMS.map(item => {
         const active = pathname.startsWith(item.href)
         return (
