@@ -149,10 +149,10 @@ export default function DispatchDeliveryClient({
       {/* Prev / next */}
       <div className="flex items-center justify-between gap-2 mb-5">
         {prevOrderId
-          ? <Link href={`/dispatch/${prevOrderId}`} className="px-3 py-1.5 rounded-lg bg-white/5 text-sm text-[var(--text-muted)] active:opacity-60 truncate">← {prevCustomerName}</Link>
+          ? <Link href={`/dispatch/${prevOrderId}`} className="px-3 py-1.5 rounded-lg bg-black/5 text-sm text-[var(--text-muted)] active:opacity-60 truncate">← {prevCustomerName}</Link>
           : <span />}
         {nextOrderId
-          ? <Link href={`/dispatch/${nextOrderId}`} className="px-3 py-1.5 rounded-lg bg-white/5 text-sm text-[var(--text-muted)] active:opacity-60 truncate">{nextCustomerName} →</Link>
+          ? <Link href={`/dispatch/${nextOrderId}`} className="px-3 py-1.5 rounded-lg bg-black/5 text-sm text-[var(--text-muted)] active:opacity-60 truncate">{nextCustomerName} →</Link>
           : <span className="px-3 py-1.5 text-xs text-[var(--text-muted)]">Last delivery</span>}
       </div>
 
@@ -184,7 +184,7 @@ export default function DispatchDeliveryClient({
                       className={`w-11 h-11 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors ${
                         isChecked
                           ? 'bg-brand-accent border-brand-accent text-white'
-                          : 'border-white/30 bg-transparent'
+                          : 'border-[var(--border)] bg-transparent'
                       }`}
                     >
                       {isChecked && <span className="text-xl leading-none font-bold">✓</span>}
@@ -199,7 +199,7 @@ export default function DispatchDeliveryClient({
                           value={priceStr[item.id] ?? ''}
                           onChange={e => setPriceStr(p => ({ ...p, [item.id]: e.target.value }))}
                           disabled={!isChecked}
-                          className="w-20 px-2 py-1 rounded-md border border-white/25 bg-white/10 text-[var(--text)] text-sm font-mono outline-none focus:border-brand-accent disabled:opacity-40 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                          className="w-20 px-2 py-1 rounded-md border border-[var(--border)] bg-black/5 text-[var(--text)] text-sm font-mono outline-none focus:border-brand-accent disabled:opacity-40 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
                         />
                         <span className="text-xs text-[var(--text-muted)]">{item.unit_type === 'box' ? 'box' : 'each'}</span>
                         <button
@@ -215,7 +215,7 @@ export default function DispatchDeliveryClient({
                       <button
                         onClick={() => adjustQty(item.id, -1)}
                         disabled={!isChecked}
-                        className="w-9 h-9 rounded-lg bg-white/10 flex items-center justify-center text-lg font-bold disabled:opacity-30 active:opacity-60"
+                        className="w-9 h-9 rounded-lg bg-black/5 flex items-center justify-center text-lg font-bold disabled:opacity-30 active:opacity-60"
                       >−</button>
                       <span className="w-9 text-center font-bold text-base tabular-nums">
                         {qty % 1 === 0 ? qty : qty.toFixed(1)}
@@ -223,7 +223,7 @@ export default function DispatchDeliveryClient({
                       <button
                         onClick={() => adjustQty(item.id, 1)}
                         disabled={!isChecked}
-                        className="w-9 h-9 rounded-lg bg-white/10 flex items-center justify-center text-lg font-bold disabled:opacity-30 active:opacity-60"
+                        className="w-9 h-9 rounded-lg bg-black/5 flex items-center justify-center text-lg font-bold disabled:opacity-30 active:opacity-60"
                       >+</button>
                     </div>
 
