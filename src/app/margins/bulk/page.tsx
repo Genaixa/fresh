@@ -92,7 +92,7 @@ function BulkRow({
             }
           }}
           onBlur={() => setPriceFocused(false)}
-          className="w-full rounded-lg bg-white/10 border border-white/10 px-1.5 py-1.5
+          className="w-full rounded-lg bg-black/5 border border-[var(--border)] px-1.5 py-1.5
                      text-sm text-center focus:outline-none focus:ring-1 focus:ring-brand-accent"
         />
 
@@ -114,7 +114,7 @@ function BulkRow({
             }
           }}
           onBlur={() => setMarkupFocused(false)}
-          className={`w-full rounded-lg bg-white/10 border border-white/10 px-1.5 py-1.5
+          className={`w-full rounded-lg bg-black/5 border border-[var(--border)] px-1.5 py-1.5
                       text-sm text-center focus:outline-none focus:ring-1 focus:ring-brand-accent
                       ${markupColour}`}
         />
@@ -304,12 +304,12 @@ export default function BulkMarginPage() {
           {[-10, -5, +5, +10].map(d => (
             <button key={d} onClick={() => nudgeAll(d)}
               className={`flex-1 rounded-xl py-2.5 text-sm font-semibold min-h-[44px]
-                ${d > 0 ? 'bg-brand-accent/20 text-brand-accent' : 'bg-white/10 text-[var(--text-muted)]'}`}>
+                ${d > 0 ? 'bg-brand-accent/20 text-brand-accent' : 'bg-black/5 text-[var(--text-muted)]'}`}>
               {d > 0 ? `+${d}p` : `${d}p`}
             </button>
           ))}
           <button onClick={resetAll}
-            className="flex-1 rounded-xl py-2.5 text-sm font-semibold min-h-[44px] bg-white/5 text-[var(--text-muted)]">
+            className="flex-1 rounded-xl py-2.5 text-sm font-semibold min-h-[44px] bg-black/5 text-[var(--text-muted)]">
             Reset
           </button>
         </div>
@@ -333,7 +333,7 @@ export default function BulkMarginPage() {
             ? 'bg-status-green/20 text-status-green'
             : changedCount > 0
               ? 'bg-brand-accent text-white'
-              : 'bg-white/5 text-[var(--text-muted)] cursor-not-allowed'}`}
+              : 'bg-black/5 text-[var(--text-muted)] cursor-not-allowed'}`}
       >
         {saving
           ? 'Saving…'

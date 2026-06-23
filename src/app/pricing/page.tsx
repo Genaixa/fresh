@@ -264,13 +264,13 @@ export default async function PricingSuggestionsPage({
             {otherCount > 0 && (
               <a href={tabHref('other')}
                 className={`flex-1 text-center rounded-xl py-2 text-sm transition-colors
-                  ${tab === 'other' ? 'bg-white/10 ring-1 ring-white/30 font-semibold' : 'card'}`}>
+                  ${tab === 'other' ? 'bg-black/5 ring-1 ring-brand-accent font-semibold' : 'card'}`}>
                 Other <span className="text-xs opacity-60">({otherCount})</span>
               </a>
             )}
             <a href={tabHref('all')}
               className={`flex-1 text-center rounded-xl py-2 text-sm transition-colors
-                ${tab === 'all' ? 'bg-white/10 ring-1 ring-white/30 font-semibold' : 'card'}`}>
+                ${tab === 'all' ? 'bg-black/5 ring-1 ring-brand-accent font-semibold' : 'card'}`}>
               All <span className="text-xs opacity-60">({pending.length})</span>
             </a>
             {opportunities.length > 0 && (
@@ -292,7 +292,7 @@ export default async function PricingSuggestionsPage({
                 <a key={s} href={sortHref(s)}
                   className={`px-4 py-1.5 rounded-lg text-xs transition-colors
                     ${active ? 'bg-brand-accent/20 text-brand-accent ring-1 ring-brand-accent/40'
-                             : 'text-[var(--text-muted)] border border-white/10'}`}>
+                             : 'text-[var(--text-muted)] border border-[var(--border)]'}`}>
                   {labels[s]}{arrow}
                 </a>
               )

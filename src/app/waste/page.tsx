@@ -66,14 +66,14 @@ export default async function WastePage({
               <p className="text-sm font-medium mb-2 text-[var(--text-muted)]">Quantity</p>
               <div className="flex items-center gap-4">
                 <button type="button" id="qty-minus"
-                  className="min-h-[48px] min-w-[48px] rounded-xl bg-white/10 text-2xl
+                  className="min-h-[48px] min-w-[48px] rounded-xl bg-black/5 text-2xl
                              flex items-center justify-center font-bold">−</button>
                 <input id="qty-input" name="quantity" type="number" min="0.5" step="0.5"
                        defaultValue={1}
                        className="w-20 text-center text-2xl font-bold bg-transparent
                                   border-b-2 border-brand-accent focus:outline-none" />
                 <button type="button" id="qty-plus"
-                  className="min-h-[48px] min-w-[48px] rounded-xl bg-white/10 text-2xl
+                  className="min-h-[48px] min-w-[48px] rounded-xl bg-black/5 text-2xl
                              flex items-center justify-center font-bold">+</button>
               </div>
             </div>
@@ -85,7 +85,7 @@ export default async function WastePage({
                   <label key={r} className="cursor-pointer">
                     <input type="radio" name="reason" value={r}
                            defaultChecked={r === 'spoiled'} className="sr-only peer" />
-                    <div className="min-h-[48px] rounded-xl border-2 border-white/10
+                    <div className="min-h-[48px] rounded-xl border-2 border-[var(--border)]
                                     peer-checked:border-brand-accent peer-checked:bg-brand-accent/10
                                     flex items-center justify-center text-sm font-medium capitalize
                                     transition-colors">

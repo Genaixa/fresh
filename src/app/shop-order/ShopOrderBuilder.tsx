@@ -129,7 +129,7 @@ export default function ShopOrderBuilder({
         <div className="flex flex-col gap-3 max-w-xs mx-auto">
           <a href="/market-run" className="btn-primary py-3 font-semibold rounded-lg">Go to Market Run →</a>
           <button onClick={() => { setPlaced(false); setQty({ ...template }); setExtras([]) }}
-            className="py-3 rounded-lg border border-white/20 font-semibold">Start another</button>
+            className="py-3 rounded-lg border border-[var(--border)] font-semibold">Start another</button>
         </div>
       </div>
     )
@@ -164,10 +164,10 @@ export default function ShopOrderBuilder({
         <input className="input" placeholder="Add another item… (e.g. Lychees)"
           value={search} onChange={e => setSearch(e.target.value)} />
         {results.length > 0 && (
-          <div className="card mt-1 p-0 divide-y divide-white/10">
+          <div className="card mt-1 p-0 divide-y divide-[var(--border)]">
             {results.map(c => (
               <button key={c.id} onClick={() => addExtra(c)}
-                className="w-full text-left px-3 py-2.5 text-sm hover:bg-white/5 flex justify-between">
+                className="w-full text-left px-3 py-2.5 text-sm hover:bg-black/5 flex justify-between">
                 <span>{c.name}</span>
                 <span className="text-[var(--text-muted)] text-xs capitalize">+ add · {c.category}</span>
               </button>
@@ -177,7 +177,7 @@ export default function ShopOrderBuilder({
       </div>
 
       {/* Veg / Fruit tabs */}
-      <div className="flex mb-4 rounded-lg overflow-hidden border border-white/10">
+      <div className="flex mb-4 rounded-lg overflow-hidden border border-[var(--border)]">
         {(['veg', 'fruit'] as const).map(t => (
           <button key={t} onClick={() => setTab(t)}
             className={`flex-1 py-2.5 text-sm font-semibold transition-colors ${
@@ -201,13 +201,13 @@ export default function ShopOrderBuilder({
               <p className="text-[var(--text-muted)] text-[11px] mb-2">{m.unit}</p>
               <div className="flex items-center gap-1">
                 <button onClick={() => setOne(id, q - 1)} disabled={q === 0}
-                  className="w-8 h-8 rounded-md bg-white/10 disabled:opacity-40 text-lg leading-none">−</button>
+                  className="w-8 h-8 rounded-md bg-black/5 disabled:opacity-40 text-lg leading-none">−</button>
                 <input type="number" inputMode="numeric" value={q}
                   onFocus={e => e.target.select()}
                   onChange={e => setOne(id, Number(e.target.value) || 0)}
-                  className="w-full text-center bg-transparent border border-white/15 rounded-md h-8 text-sm" />
+                  className="w-full text-center bg-transparent border border-[var(--border)] rounded-md h-8 text-sm" />
                 <button onClick={() => setOne(id, q + 1)}
-                  className="w-8 h-8 rounded-md bg-white/10 text-lg leading-none">+</button>
+                  className="w-8 h-8 rounded-md bg-black/5 text-lg leading-none">+</button>
               </div>
             </div>
           )
@@ -222,7 +222,7 @@ export default function ShopOrderBuilder({
       {error && <p className="text-red-400 text-sm mt-4">{error}</p>}
 
       {/* Sits ABOVE the global bottom nav (h-16) so it isn't intercepted by it. */}
-      <div className="fixed bottom-16 left-0 right-0 max-w-lg mx-auto p-3 bg-[var(--bg-main)] border-t border-white/10 z-40">
+      <div className="fixed bottom-16 left-0 right-0 max-w-lg mx-auto p-3 bg-[var(--bg-main)] border-t border-[var(--border)] z-40">
         <button onClick={submit} disabled={saving || lineCount === 0}
           className="btn-primary w-full py-3.5 font-semibold rounded-lg disabled:opacity-50">
           {saving ? 'Sending…'

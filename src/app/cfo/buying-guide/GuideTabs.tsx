@@ -41,7 +41,7 @@ function MarginRow({ r, muted }: { r: GuideRow; muted?: boolean }) {
 }
 
 const Table = ({ children }: { children: React.ReactNode }) => (
-  <div className="rounded-xl border border-white/10 bg-[var(--bg-card)] divide-y divide-white/5 overflow-hidden">{children}</div>
+  <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] divide-y divide-[var(--border)] overflow-hidden">{children}</div>
 )
 
 type TabId = 'big' | 'steady' | 'small' | 'other'
@@ -62,11 +62,11 @@ export function GuideTabs({ big, steady, small, noVolume, lossLeaders }: {
 
   return (
     <section className="mb-6">
-      <div className="flex gap-1 mb-2 bg-white/5 rounded-xl p-1">
+      <div className="flex gap-1 mb-2 bg-black/5 rounded-xl p-1">
         {tabs.map(t => (
           <button key={t.id} onClick={() => setTab(t.id)}
             className={`flex-1 text-xs font-semibold py-2 rounded-lg transition-colors ${
-              tab === t.id ? 'bg-white/15 text-[var(--text)]' : 'text-[var(--text-muted)]'
+              tab === t.id ? 'bg-[var(--bg-card)] shadow-sm text-[var(--text)]' : 'text-[var(--text-muted)]'
             }`}>
             {t.label} <span className="opacity-60">({t.count})</span>
           </button>

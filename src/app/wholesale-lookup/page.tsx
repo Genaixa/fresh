@@ -47,7 +47,7 @@ export default async function WholesaleLookupPage({
             defaultValue={q}
             placeholder="Search product..."
             autoFocus
-            className="w-full rounded-xl border border-white/10 bg-[var(--bg-card)]
+            className="w-full rounded-xl border border-[var(--border)] bg-[var(--bg-card)]
                        px-4 py-4 text-xl text-[var(--text)] min-h-[60px]
                        focus:outline-none focus:ring-2 focus:ring-brand-accent"
           />

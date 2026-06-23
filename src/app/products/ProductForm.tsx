@@ -115,7 +115,7 @@ export function ProductForm({ id, defaultValues: d, suppliers, isNew, deactivate
       )}
       {!showCaseSize && <input type="hidden" name="case_size" value="1" />}
 
-      <div className="border-t border-white/10 pt-4">
+      <div className="border-t border-[var(--border)] pt-4">
         <p className="text-xs font-semibold uppercase tracking-wide text-[var(--text-muted)] mb-3">Pricing Engine</p>
         <div className="space-y-3">
           <Field label="Price multiplier">

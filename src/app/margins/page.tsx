@@ -124,7 +124,7 @@ export default async function MarginsPage({
           return (
             <a key={t} href={tabHref(t)}
               className={`flex-1 text-center rounded-xl py-2 text-sm transition-colors
-                ${tab === t ? 'bg-white/10 ring-1 ring-white/30 font-semibold' : 'card'}`}>
+                ${tab === t ? 'bg-black/5 ring-1 ring-brand-accent font-semibold' : 'card'}`}>
               {labels[t]} <span className="text-xs opacity-60">({count})</span>
             </a>
           )
@@ -141,7 +141,7 @@ export default async function MarginsPage({
               className={`px-4 py-1.5 rounded-lg text-xs transition-colors
                 ${active
                   ? 'bg-brand-accent/20 text-brand-accent ring-1 ring-brand-accent/40'
-                  : 'text-[var(--text-muted)] border border-white/10'}`}>
+                  : 'text-[var(--text-muted)] border border-[var(--border)]'}`}>
               {label}{arrow}
             </a>
           )

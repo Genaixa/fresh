@@ -51,7 +51,7 @@ function ForgotPasswordContent() {
                   type="email"
                   autoComplete="email"
                   required
-                  className="w-full rounded-xl border border-white/10 bg-[var(--bg-card)]
+                  className="w-full rounded-xl border border-[var(--border)] bg-[var(--bg-card)]
                              px-4 py-3 text-base text-[var(--text)] min-h-[48px]
                              focus:outline-none focus:ring-2 focus:ring-brand-accent"
                 />

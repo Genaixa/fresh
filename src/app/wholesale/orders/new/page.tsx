@@ -147,7 +147,7 @@ function NewOrderForm() {
           <div className="mt-2 space-y-1 max-h-48 overflow-y-auto">
             {filtered.map(p => (
               <button key={p.id} onClick={() => addLine(p)}
-                className="w-full text-left px-3 py-2 rounded-lg hover:bg-white/10
+                className="w-full text-left px-3 py-2 rounded-lg hover:bg-black/5
                            flex items-center justify-between text-sm">
                 <span>{p.name}</span>
                 <span className="text-[var(--text-muted)]">{pence(p.wholesale_price)}</span>
@@ -201,9 +201,9 @@ function NewOrderForm() {
       {error && <p className="text-red-400 text-sm mb-3">{error}</p>}
 
       {/* Action buttons */}
-      <div className="fixed bottom-0 left-0 right-0 max-w-lg mx-auto p-4 bg-[var(--bg-main)] border-t border-white/10 flex gap-3">
+      <div className="fixed bottom-0 left-0 right-0 max-w-lg mx-auto p-4 bg-[var(--bg-main)] border-t border-[var(--border)] flex gap-3">
         <button onClick={() => submit('draft')} disabled={saving}
-          className="flex-1 py-3 rounded-xl border border-white/20 text-sm font-medium">
+          className="flex-1 py-3 rounded-xl border border-[var(--border)] text-sm font-medium">
           Save Draft
         </button>
         <button onClick={() => submit('confirmed')} disabled={saving}

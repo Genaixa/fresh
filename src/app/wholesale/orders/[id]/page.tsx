@@ -109,7 +109,7 @@ export default function OrderDetailPage() {
 
       {/* Actions */}
       {order.status !== 'dispatched' && order.status !== 'cancelled' && (
-        <div className="fixed bottom-0 left-0 right-0 max-w-lg mx-auto p-4 bg-[var(--bg-main)] border-t border-white/10">
+        <div className="fixed bottom-0 left-0 right-0 max-w-lg mx-auto p-4 bg-[var(--bg-main)] border-t border-[var(--border)]">
           <button onClick={dispatch} disabled={dispatching}
             className="btn-primary w-full py-4 text-lg font-semibold">
             {dispatching ? 'Generating invoice…' : 'Dispatch & Generate Invoice'}

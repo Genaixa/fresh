@@ -149,7 +149,7 @@ export default async function DispatchPage() {
       )}
 
       {firstOrderId && (
-        <div className="fixed bottom-16 left-0 right-0 max-w-lg mx-auto p-4 bg-[var(--bg-main)] border-t border-white/10 z-40">
+        <div className="fixed bottom-16 left-0 right-0 max-w-lg mx-auto p-4 bg-[var(--bg-main)] border-t border-[var(--border)] z-40">
           <Link href={`/dispatch/${firstOrderId}`}
             className="btn-primary w-full py-5 text-lg font-semibold flex items-center justify-center rounded-xl">
             All loaded → Start deliveries

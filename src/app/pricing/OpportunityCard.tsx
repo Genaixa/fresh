@@ -78,7 +78,7 @@ export function OpportunityCard({
   }
 
   return (
-    <div className={`card border border-white/8 ${pending ? 'opacity-40 pointer-events-none' : ''}`}>
+    <div className={`card border border-[var(--border)] ${pending ? 'opacity-40 pointer-events-none' : ''}`}>
 
       {/* Product name + cost */}
       <div className="flex items-baseline justify-between mb-3">
@@ -88,7 +88,7 @@ export function OpportunityCard({
 
       {/* Now vs At 40% */}
       <div className="grid grid-cols-2 gap-2 mb-3">
-        <div className="rounded-xl bg-white/5 p-3">
+        <div className="rounded-xl bg-black/5 p-3">
           <p className="text-xs text-[var(--text-muted)] mb-1">Now</p>
           <p className="text-lg font-bold">{formatPrice(currentRetailPrice)}</p>
           <p className="text-xs text-[var(--text-muted)]">{currentMarginPct}% margin</p>
@@ -138,7 +138,7 @@ export function OpportunityCard({
       <div className="flex gap-2">
         <button
           onClick={handleDismiss}
-          className="flex-1 py-2.5 rounded-xl bg-white/5 text-[var(--text-muted)] text-sm font-medium active:bg-white/10 transition-colors"
+          className="flex-1 py-2.5 rounded-xl bg-black/5 text-[var(--text-muted)] text-sm font-medium active:bg-black/5 transition-colors"
         >
           Leave as is
         </button>

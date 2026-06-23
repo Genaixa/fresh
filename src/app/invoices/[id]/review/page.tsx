@@ -129,7 +129,7 @@ export default async function ReviewInvoicePage({
           name="invoice_number"
           defaultValue={invoice.invoice_number ?? ''}
           placeholder="e.g. DN-123456"
-          className="flex-1 bg-transparent text-sm font-mono font-semibold outline-none placeholder:text-white/20"
+          className="flex-1 bg-transparent text-sm font-mono font-semibold outline-none placeholder:text-[var(--text-muted)]"
         />
         <button type="submit" className="text-xs text-brand-accent shrink-0 px-2 py-1 rounded-lg border border-brand-accent/30">
           Save
@@ -210,13 +210,13 @@ export default async function ReviewInvoicePage({
             {otherCount > 0 && (
               <Link href={tabHref('other')}
                 className={`flex-1 text-center rounded-xl py-2 text-sm transition-colors
-                  ${tab === 'other' ? 'bg-white/10 ring-1 ring-white/30 font-semibold' : 'card'}`}>
+                  ${tab === 'other' ? 'bg-black/5 ring-1 ring-brand-accent font-semibold' : 'card'}`}>
                 Other <span className="text-xs opacity-60">({otherCount})</span>
               </Link>
             )}
             <Link href={tabHref('all')}
               className={`flex-1 text-center rounded-xl py-2 text-sm transition-colors
-                ${tab === 'all' ? 'bg-white/10 ring-1 ring-white/30 font-semibold' : 'card'}`}>
+                ${tab === 'all' ? 'bg-black/5 ring-1 ring-brand-accent font-semibold' : 'card'}`}>
               All <span className="text-xs opacity-60">({allMatched.length})</span>
             </Link>
           </div>
@@ -231,7 +231,7 @@ export default async function ReviewInvoicePage({
                 <Link key={s} href={sortHref(s)}
                   className={`px-4 py-1.5 rounded-lg text-xs transition-colors
                     ${active ? 'bg-brand-accent/20 text-brand-accent ring-1 ring-brand-accent/40'
-                             : 'text-[var(--text-muted)] border border-white/10'}`}>
+                             : 'text-[var(--text-muted)] border border-[var(--border)]'}`}>
                   {label}{arrow}
                 </Link>
               )

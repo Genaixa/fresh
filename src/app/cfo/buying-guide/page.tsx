@@ -128,7 +128,7 @@ export default async function BuyingGuidePage() {
               Cost or selling unit still being checked with David — so the margin here
               isn&apos;t reliable yet (even where it looks normal). Don&apos;t act on these %.
             </p>
-            <div className="rounded-xl border border-white/10 bg-[var(--bg-card)] divide-y divide-white/5 overflow-hidden">{needsCheck.map(r => <Line key={r.name} r={r} tone="text-status-amber" />)}</div>
+            <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] divide-y divide-[var(--border)] overflow-hidden">{needsCheck.map(r => <Line key={r.name} r={r} tone="text-status-amber" />)}</div>
           </section>
         )}
 
@@ -138,7 +138,7 @@ export default async function BuyingGuidePage() {
             <p className="text-xs text-[var(--text-muted)] mb-3">
               Under 20% margin. The faster it sells, the more a small price rise is worth.
             </p>
-            <div className="rounded-xl border border-white/10 bg-[var(--bg-card)] divide-y divide-white/5 overflow-hidden">{thin.map(r => (
+            <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] divide-y divide-[var(--border)] overflow-hidden">{thin.map(r => (
               <div key={r.name} className="px-3 py-2 flex items-center justify-between gap-3">
                 <div className="min-w-0">
                   <p className="font-medium text-sm truncate">{r.name}</p>
@@ -155,7 +155,7 @@ export default async function BuyingGuidePage() {
         {losing.length > 0 && (
           <section className="mb-6">
             <p className="section-title text-status-red">Losing money — needs a price rise</p>
-            <div className="rounded-xl border border-white/10 bg-[var(--bg-card)] divide-y divide-white/5 overflow-hidden">{losing.map(r => <Line key={r.name} r={r} tone="text-status-red" />)}</div>
+            <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] divide-y divide-[var(--border)] overflow-hidden">{losing.map(r => <Line key={r.name} r={r} tone="text-status-red" />)}</div>
           </section>
         )}
 

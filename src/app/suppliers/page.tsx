@@ -74,21 +74,21 @@ function SupplierCard({ supplier: s }: { supplier: Supplier }) {
       <summary className="flex items-center justify-between cursor-pointer select-none min-h-[44px]">
         <div className="flex items-center gap-3">
           {s.market_order != null && (
-            <span className="text-xs bg-white/10 rounded px-2 py-0.5 font-mono">
+            <span className="text-xs bg-black/5 rounded px-2 py-0.5 font-mono">
               #{s.market_order}
             </span>
           )}
           <span className="font-medium">{s.name}</span>
         </div>
         <span className={`text-xs px-2 py-0.5 rounded-full ${
-          s.is_active ? 'bg-green-500/20 text-green-400' : 'bg-white/10 text-[var(--text-muted)]'
+          s.is_active ? 'bg-green-500/20 text-green-400' : 'bg-black/5 text-[var(--text-muted)]'
         }`}>
           {s.is_active ? 'Active' : 'Inactive'}
         </span>
       </summary>
 
       {/* Edit form */}
-      <form action={upsertSupplier} className="mt-4 space-y-3 border-t border-white/10 pt-4">
+      <form action={upsertSupplier} className="mt-4 space-y-3 border-t border-[var(--border)] pt-4">
         <input type="hidden" name="id" value={s.id} />
         <input type="hidden" name="is_active" value={s.is_active ? 'true' : 'false'} />
         <div>

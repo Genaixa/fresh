@@ -94,7 +94,7 @@ export default function UploadInvoicePage() {
       {uploading ? (
         <div className="card text-center py-10">
           <p className="text-lg font-semibold mb-4">Scanning invoice...</p>
-          <div className="w-full bg-white/10 rounded-full h-3 mb-2">
+          <div className="w-full bg-black/5 rounded-full h-3 mb-2">
             <div
               className="bg-brand-accent h-3 rounded-full transition-all duration-500"
               style={{ width: `${progress}%` }}
@@ -147,7 +147,7 @@ export default function UploadInvoicePage() {
           </button>
           <button
             onClick={() => { setDuplicate(null); setFile(null) }}
-            className="w-full py-3 rounded-xl border border-white/20 text-sm"
+            className="w-full py-3 rounded-xl border border-[var(--border)] text-sm"
           >
             Cancel — go back
           </button>

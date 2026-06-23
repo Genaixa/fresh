@@ -114,7 +114,7 @@ export default async function ProductsPage({
           >
             ⚠ Issues
             <span className={`rounded-full text-xs px-1.5 py-0.5 font-bold
-              ${showIssues ? 'bg-white/20' : 'bg-status-red/20'}`}>
+              ${showIssues ? 'bg-black/10' : 'bg-status-red/20'}`}>
               {issueCount}
             </span>
           </Link>
@@ -134,14 +134,14 @@ export default async function ProductsPage({
           className={`px-4 py-1.5 rounded-lg text-xs font-medium transition-colors
             ${nameActive
               ? 'bg-brand-accent/20 text-brand-accent ring-1 ring-brand-accent/40'
-              : 'text-[var(--text-muted)] border border-white/10'}`}>
+              : 'text-[var(--text-muted)] border border-[var(--border)]'}`}>
           A–Z {nameActive ? (sort === 'name_asc' ? '↑' : '↓') : ''}
         </Link>
         <Link href={buildHref({ sort: priceNextSort })}
           className={`px-4 py-1.5 rounded-lg text-xs font-medium transition-colors
             ${priceActive
               ? 'bg-brand-accent/20 text-brand-accent ring-1 ring-brand-accent/40'
-              : 'text-[var(--text-muted)] border border-white/10'}`}>
+              : 'text-[var(--text-muted)] border border-[var(--border)]'}`}>
           Price {priceActive ? (sort === 'price_asc' ? '↑' : '↓') : ''}
         </Link>
       </div>

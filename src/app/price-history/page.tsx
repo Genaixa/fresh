@@ -198,7 +198,7 @@ export default async function PriceHistoryPage({
                 <p className={`text-lg font-bold ${mc(currentMargin)}`}>{pct(currentMargin)}</p>
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-3 pt-3 border-t border-white/10">
+            <div className="grid grid-cols-2 gap-3 pt-3 border-t border-[var(--border)]">
               <div>
                 <p className="text-xs text-[var(--text-muted)]">
                   4-wk avg cost
@@ -216,7 +216,7 @@ export default async function PriceHistoryPage({
               )}
             </div>
             {weeklyUnits > 0 && (
-              <div className="pt-3 border-t border-white/10 mt-3">
+              <div className="pt-3 border-t border-[var(--border)] mt-3">
                 <p className="text-xs text-[var(--text-muted)] mb-2">Avg sales volume</p>
                 <div className="grid grid-cols-4 gap-2">
                   {[
@@ -234,7 +234,7 @@ export default async function PriceHistoryPage({
               </div>
             )}
             {trendPct !== null && Math.abs(trendPct) >= 5 && (
-              <p className={`text-xs mt-2 pt-2 border-t border-white/10
+              <p className={`text-xs mt-2 pt-2 border-t border-[var(--border)]
                 ${trendPct > 0 ? 'text-status-amber' : 'text-status-green'}`}>
                 Long-term cost trend: {trendPct > 0 ? '+' : ''}{trendPct}% over {deliveries.length} deliveries
               </p>
@@ -257,7 +257,7 @@ export default async function PriceHistoryPage({
                     weekday: 'short', day: 'numeric', month: 'short', year: 'numeric',
                   })
                   return (
-                    <div key={t.id} className={`card border ${isDataError ? 'border-status-red/20 bg-status-red/5 opacity-60' : 'border-white/8'}`}>
+                    <div key={t.id} className={`card border ${isDataError ? 'border-status-red/20 bg-status-red/5 opacity-60' : 'border-[var(--border)]'}`}>
                       <div className="flex items-center justify-between mb-3">
                         <p className="text-sm font-semibold">{dateStr}</p>
                         {isDataError ? (
@@ -266,13 +266,13 @@ export default async function PriceHistoryPage({
                           </span>
                         ) : (
                           <span className={`text-xs px-2 py-0.5 rounded-full font-medium
-                            ${t.priceType === 'retail' ? 'bg-brand-accent/20 text-brand-accent' : 'bg-white/10 text-[var(--text-muted)]'}`}>
+                            ${t.priceType === 'retail' ? 'bg-brand-accent/20 text-brand-accent' : 'bg-black/5 text-[var(--text-muted)]'}`}>
                             {t.priceType === 'purchase' ? 'Cost changed' : t.priceType === 'retail' ? 'Retail changed' : 'Both changed'}
                           </span>
                         )}
                       </div>
                       <div className="grid grid-cols-2 gap-2 mb-3">
-                        <div className="rounded-xl bg-white/5 p-2.5">
+                        <div className="rounded-xl bg-black/5 p-2.5">
                           <p className="text-xs text-[var(--text-muted)] mb-1">Cost</p>
                           <p className="font-bold">{formatPrice(t.cost)}</p>
                           {t.cost !== t.oldCost && (
@@ -283,7 +283,7 @@ export default async function PriceHistoryPage({
                                 </p>
                           )}
                         </div>
-                        <div className="rounded-xl bg-white/5 p-2.5">
+                        <div className="rounded-xl bg-black/5 p-2.5">
                           <p className="text-xs text-[var(--text-muted)] mb-1">Retail</p>
                           <p className="font-bold">{formatPrice(t.retail)}</p>
                           {t.retail !== t.oldRetail && (
@@ -309,7 +309,7 @@ export default async function PriceHistoryPage({
                         )}
                       </div>
                       {weeklyGain !== null && (
-                        <div className={`pt-2 border-t border-white/10 mt-2 ${weeklyGain >= 0 ? 'text-status-green' : 'text-status-red'}`}>
+                        <div className={`pt-2 border-t border-[var(--border)] mt-2 ${weeklyGain >= 0 ? 'text-status-green' : 'text-status-red'}`}>
                           <p className="text-xs text-[var(--text-muted)] mb-1.5">Profit at this price ({weeklyUnits} units/wk)</p>
                           <div className="grid grid-cols-4 gap-2">
                             {[
@@ -353,7 +353,7 @@ export default async function PriceHistoryPage({
                 day: 'numeric', month: 'short', year: 'numeric',
               })
               return (
-                <div className={`card border ${isDataErr ? 'border-status-red/20 bg-status-red/5 opacity-60' : 'border-white/8'}`}>
+                <div className={`card border ${isDataErr ? 'border-status-red/20 bg-status-red/5 opacity-60' : 'border-[var(--border)]'}`}>
                   <div className="flex items-center justify-between mb-2">
                     <div>
                       <p className="text-sm font-semibold">{dateStr}</p>
@@ -416,7 +416,7 @@ export default async function PriceHistoryPage({
                 {older.length > 0 && (
                   <details className="mb-4">
                     <summary className="text-sm text-[var(--text-muted)] cursor-pointer py-2 select-none list-none flex items-center gap-2">
-                      <span className="text-xs border border-white/20 rounded px-2 py-0.5">Show {older.length} older deliveries</span>
+                      <span className="text-xs border border-[var(--border)] rounded px-2 py-0.5">Show {older.length} older deliveries</span>
                     </summary>
                     <div className="space-y-2 mt-2">
                       {older.map((d, i) => <DeliveryCard key={d.id} d={d} i={thisMonth.length + i} />)}

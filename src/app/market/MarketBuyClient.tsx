@@ -879,15 +879,15 @@ function SessionSummary({ date, lines, financials, onClose }: {
     return (
       <div className="mb-5">
         <h3 className="text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider mb-2">{label}</h3>
-        <div className="border border-white/10 rounded-xl overflow-hidden">
+        <div className="border border-[var(--border)] rounded-xl overflow-hidden">
           {items.map((l, i) => (
-            <div key={i} className="flex items-baseline justify-between px-3 py-2 border-b border-white/5 last:border-0 bg-[var(--bg-card)]">
+            <div key={i} className="flex items-baseline justify-between px-3 py-2 border-b border-[var(--border)] last:border-0 bg-[var(--bg-card)]">
               <span className="text-sm text-[var(--text)] flex-1">{l.name}</span>
               <span className="text-xs text-[var(--text-muted)] mx-2 shrink-0">{l.qty} × {fmt(l.pricePence)}</span>
               <span className="text-sm font-semibold text-[var(--text)] shrink-0">{fmt(l.qty * l.pricePence)}</span>
             </div>
           ))}
-          <div className="flex justify-between px-3 py-2 bg-white/5">
+          <div className="flex justify-between px-3 py-2 bg-black/5">
             <span className="text-xs font-bold text-[var(--text-muted)] uppercase tracking-wide">{label} total</span>
             <span className="text-sm font-bold text-[var(--text)]">{fmt(total)}</span>
           </div>
@@ -899,12 +899,12 @@ function SessionSummary({ date, lines, financials, onClose }: {
   return (
     <div className="fixed inset-0 z-50 bg-[var(--bg)] overflow-y-auto pb-28">
       <div className="max-w-lg mx-auto">
-        <div className="sticky top-0 bg-[var(--bg)] border-b border-white/10 px-4 py-3 flex items-center justify-between">
+        <div className="sticky top-0 bg-[var(--bg)] border-b border-[var(--border)] px-4 py-3 flex items-center justify-between">
           <div>
             <h2 className="font-bold text-[var(--text)]">Market Summary</h2>
             <p className="text-xs text-[var(--text-muted)]">{date}</p>
           </div>
-          <button onClick={onClose} className="text-xs text-[var(--text-muted)] border border-white/20 px-3 py-1.5 rounded-lg active:bg-white/5">
+          <button onClick={onClose} className="text-xs text-[var(--text-muted)] border border-[var(--border)] px-3 py-1.5 rounded-lg active:bg-black/5">
             Edit
           </button>
         </div>
@@ -973,7 +973,7 @@ function SessionSummary({ date, lines, financials, onClose }: {
           <SupplierSection label="Dole" items={lines.dole} total={doleTotal} />
           <SupplierSection label="JR Holland" items={lines.holland} total={hollandTotal} />
 
-          <div className="flex justify-between items-center px-3 py-3 bg-[var(--bg-card)] border border-white/10 rounded-xl mb-6">
+          <div className="flex justify-between items-center px-3 py-3 bg-[var(--bg-card)] border border-[var(--border)] rounded-xl mb-6">
             <span className="text-sm font-bold text-[var(--text)]">Grand total</span>
             <span className="text-lg font-bold text-[var(--text)]">{fmt(grandTotal)}</span>
           </div>

@@ -133,7 +133,7 @@ export default function InvoiceDetailPage() {
           <span className="text-[var(--text-muted)]">Paid</span>
           <span className="text-green-400">−{pence(invoice.amount_paid)}</span>
         </div>
-        <div className="flex justify-between font-bold text-base border-t border-white/10 pt-2">
+        <div className="flex justify-between font-bold text-base border-t border-[var(--border)] pt-2">
           <span>Balance due</span>
           <span className={balance > 0 ? 'text-yellow-400' : 'text-green-400'}>{pence(balance)}</span>
         </div>
@@ -212,7 +212,7 @@ export default function InvoiceDetailPage() {
             {error && <p className="text-red-400 text-sm">{error}</p>}
             <div className="flex gap-3">
               <button onClick={() => setShowPayment(false)}
-                className="flex-1 py-3 rounded-xl border border-white/20 text-sm">
+                className="flex-1 py-3 rounded-xl border border-[var(--border)] text-sm">
                 Cancel
               </button>
               <button onClick={recordPayment} disabled={saving}
@@ -226,7 +226,7 @@ export default function InvoiceDetailPage() {
 
       {/* Bottom bar */}
       {balance > 0 && (
-        <div className="fixed bottom-0 left-0 right-0 max-w-lg mx-auto p-4 bg-[var(--bg-main)] border-t border-white/10">
+        <div className="fixed bottom-0 left-0 right-0 max-w-lg mx-auto p-4 bg-[var(--bg-main)] border-t border-[var(--border)]">
           <button onClick={() => setShowPayment(true)}
             className="btn-primary w-full py-4 text-lg font-semibold">
             Record Payment

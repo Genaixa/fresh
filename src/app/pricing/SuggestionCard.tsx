@@ -115,7 +115,7 @@ export function SuggestionCard({
     <div className={`card border ${
       isWithheld ? 'border-status-red/50' :
       isHeld ? 'border-status-amber/40 opacity-60' :
-      marginWarning ? 'border-status-amber/40' : 'border-white/5'
+      marginWarning ? 'border-status-amber/40' : 'border-[var(--border)]'
     } ${pending ? 'opacity-40 pointer-events-none' : ''}`}>
       {/* Withheld banner — why this price was blocked */}
       {isWithheld && blockReason && (
@@ -155,7 +155,7 @@ export function SuggestionCard({
             {invoiceId && invoiceDate && (
               <Link
                 href={`/invoices/${invoiceId}/review`}
-                className="inline-flex items-center gap-1 text-xs bg-white/5 border border-white/10 px-2 py-1 rounded-lg text-[var(--text-muted)] active:bg-white/10 mt-0.5"
+                className="inline-flex items-center gap-1 text-xs bg-black/5 border border-[var(--border)] px-2 py-1 rounded-lg text-[var(--text-muted)] active:bg-black/5 mt-0.5"
               >
                 📄 {supplierName} · {new Date(invoiceDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
               </Link>
@@ -173,7 +173,7 @@ export function SuggestionCard({
           ) : (
             <button
               onClick={handleHold}
-              className="min-h-[44px] px-3 rounded-xl bg-white/5 text-[var(--text-muted)] text-xs font-semibold flex items-center justify-center active:scale-95 transition-transform"
+              className="min-h-[44px] px-3 rounded-xl bg-black/5 text-[var(--text-muted)] text-xs font-semibold flex items-center justify-center active:scale-95 transition-transform"
             >
               Hold
             </button>
