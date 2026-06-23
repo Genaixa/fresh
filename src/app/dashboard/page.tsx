@@ -18,10 +18,26 @@ export default async function DashboardPage() {
     .select('*', { count: 'exact', head: true })
     .eq('status', 'pending')
 
-  const { count: unmappedCount } = await supabase
+  // "Needs mapping" nudge — only for descriptions that actually landed on a delivery
+  // in the last 14 days. Older unmapped descriptions stay in the /invoice-mapping
+  // backlog but stop nagging here until they arrive on a delivery again. (Pending
+  // mapping rows aren't bumped on reappearance, so the invoice line date is the
+  // truthful "recently seen" signal, not the mapping row's timestamp.)
+  const mappingCutoff = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10)
+  const { data: recentUnmatched } = await supabase
+    .from('purchase_invoice_items')
+    .select('product_name_raw, purchase_invoices!inner(invoice_date)')
+    .is('product_id', null)
+    .gte('purchase_invoices.invoice_date', mappingCutoff)
+    .limit(5000)
+  const recentRawSet = new Set((recentUnmatched ?? []).map(r => r.product_name_raw.toLowerCase()))
+
+  const { data: pendingMappings } = await supabase
     .from('supplier_product_mappings')
-    .select('*', { count: 'exact', head: true })
+    .select('raw_description')
     .eq('status', 'pending')
+    .limit(9999)
+  const unmappedCount = (pendingMappings ?? []).filter(m => recentRawSet.has(m.raw_description.toLowerCase())).length
 
   const { count: pendingDeliveryCount } = await supabase
     .from('purchase_invoices')
@@ -66,6 +82,15 @@ export default async function DashboardPage() {
       return p.purchase_cost === a.proposed_cost    // bad value actually got in
     })
   }
+  // Collapse to one card per product — the post-confirm check and the pipeline can
+  // both flag the same cost in the same second, otherwise the product shows twice
+  // (and React sees duplicate keys). Rows are newest-first, so we keep the latest.
+  const seenBlocked = new Set<string>()
+  blockedCosts = blockedCosts.filter(b => {
+    if (seenBlocked.has(b.product_id)) return false
+    seenBlocked.add(b.product_id)
+    return true
+  })
   const blockedCostCount = blockedCosts.length
 
   const now = new Date()
