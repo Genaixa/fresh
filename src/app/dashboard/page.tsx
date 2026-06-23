@@ -13,10 +13,14 @@ export default async function DashboardPage() {
     .eq('id', user!.id)
     .single()
 
-  const { count: pendingCount } = await supabase
+  const { data: pendingSuggestions } = await supabase
     .from('price_suggestions')
-    .select('*', { count: 'exact', head: true })
+    .select('product_id')
     .eq('status', 'pending')
+  const pendingCount = pendingSuggestions?.length ?? 0
+  // A product with a pending suggestion is already actionable via "approve" — so it
+  // shouldn't ALSO show up as a health issue or a wrong-cost card. Dedupe by product.
+  const pendingProductIds = new Set((pendingSuggestions ?? []).map(s => s.product_id))
 
   // "Needs mapping" nudge — only for descriptions that actually landed on a delivery
   // in the last 14 days. Older unmapped descriptions stay in the /invoice-mapping
@@ -49,7 +53,8 @@ export default async function DashboardPage() {
     .select('*', { count: 'exact', head: true })
     .eq('status', 'confirmed')
 
-  const healthIssues    = await getProductHealthIssues(supabase)
+  const healthIssues    = (await getProductHealthIssues(supabase))
+    .filter(i => !pendingProductIds.has(i.productId))   // already covered by a pending price approval
   const atLossCount     = healthIssues.filter(i => i.type === 'at_loss').length
   const unpricedCount   = healthIssues.filter(i => i.type === 'unpriced').length
   const belowFloorCount = healthIssues.filter(i => i.type === 'below_floor').length
@@ -91,7 +96,9 @@ export default async function DashboardPage() {
     seenBlocked.add(b.product_id)
     return true
   })
-  const blockedCostCount = blockedCosts.length
+  // Suppress wrong-cost cards for products that already have a pending price approval —
+  // the approve flow is the single place to resolve them (no triple-listing).
+  blockedCosts = blockedCosts.filter(b => !pendingProductIds.has(b.product_id))
 
   const now = new Date()
   const hour = now.getHours()
@@ -104,7 +111,32 @@ export default async function DashboardPage() {
   const hasPendingDelivery = (pendingDeliveryCount ?? 0) > 0
   const hasDeliveries      = (confirmedOrderCount ?? 0) > 0
 
+  // Everything that needs David's eye, collapsed behind one flag instead of a
+  // stack of banners. Each row still deep-links to where it gets fixed.
+  const attention: { key: string; href: string; title: string; sub: string; urgent?: boolean }[] = []
+  if (hasPending) attention.push({ key: 'pricing', href: '/pricing',
+    title: `${pendingCount} price${pendingCount !== 1 ? 's' : ''} need approval`, sub: 'Review & approve →' })
+  if (hasPendingDelivery) attention.push({ key: 'confirm', href: '/invoices',
+    title: `${pendingDeliveryCount} delivery ${pendingDeliveryCount === 1 ? 'note' : 'notes'} to confirm`, sub: 'Check costs →' })
+  if (hasUnmapped) attention.push({ key: 'mapping', href: '/invoice-mapping?recent=1',
+    title: `${unmappedCount} delivery ${unmappedCount === 1 ? 'product' : 'products'} need mapping`, sub: 'Match once, automatic after →' })
+  for (const b of blockedCosts) attention.push({ key: `cost-${b.product_id}`, href: `/products/${b.product_id}`,
+    title: `Wrong cost — ${b.product_name}`, sub: 'Fix now →', urgent: true })
+  if (atLossCount + belowFloorCount + unpricedCount > 0) {
+    const total = atLossCount + belowFloorCount + unpricedCount
+    const parts = [
+      atLossCount     > 0 ? `${atLossCount} at a loss`        : null,
+      belowFloorCount > 0 ? `${belowFloorCount} below floor`  : null,
+      unpricedCount   > 0 ? `${unpricedCount} unpriced`       : null,
+    ].filter(Boolean)
+    attention.push({ key: 'health', href: '/products?category=issues',
+      title: `${total} ${total === 1 ? 'product' : 'products'} need attention`, sub: `${parts.join(' · ')} →`, urgent: atLossCount > 0 })
+  }
+  const attentionCount  = attention.length
+  const attentionUrgent = attention.some(a => a.urgent)
+
   return (
+    <div className="light min-h-screen bg-[var(--bg)] text-[var(--text)]">
     <div className="page pb-24">
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
@@ -120,129 +152,60 @@ export default async function DashboardPage() {
         </form>
       </div>
 
-      {/* Primary CTA */}
-      {hasPending && (
-        <Link href="/pricing" className="block mb-8">
-          <div className="card bg-brand-accent text-white">
-            <div className="flex items-center justify-between">
+      {/* Grouped attention — one flag instead of a stack of banners */}
+      {attentionCount > 0 && (
+        <details open className={`card mb-4 border ${attentionUrgent
+          ? 'border-status-red/50 bg-status-red/5'
+          : 'border-status-amber/40 bg-status-amber/5'}`}>
+          <summary className="flex items-center justify-between cursor-pointer list-none
+                              select-none [&::-webkit-details-marker]:hidden">
+            <div className="flex items-center gap-3">
+              <span className="text-2xl">🚩</span>
               <div>
-                <p className="font-bold text-lg">
-                  {pendingCount} price{pendingCount !== 1 ? 's' : ''} need approval
+                <p className={`font-bold text-sm ${attentionUrgent ? 'text-status-red' : ''}`}>
+                  Needs attention
                 </p>
-                <p className="text-white/80 text-sm mt-0.5">Tap to review →</p>
+                <p className="text-xs text-[var(--text-muted)] mt-0.5">Tap to expand / collapse</p>
               </div>
-              <span className="text-4xl">💰</span>
             </div>
-          </div>
-        </Link>
-      )}
-
-      {/* Unmapped products banner */}
-      {hasUnmapped && (
-        <Link href="/invoice-mapping" className="block mb-4">
-          <div className="card border border-status-red/40 bg-status-red/5">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="font-semibold text-sm">
-                  {unmappedCount} delivery {unmappedCount === 1 ? 'product' : 'products'} need mapping
-                </p>
-                <p className="text-xs text-[var(--text-muted)] mt-0.5">
-                  Tap to match once — automatic forever after
-                </p>
-              </div>
-              <span className="bg-status-red text-white text-sm font-bold
-                               rounded-full w-8 h-8 flex items-center justify-center flex-shrink-0 ml-3">
-                {unmappedCount}
-              </span>
-            </div>
-          </div>
-        </Link>
-      )}
-
-      {/* Pending delivery notes banner */}
-      {hasPendingDelivery && (
-        <Link href="/invoices" className="block mb-4">
-          <div className="card border border-status-amber/40 bg-status-amber/5">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="font-semibold text-sm">
-                  {pendingDeliveryCount} delivery {pendingDeliveryCount === 1 ? 'note' : 'notes'} to confirm
-                </p>
-                <p className="text-xs text-[var(--text-muted)] mt-0.5">
-                  Tap to review costs →
-                </p>
-              </div>
-              <span className="bg-status-amber text-white text-sm font-bold
-                               rounded-full w-8 h-8 flex items-center justify-center flex-shrink-0 ml-3">
-                {pendingDeliveryCount}
-              </span>
-            </div>
-          </div>
-        </Link>
-      )}
-
-      {/* Blocked cost — bad value actually got into the DB (rare/emergency) */}
-      {blockedCostCount > 0 && blockedCosts.map(b => (
-        <Link key={b.product_id} href={`/products/${b.product_id}`} className="block mb-4">
-          <div className="card border-2 border-status-red bg-status-red/10">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="font-bold text-status-red text-sm">Wrong cost — fix now</p>
-                <p className="text-xs text-[var(--text-muted)] mt-0.5">
-                  {b.product_name} → tap to fix
-                </p>
-              </div>
-              <span className="text-2xl flex-shrink-0 ml-3">🛡</span>
-            </div>
-          </div>
-        </Link>
-      ))}
-
-      {/* Combined price health — all health issues in one card */}
-      {(atLossCount > 0 || belowFloorCount > 0 || unpricedCount > 0) && (() => {
-        const total    = atLossCount + belowFloorCount + unpricedCount
-        const isUrgent = atLossCount > 0
-        const parts    = [
-          atLossCount     > 0 ? `${atLossCount} at a loss`                                        : null,
-          belowFloorCount > 0 ? `${belowFloorCount} below floor`                                  : null,
-          unpricedCount   > 0 ? `${unpricedCount} unpriced`                                       : null,
-        ].filter(Boolean)
-        return (
-          <Link href="/products?category=issues" className="block mb-4">
-            <div className={`card border ${isUrgent
-              ? 'border-status-red/60 bg-status-red/5'
-              : 'border-status-amber/40 bg-status-amber/5'}`}>
-              <div className="flex items-center justify-between">
+            <span className={`text-white text-sm font-bold rounded-full w-8 h-8 flex items-center
+                             justify-center flex-shrink-0 ml-3
+                             ${attentionUrgent ? 'bg-status-red' : 'bg-status-amber'}`}>
+              {attentionCount}
+            </span>
+          </summary>
+          <div className="mt-3 space-y-2">
+            {attention.map(a => (
+              <Link key={a.key} href={a.href}
+                className="flex items-center justify-between rounded-xl bg-[var(--bg)] px-3 py-2.5
+                           active:scale-[0.99] transition-transform">
                 <div>
-                  <p className={`font-semibold text-sm ${isUrgent ? 'text-status-red' : ''}`}>
-                    {total} {total === 1 ? 'product' : 'products'} need attention
-                  </p>
-                  <p className="text-xs text-[var(--text-muted)] mt-0.5">{parts.join(' · ')} →</p>
+                  <p className={`text-sm font-medium ${a.urgent ? 'text-status-red' : ''}`}>{a.title}</p>
+                  <p className="text-xs text-[var(--text-muted)] mt-0.5">{a.sub}</p>
                 </div>
-                <span className={`text-sm font-bold rounded-full w-8 h-8 flex items-center
-                                  justify-center flex-shrink-0 ml-3
-                                  ${isUrgent ? 'bg-status-red text-white' : 'bg-status-amber text-white'}`}>
-                  {total}
-                </span>
-              </div>
-            </div>
-          </Link>
-        )
-      })()}
+                <span className="text-[var(--text-muted)] text-lg flex-shrink-0 ml-3">›</span>
+              </Link>
+            ))}
+          </div>
+        </details>
+      )}
 
-      {/* Dispatch banner */}
+      {/* Deliveries ready — its own flag, same treatment */}
       {hasDeliveries && (
         <Link href="/dispatch" className="block mb-4">
-          <div className="card border border-brand-accent/50 bg-brand-accent/10">
-            <div className="flex items-center justify-between">
+          <div className="card border border-brand-accent/50 bg-brand-accent/10
+                          flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <span className="text-2xl">🚐</span>
               <div>
-                <p className="font-bold text-sm">
-                  {confirmedOrderCount} {confirmedOrderCount === 1 ? 'delivery' : 'deliveries'} ready
-                </p>
+                <p className="font-bold text-sm">Deliveries ready</p>
                 <p className="text-xs text-[var(--text-muted)] mt-0.5">Tap to start dispatch →</p>
               </div>
-              <span className="text-3xl">🚐</span>
             </div>
+            <span className="bg-brand-accent text-white text-sm font-bold rounded-full w-8 h-8
+                             flex items-center justify-center flex-shrink-0 ml-3">
+              {confirmedOrderCount}
+            </span>
           </div>
         </Link>
       )}
@@ -275,6 +238,7 @@ export default async function DashboardPage() {
         <QuickAction href="/sync"             icon="🔄" label="EPOS Sync" />
         <QuickAction href="/invoices/new"     icon="📄" label="Upload invoice" />
       </div>
+    </div>
     </div>
   )
 }

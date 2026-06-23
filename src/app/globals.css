@@ -24,6 +24,17 @@
     --bg-main:    var(--bg);
   }
 
+  /* Light-theme island: re-declares the light palette for a subtree even when the
+     global .dark class is active. Lets us prototype one screen in light without
+     flipping the whole app. (Custom properties resolve to the nearest ancestor.) */
+  .light {
+    --bg:         #F5F5F0;
+    --bg-card:    #FFFFFF;
+    --text:       #1A1A1A;
+    --text-muted: #6B7280;
+    --bg-main:    var(--bg);
+  }
+
   * { box-sizing: border-box; }
 
   html {
