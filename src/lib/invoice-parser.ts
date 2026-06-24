@@ -60,6 +60,12 @@ Extract all line items. Return ONLY valid JSON — no markdown fences, no explan
   "invoice_number": "string or null"
 }
 
+CRITICAL — which total to use for raw_total_pence:
+- raw_total_pence MUST be the EX-VAT goods amount, i.e. the "Sub Total" line (the sum of the Value column / all line items).
+- It must NOT be the VAT-inclusive grand "Total" line. These Dole/Total Produce notes print BOTH: "Sub Total: GBP 475.90", "VAT: GBP 12.00", "Total: GBP 487.90" — take 475.90 (the Sub Total), never 487.90.
+- If only one total is printed (no separate VAT line, or VAT is 0), use that.
+- Sanity check: raw_total_pence should equal the sum of every line's total_cost_pence. If it doesn't, you have likely picked the VAT-inclusive Total — switch to the Sub Total.
+
 Rules:
 - Convert all prices to integer pence. £10.50 → 1050. Price is per box (per line).
 - Date: use DD/MM/YYYY interpretation (UK dates).

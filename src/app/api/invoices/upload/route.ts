@@ -190,6 +190,18 @@ export async function POST(request: NextRequest) {
 
     await supabase.from('purchase_invoice_items').insert(itemsToInsert)
 
+    // INVARIANT (same as the autopilot delivery-note route): the header total is
+    // the EX-VAT goods amount = the sum of the captured line items. Store lineSum,
+    // not parsed.raw_total, so the header can never diverge from the items — guards
+    // against the parser picking a VAT-inclusive grand total (see 11254559, 24 Jun).
+    const lineSum = itemsToInsert.reduce((s, i) => s + (i.total_cost ?? 0), 0)
+    if (invoice.total_amount !== lineSum) {
+      await supabase
+        .from('purchase_invoices')
+        .update({ total_amount: lineSum })
+        .eq('id', invoice.id)
+    }
+
     return NextResponse.json({ invoice_id: invoice.id })
   } catch (err) {
     console.error('Upload route unhandled error:', err)

@@ -265,6 +265,21 @@ export async function POST(request: NextRequest) {
       // total. A gap means the parser likely dropped or misread a line — flag it
       // so a missing line never slips through silently again.
       const lineSum = itemsToInsert.reduce((s, i) => s + (i.total_cost ?? 0), 0)
+
+      // INVARIANT: the header total is the EX-VAT goods amount = the sum of the
+      // captured line items. We store lineSum (not parsed.raw_total) so the header
+      // can NEVER diverge from the items by construction. This is what stopped the
+      // 11254559 bug (24 Jun) where the parser grabbed the VAT-inclusive grand
+      // total (£487.90) instead of the £475.90 ex-VAT subtotal. parsed.raw_total
+      // (now also ex-VAT — see invoice-parser prompt) is kept ONLY as the
+      // independent cross-check below.
+      if (invoice.total_amount !== lineSum) {
+        await supabase
+          .from('purchase_invoices')
+          .update({ total_amount: lineSum })
+          .eq('id', invoice.id)
+      }
+
       const reconcileGap = parsed.raw_total != null ? parsed.raw_total - lineSum : 0
       const reconcileWarning = (parsed.raw_total != null && Math.abs(reconcileGap) > 1)
         ? `\n⚠️ <b>Lines don't add up — check for a missed line:</b>\n  ${total} lines = £${(lineSum / 100).toFixed(2)}, but invoice total = £${(parsed.raw_total / 100).toFixed(2)} (£${(Math.abs(reconcileGap) / 100).toFixed(2)} ${reconcileGap > 0 ? 'missing' : 'extra'})`

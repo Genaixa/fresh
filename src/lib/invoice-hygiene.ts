@@ -20,7 +20,7 @@ import type { SupabaseClient } from '@supabase/supabase-js'
  */
 
 export interface HygieneFinding {
-  check:  'MISDATED' | 'STALE_CACHE' | 'BAD_ARITH'
+  check:  'MISDATED' | 'STALE_CACHE' | 'BAD_ARITH' | 'HEADER_MISMATCH'
   ref:    string   // supplier / ticket / description the issue attaches to
   detail: string
 }
@@ -137,6 +137,42 @@ export async function checkInvoiceHygiene(supabase: SupabaseClient): Promise<Hyg
         check: 'BAD_ARITH',
         ref: `${inv.supplier_name} #${inv.invoice_number ?? '?'} · ${it.product_name_raw}`,
         detail: `${it.quantity} × ${gbp(it.unit_cost)} = ${gbp(expected)} but total recorded ${gbp(it.total_cost)} (${inv.invoice_date}).`,
+      })
+    }
+  }
+
+  // ── Check 4: HEADER_MISMATCH ──────────────────────────────────────────────────
+  // The header total_amount must equal the sum of the invoice's ex-VAT line items.
+  // A positive gap usually means a VAT-INCLUSIVE grand total was stored instead of
+  // the ex-VAT goods subtotal (Dole note 11254559, 24 Jun 2026: header £487.90 vs
+  // items £475.90 = the £12 water VAT). A negative gap means items exceed the
+  // header — a dropped/duplicated/mis-parsed line. Ingestion now derives the header
+  // from the line items, so this should only fire on legacy rows or manual edits.
+  const { data: hdrs, error: hdrErr } = await supabase
+    .from('purchase_invoices')
+    .select('id, supplier_name, invoice_date, invoice_number, total_amount')
+    .not('total_amount', 'is', null)
+    .limit(20000)
+  if (hdrErr) throw new Error(`hygiene: header query failed: ${hdrErr.message}`)
+
+  const { data: hdrItems, error: hdrItemErr } = await supabase
+    .from('purchase_invoice_items')
+    .select('invoice_id, total_cost')
+    .limit(100000)
+  if (hdrItemErr) throw new Error(`hygiene: header-items query failed: ${hdrItemErr.message}`)
+
+  const sumByInvoice = new Map<string, number>()
+  for (const it of hdrItems ?? []) {
+    sumByInvoice.set(it.invoice_id, (sumByInvoice.get(it.invoice_id) ?? 0) + (it.total_cost ?? 0))
+  }
+  for (const h of hdrs ?? []) {
+    const itemsSum = sumByInvoice.get(h.id)
+    if (itemsSum == null) continue   // header with no items captured yet — skip
+    if (Math.abs(h.total_amount - itemsSum) > 2) {
+      findings.push({
+        check: 'HEADER_MISMATCH',
+        ref: `${h.supplier_name} #${h.invoice_number ?? '?'}`,
+        detail: `header ${gbp(h.total_amount)} ≠ line items ${gbp(itemsSum)} (${h.invoice_date}) — likely a VAT-inclusive total stored instead of ex-VAT, or a dropped line.`,
       })
     }
   }
