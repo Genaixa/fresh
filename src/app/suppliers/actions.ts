@@ -7,12 +7,21 @@ export async function upsertSupplier(formData: FormData) {
   const supabase = await createClient()
   const id = formData.get('id') as string | null
 
+  const str = (k: string) => {
+    const v = (formData.get(k) as string | null)?.trim()
+    return v ? v : null
+  }
   const payload = {
     name:         (formData.get('name') as string).trim(),
     market_order: formData.get('market_order')
                     ? parseInt(formData.get('market_order') as string, 10)
                     : null,
     is_active:    formData.get('is_active') === 'true',
+    phone:        str('phone'),
+    email:        str('email'),
+    address:      str('address'),
+    account_ref:  str('account_ref'),
+    notes:        str('notes'),
   }
 
   if (id) {

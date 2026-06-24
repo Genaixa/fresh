@@ -37,8 +37,9 @@ function getClient() {
   })
 }
 
-const PROMPT = `You are reading a Dole/Total Produce Delivery Note/Invoice for a greengrocer.
-The document has these columns: Qty | Units | Product Description | Brand | VAT | Price | Value
+const PROMPT = `You are reading a delivery note / invoice from one of the shop's suppliers: Total Produce/Dole, JR Holland, Thomas Baty, or The Milk Company.
+Most are produce notes with columns: Qty | Units | Product Description | Brand | VAT | Price | Value.
+The Milk Company invoice looks different — see the milk rule below.
 
 Extract all line items. Return ONLY valid JSON — no markdown fences, no explanation:
 {
@@ -70,7 +71,8 @@ Rules:
 - Convert all prices to integer pence. £10.50 → 1050. Price is per box (per line).
 - Date: use DD/MM/YYYY interpretation (UK dates).
 - Do NOT include VAT rows, subtotals, or Total lines as items.
-- invoice_number: the "Ticket No" (e.g. 2744185) or the Dole "No" / "Delivery No" (e.g. 11230791). null if none found.
+- invoice_number: the "Ticket No" (e.g. 2744185) or the Dole "No" / "Delivery No" (e.g. 11230791) or, for milk, the "Invoice No." (e.g. 20019). null if none found.
+- THE MILK COMPANY invoices are a weekly grid: rows like "Whole" and "Semi" milk, daily columns (Sun..Fri), a weekly Qty, and a per-unit Price (e.g. "160 @ 1.29000 = 206.40"). For each milk row emit one item: product_name_raw = the milk type as printed ("Whole" / "Semi"), quantity = the weekly Qty (160 / 80), unit_cost_pence = the per-unit price (1.29 → 129), total_cost_pence = the line Value, unit_type="count", units_per_case=1, box_weight_kg=null. invoice_number = the "Invoice No." (20019). invoice_date = the "Week Ending" / "Date" (DD/MM/YY UK). raw_total_pence = the "Weeks Total" (milk is zero-rated, so no VAT line).
 - Include EVERY line item — including non-produce lines like carrier bags, water, plastic — so the line values add up to the printed total. Do not skip any line.
 
 Box spec rules — read BOTH Product Description AND Brand column:
@@ -194,19 +196,53 @@ async function parseInvoiceOnce(base64Content: string, mimeType: string): Promis
   return {
     supplier_name: parsed.supplier_name ?? 'Unknown',
     invoice_date: parsed.invoice_date ?? new Date().toISOString().slice(0, 10),
-    items: (parsed.items ?? []).map(item => ({
-      product_name_raw: item.product_name_raw,
-      brand_raw:        item.brand_raw        ?? '',
-      quantity:         item.quantity         ?? 1,
-      unit_cost:        item.unit_cost_pence  ?? 0,
-      total_cost:       item.total_cost_pence ?? 0,
-      unit_type:        item.unit_type        ?? 'count',
-      units_per_case:   item.units_per_case   ?? null,
-      box_weight_kg:    item.box_weight_kg    ?? null,
-    })),
+    items: (parsed.items ?? []).map(item => {
+      let unit_type: 'count' | 'weight' = item.unit_type ?? 'count'
+      let units_per_case = item.units_per_case ?? null
+      const box_weight_kg = item.box_weight_kg ?? null
+      // Deterministic fallback: the model sometimes drops an explicit multipack
+      // marker that is plainly in the text (e.g. "8X500G", "X16"). Recover it
+      // only when the model left BOTH pack fields blank.
+      if (units_per_case == null && box_weight_kg == null) {
+        const inferred = inferBoxSpec(item.product_name_raw)
+        if (inferred) { unit_type = inferred.unit_type; units_per_case = inferred.units_per_case }
+      }
+      return {
+        product_name_raw: item.product_name_raw,
+        brand_raw:        item.brand_raw        ?? '',
+        quantity:         item.quantity         ?? 1,
+        unit_cost:        item.unit_cost_pence  ?? 0,
+        total_cost:       item.total_cost_pence ?? 0,
+        unit_type,
+        units_per_case,
+        box_weight_kg,
+      }
+    }),
     raw_total: parsed.raw_total_pence ?? null,
     invoice_number: parsed.invoice_number ?? null,
   }
+}
+
+/**
+ * Deterministic box-spec fallback for unambiguous multipack markers the model
+ * occasionally misses. Only handles patterns with no calibre/citrus ambiguity —
+ * standalone weights ("12KG") and bare trailing numbers ("BRAZIL 9") are left to
+ * the model, since those need fruit-type knowledge to read correctly.
+ */
+export function inferBoxSpec(raw: string): { unit_type: 'count'; units_per_case: number } | null {
+  const s = (raw ?? '').toUpperCase()
+  // 1. Multipack "NxWEIGHT": leading N before X then a weight unit → N units/box
+  //    e.g. 8X500G, 10X2KG, 24X500ML, 16X250G, 11X500G
+  let m = s.match(/(\d{1,3})\s*X\s*\d+(?:\.\d+)?\s*(?:KG|G|ML|L)\b/)
+  if (m) return { unit_type: 'count', units_per_case: parseInt(m[1], 10) }
+  // 2. X-prefixed case count "X16" / "X12" (1–2 digits; (?!\d) skips gram weights
+  //    like X250). Skipped when the line also carries a standalone box weight
+  //    (e.g. "12KG … X70"), where the weight is the better cost basis.
+  if (!/\d+(?:\.\d+)?\s*KG\b/.test(s)) {
+    m = s.match(/X\s*(\d{1,2})(?!\d)/)
+    if (m) return { unit_type: 'count', units_per_case: parseInt(m[1], 10) }
+  }
+  return null
 }
 
 /** Normalise a supplier name for consistent mapping keys */

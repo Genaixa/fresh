@@ -21,6 +21,11 @@ export interface Supplier {
   market_order: number | null
   is_active: boolean
   created_at: string
+  phone: string | null
+  email: string | null
+  address: string | null
+  account_ref: string | null
+  notes: string | null
 }
 
 export interface Product {

@@ -32,6 +32,7 @@ function supplierFromNumber(num: string | null | undefined): string | null {
   if (/^(DN|WI)/i.test(n)) return 'Thomas Baty'
   if (/^27\d{5}$/.test(n)) return 'JR Holland'
   if (/^112\d{5}$/.test(n)) return 'Total Produce'
+  if (/^20\d{3}$/.test(n)) return 'The Milk Company'  // weekly milk invoice no. e.g. 20019
   return null
 }
 
@@ -41,6 +42,7 @@ function normaliseSupplier(raw: string): string {
   if (lower.includes('holland') || lower.includes('devorah')) return 'JR Holland'
   if (lower.includes('baty')) return 'Thomas Baty'
   if (lower.includes('dole') || lower.includes('redbridge') || lower.includes('gateshead') || lower.includes('total produce')) return 'Total Produce'
+  if (lower.includes('milk')) return 'The Milk Company'
   return raw
 }
 
