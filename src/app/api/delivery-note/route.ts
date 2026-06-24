@@ -170,7 +170,7 @@ export async function POST(request: NextRequest) {
       // Match line items against product catalogue
       const { data: catalogue } = await supabase
         .from('products')
-        .select('id, name, category')
+        .select('id, name, category, default_unit_type')
         .eq('is_active', true)
 
       const productById = new Map((catalogue ?? []).map(p => [p.id, p]))
@@ -204,7 +204,10 @@ export async function POST(request: NextRequest) {
         const noRealSpec = !box_weight_kg && (!units_per_case || units_per_case === 1)
         if (supplierName === 'JR Holland' && matched_id && noRealSpec) {
           const prod = productById.get(matched_id)
-          if (prod?.category === 'veg') {
+          // Only by-weight veg (default_unit_type 'box') — NOT per-pack/per-head
+          // veg (retail_unit: mushrooms, lettuce, celery, punnets…), where a 5kg
+          // box weight would be meaningless.
+          if (prod?.category === 'veg' && prod?.default_unit_type === 'box') {
             box_weight_kg  = /leek/i.test(prod.name) ? 4.5 : 5.0
             unit_type      = 'weight'
             units_per_case = null
