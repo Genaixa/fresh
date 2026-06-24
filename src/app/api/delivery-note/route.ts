@@ -170,9 +170,10 @@ export async function POST(request: NextRequest) {
       // Match line items against product catalogue
       const { data: catalogue } = await supabase
         .from('products')
-        .select('id, name')
+        .select('id, name, category')
         .eq('is_active', true)
 
+      const productById = new Map((catalogue ?? []).map(p => [p.id, p]))
       const itemsToInsert = []
       for (const item of parsed.items) {
         const savedMapping = await lookupMapping(supabase, supplierName, item.product_name_raw)
@@ -192,6 +193,21 @@ export async function POST(request: NextRequest) {
               last_price_p:   item.unit_cost,
             }
             await saveMapping(supabase, supplierName, item.product_name_raw, matched_id, null, boxSpec)
+          }
+        }
+
+        // David's rule (24 Jun): a JR Holland VEG box with no printed pack size
+        // is a 5kg box sold by weight (leeks are the 4.5kg exception). Their
+        // invoices routinely omit the size; this auto-costs those lines instead
+        // of leaving them spec-less. Only fires when nothing else (mapping,
+        // NxWEIGHT marker, LLM) determined a real spec — explicit specs win.
+        const noRealSpec = !box_weight_kg && (!units_per_case || units_per_case === 1)
+        if (supplierName === 'JR Holland' && matched_id && noRealSpec) {
+          const prod = productById.get(matched_id)
+          if (prod?.category === 'veg') {
+            box_weight_kg  = /leek/i.test(prod.name) ? 4.5 : 5.0
+            unit_type      = 'weight'
+            units_per_case = null
           }
         }
 
