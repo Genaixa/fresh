@@ -96,6 +96,7 @@ export function TillScreen({ products }: { products: TillProduct[] }) {
   const [payStep, setPayStep] = useState<PayStep>(null)
   const [cashInput, setCashInput] = useState('')
   const [saving, setSaving] = useState(false)
+  const [saveError, setSaveError] = useState<string | null>(null)
   const [saleChange, setSaleChange] = useState<number | null>(null)
   const [time, setTime] = useState('')
   const weightRef = useRef<HTMLInputElement>(null)
@@ -218,7 +219,8 @@ export function TillScreen({ products }: { products: TillProduct[] }) {
   async function completeSale(method: 'cash' | 'card') {
     if (saving) return
     setSaving(true)
-    await recordTransaction({
+    setSaveError(null)
+    const res = await recordTransaction({
       total_pence: total,
       payment_method: method,
       cash_tendered_pence: method === 'cash' ? cashPence : null,
@@ -232,11 +234,16 @@ export function TillScreen({ products }: { products: TillProduct[] }) {
         line_total_pence: i.line_total,
       })),
     })
+    setSaving(false)
+    if (!res.ok) {
+      // Keep the basket and pay modal so the cashier can retry — never lose a sale.
+      setSaveError(res.error)
+      return
+    }
     const savedChange = method === 'cash' ? change : null
     setBasket([])
     setPayStep(null)
     setCashInput('')
-    setSaving(false)
     if (savedChange !== null) {
       setSaleChange(savedChange)
       setTimeout(() => setSaleChange(null), 4000)
@@ -250,10 +257,25 @@ export function TillScreen({ products }: { products: TillProduct[] }) {
       <div className="flex items-center justify-between px-4 py-2.5 border-b border-white/10 shrink-0">
         <span className="font-bold text-brand-accent">Fresh &amp; Fruity</span>
         <span className="text-sm text-[var(--text-muted)]">{time}</span>
-        <Link href="/dashboard" className="text-xs text-[var(--text-muted)] px-3 py-2 rounded-xl border border-white/10 active:bg-white/5">
-          Exit
-        </Link>
+        <div className="flex items-center gap-2">
+          <Link href="/till/sales" className="text-xs text-[var(--text-muted)] px-3 py-2 rounded-xl border border-white/10 active:bg-white/5">
+            Today
+          </Link>
+          <Link href="/dashboard" className="text-xs text-[var(--text-muted)] px-3 py-2 rounded-xl border border-white/10 active:bg-white/5">
+            Exit
+          </Link>
+        </div>
       </div>
+
+      {/* Save-failure banner — a sale that didn't save must never look like one that did */}
+      {saveError && (
+        <button
+          onClick={() => setSaveError(null)}
+          className="absolute top-14 left-1/2 -translate-x-1/2 z-[60] max-w-[90%] bg-status-red text-white text-sm font-medium px-4 py-2.5 rounded-xl shadow-lg active:opacity-80"
+        >
+          ⚠ {saveError} — tap to dismiss
+        </button>
+      )}
 
       {/* Body */}
       <div className="flex-1 flex overflow-hidden">
