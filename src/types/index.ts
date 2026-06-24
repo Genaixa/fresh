@@ -41,6 +41,7 @@ export interface Product {
   market_ceiling: number | null  // pence
   margin_floor: number           // e.g. 0.20
   epos_now_id: string | null
+  plu_code: number | null        // scale PLU for weigh-by-label scanning
   default_supplier_id: string | null
   is_active: boolean
   created_at: string

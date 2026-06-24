@@ -17,6 +17,7 @@ type Props = {
     market_ceiling: string
     margin_floor: number
     epos_now_id: string
+    plu_code: string
     default_supplier_id: string
   }
   suppliers: { id: string; name: string }[]
@@ -152,6 +153,11 @@ export function ProductForm({ id, defaultValues: d, suppliers, isNew, deactivate
       <Field label="EPOS Now ID">
         <input name="epos_now_id" defaultValue={d.epos_now_id}
           className="input-field" placeholder="Leave blank if not synced" />
+      </Field>
+
+      <Field label="Scale PLU">
+        <input name="plu_code" type="number" min="1" step="1" defaultValue={d.plu_code}
+          className="input-field" placeholder="Weigh-by-label PLU — blank if not scale-sold" />
       </Field>
 
       <button formAction={upsertProduct} className="btn-primary w-full mt-2">

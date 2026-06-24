@@ -22,6 +22,7 @@ export default async function NewProductPage() {
     market_ceiling:      '',
     margin_floor:        20,
     epos_now_id:         '',
+    plu_code:            '',
     default_supplier_id: '',
   }
 

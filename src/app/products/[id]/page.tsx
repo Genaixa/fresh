@@ -33,6 +33,7 @@ export default async function ProductDetailPage({
     market_ceiling:      product.market_ceiling ? (product.market_ceiling / 100).toFixed(2) : '',
     margin_floor:        (product.margin_floor ?? 0.2) * 100,
     epos_now_id:         product.epos_now_id ?? '',
+    plu_code:            product.plu_code != null ? String(product.plu_code) : '',
     default_supplier_id: (product as Record<string, unknown>).default_supplier_id as string ?? '',
   }
 

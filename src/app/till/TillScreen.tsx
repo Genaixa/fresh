@@ -4,6 +4,7 @@ import { useState, useMemo, useRef, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { recordTransaction } from './actions'
 import { formatPrice } from '@/lib/pricing-engine'
+import { parseScaleBarcode } from '@/lib/scale-barcode'
 
 type TillProduct = {
   id: string
@@ -11,6 +12,7 @@ type TillProduct = {
   category: 'fruit' | 'veg' | 'other'
   unit: string
   retail_price: number
+  plu_code: number | null
 }
 
 // Ordered longest-match-first to avoid partial collisions (e.g. grapefruit before grape)
@@ -97,6 +99,7 @@ export function TillScreen({ products }: { products: TillProduct[] }) {
   const [cashInput, setCashInput] = useState('')
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
+  const [scanMsg, setScanMsg] = useState<{ kind: 'ok' | 'err'; text: string } | null>(null)
   const [saleChange, setSaleChange] = useState<number | null>(null)
   const [time, setTime] = useState('')
   const weightRef = useRef<HTMLInputElement>(null)
@@ -135,6 +138,76 @@ export function TillScreen({ products }: { products: TillProduct[] }) {
     }
     return r
   }, [products, category, search])
+
+  // PLU → product, for resolving a scanned weigh-by-label barcode.
+  const pluMap = useMemo(() => {
+    const m = new Map<number, TillProduct>()
+    for (const p of products) if (p.plu_code != null) m.set(p.plu_code, p)
+    return m
+  }, [products])
+
+  function flashScan(kind: 'ok' | 'err', text: string) {
+    setScanMsg({ kind, text })
+    setTimeout(() => setScanMsg(null), kind === 'ok' ? 1500 : 2500)
+  }
+
+  function handleScan(code: string) {
+    const parsed = parseScaleBarcode(code)
+    if (!parsed) { flashScan('err', 'Unrecognised barcode'); return }
+    const product = pluMap.get(parsed.plu)
+    if (!product) { flashScan('err', `No product for PLU ${parsed.plu}`); return }
+
+    const unit_price = product.retail_price
+    let quantity: number
+    let line_total: number
+    if (parsed.pricePence != null) {
+      // Price-embedded: honour the price the customer sees on the label; derive
+      // the weight for the record from our £/kg so the line still reconciles.
+      line_total = parsed.pricePence
+      quantity = unit_price > 0 ? parsed.pricePence / unit_price : 0
+    } else {
+      quantity = parsed.weightKg ?? 0
+      line_total = calcLine(unit_price, quantity)
+    }
+    setBasket(prev => [...prev, {
+      key: `${product.id}-scan-${Date.now()}`,
+      product_id: product.id,
+      name: product.name,
+      unit: 'kg',
+      unit_price,
+      quantity,
+      line_total,
+    }])
+    setSearch('')
+    flashScan('ok', `${product.name} · ${formatPrice(line_total)}`)
+  }
+
+  // Keep refs fresh so the single keydown listener never holds a stale closure.
+  const handleScanRef = useRef(handleScan)
+  const scanBlockedRef = useRef(false)
+  useEffect(() => { handleScanRef.current = handleScan })
+  useEffect(() => { scanBlockedRef.current = !!weightModal || !!payStep || saving })
+
+  // Keyboard-wedge scanner: a barcode reader "types" the digits fast and ends
+  // with Enter. We treat a fast digit burst terminated by Enter as a scan.
+  useEffect(() => {
+    let buf = ''
+    let last = 0
+    function onKey(e: KeyboardEvent) {
+      if (scanBlockedRef.current) return
+      const now = Date.now()
+      if (now - last > 60) buf = ''   // slow gap = human typing, not one scan
+      last = now
+      if (e.key === 'Enter') {
+        if (buf.length >= 8) { handleScanRef.current(buf); e.preventDefault() }
+        buf = ''
+        return
+      }
+      if (/^[0-9]$/.test(e.key)) buf += e.key
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [])
 
   function tapProduct(p: TillProduct) {
     if (p.unit === 'kg') {
@@ -275,6 +348,16 @@ export function TillScreen({ products }: { products: TillProduct[] }) {
         >
           ⚠ {saveError} — tap to dismiss
         </button>
+      )}
+
+      {/* Scan feedback — confirms a scanned label landed, or why it didn't */}
+      {scanMsg && (
+        <div
+          className={`absolute top-14 left-1/2 -translate-x-1/2 z-[55] max-w-[90%] text-sm font-medium px-4 py-2.5 rounded-xl shadow-lg
+            ${scanMsg.kind === 'ok' ? 'bg-status-green text-white' : 'bg-status-amber text-black'}`}
+        >
+          {scanMsg.kind === 'ok' ? '✓' : '⚠'} {scanMsg.text}
+        </div>
       )}
 
       {/* Body */}
