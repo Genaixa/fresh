@@ -5,7 +5,7 @@ import { ProductForm } from '../ProductForm'
 export default async function NewProductPage() {
   const supabase = await createClient()
   const { data: suppliers } = await supabase
-    .from('purchase_suppliers')
+    .from('suppliers')
     .select('id, name')
     .eq('is_active', true)
     .order('name')

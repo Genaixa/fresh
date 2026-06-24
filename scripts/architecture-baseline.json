@@ -113,12 +113,12 @@
     "market_sessions",
     "price_history",
     "price_suggestions",
+    "product_epos_aliases",
     "product_seasonal_averages",
     "product_suppliers",
     "products",
     "purchase_invoice_items",
     "purchase_invoices",
-    "purchase_suppliers",
     "sales_data",
     "schema_migration_log",
     "supplier_product_mappings",
@@ -157,6 +157,7 @@
     "0 10 * * * curl -s -X POST \"http://localhost:3100/api/golem?token=qKz-Ddv9clPxoKQBOsKdjFDgeY9diGd1tzbs8-jRyJ8\" >> /root/fresh/logs/golem-cron.log 2>&1",
     "0 11 * * 1-6 /root/fresh/cost-integrity-check.sh >> /root/fresh/logs/cost-check.log 2>&1",
     "0 4 * * * curl -s -X POST \"http://localhost:3100/api/integrity-check?token=qKz-Ddv9clPxoKQBOsKdjFDgeY9diGd1tzbs8-jRyJ8\" >> /root/fresh/logs/integrity-check.log 2>&1",
-    "15 2 * * * /root/fresh/backups/backup-fresh.sh >> /root/fresh/logs/backup-fresh.log 2>&1"
+    "15 2 * * * /root/fresh/backups/backup-fresh.sh >> /root/fresh/logs/backup-fresh.log 2>&1",
+    "5 10 * * * PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin /usr/bin/node /root/fresh/fresh-and-fruity/scripts/architecture-drift.mjs >> /root/fresh/logs/architecture-drift.log 2>&1"
   ]
 }

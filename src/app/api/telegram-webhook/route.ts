@@ -91,7 +91,7 @@ async function handleQuestion(supabase: any, question: string, fromName: string)
       // Today's market session
       supabase
         .from('market_session_items')
-        .select('qty_boxes, price_pence, product:products(name), supplier:purchase_suppliers(name)')
+        .select('qty_boxes, price_pence, product:products(name), supplier:suppliers(name)')
         .eq('session_id',
           (await supabase
             .from('market_sessions')

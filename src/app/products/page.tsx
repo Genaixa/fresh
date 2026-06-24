@@ -24,7 +24,7 @@ export default async function ProductsPage({
 
   const [{ data: allProducts }, { data: suppliers }] = await Promise.all([
     supabase.from('products').select('*').eq('is_active', true).order('category').order('name'),
-    supabase.from('purchase_suppliers').select('id, name').order('name'),
+    supabase.from('suppliers').select('id, name').order('name'),
   ])
 
   function isIssue(p: Product) {

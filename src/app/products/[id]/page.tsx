@@ -14,7 +14,7 @@ export default async function ProductDetailPage({
   const supabase = await createClient()
   const [{ data: product }, { data: suppliers }] = await Promise.all([
     supabase.from('products').select('*').eq('id', id).single(),
-    supabase.from('purchase_suppliers').select('id, name').eq('is_active', true).order('name'),
+    supabase.from('suppliers').select('id, name').eq('is_active', true).order('name'),
   ])
 
   if (!product) return <div className="page">Product not found.</div>
