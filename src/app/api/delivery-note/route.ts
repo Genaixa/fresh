@@ -18,9 +18,28 @@ interface PostmarkInbound {
   MessageID: string
 }
 
+// Primary supplier attribution: each supplier's invoice/delivery number has a
+// distinct, non-overlapping syntax (verified across all 721 invoices, 24 Jun):
+//   • 7-digit  27xxxxx  → JR Holland   (e.g. 2748241)
+//   • 8-digit  112xxxxx → Total Produce (Dole, e.g. 11255942)
+//   • DN…/WI…  prefixed → Thomas Baty  (e.g. DN259692, WI1964073)
+// This is more reliable than fuzzy header-text matching — it's how the mis-parsed
+// Baty note DN259049 (read as our own company) was identified. Returns null if the
+// number doesn't match a known pattern, so the caller falls back to the header.
+function supplierFromNumber(num: string | null | undefined): string | null {
+  if (!num) return null
+  const n = num.trim()
+  if (/^(DN|WI)/i.test(n)) return 'Thomas Baty'
+  if (/^27\d{5}$/.test(n)) return 'JR Holland'
+  if (/^112\d{5}$/.test(n)) return 'Total Produce'
+  return null
+}
+
+// Fallback: match words in the parsed header text.
 function normaliseSupplier(raw: string): string {
   const lower = raw.toLowerCase()
   if (lower.includes('holland') || lower.includes('devorah')) return 'JR Holland'
+  if (lower.includes('baty')) return 'Thomas Baty'
   if (lower.includes('dole') || lower.includes('redbridge') || lower.includes('gateshead') || lower.includes('total produce')) return 'Total Produce'
   return raw
 }
@@ -58,7 +77,8 @@ export async function POST(request: NextRequest) {
   for (const pdf of pdfs) {
     try {
       const parsed = await parseInvoicePdf(pdf.Content)
-      const supplierName = normaliseSupplier(parsed.supplier_name)
+      // Route off the document number first (reliable); fall back to header text.
+      const supplierName = supplierFromNumber(parsed.invoice_number) ?? normaliseSupplier(parsed.supplier_name)
 
       // Duplicate check: skip only if this exact delivery note is already in DB
       // (same supplier + date + same item set). Suppliers send multiple delivery

@@ -149,7 +149,7 @@ export default async function DashboardPage() {
         <QuickAction href="/price-history"    icon="🔍" label="Price History" />
         <QuickAction href="/margins"          icon="📊" label="Margins" />
         <QuickAction href="/margins/sim"      icon="🧮" label="Simulator" />
-        <QuickAction href="/wholesale-lookup" icon="🏷️" label="Trade Price" />
+        <QuickAction href="/wholesale-lookup" icon="🏷️" label="Price Lookup" />
       </div>
 
       {/* Settings */}
