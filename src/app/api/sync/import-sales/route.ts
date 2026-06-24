@@ -61,6 +61,19 @@ export async function POST(request: NextRequest) {
       if (p.epos_now_id) eposToProductId.set(p.epos_now_id, p.id)
     }
 
+    // Also resolve promo/multibuy/duplicate buttons via the alias table
+    // (migration 0102): EPOS has many buttons for one product, but epos_now_id
+    // only holds the primary. Aliases never override a primary link.
+    const { data: aliases } = await supabase
+      .from('product_epos_aliases')
+      .select('epos_product_id, product_id')
+      .in('epos_product_id', eposIds)
+    for (const a of (aliases ?? [])) {
+      if (!eposToProductId.has(a.epos_product_id)) {
+        eposToProductId.set(a.epos_product_id, a.product_id)
+      }
+    }
+
     const inserts = rows.map(row => ({
       product_id:       eposToProductId.get(row.epos_product_id) ?? null,
       product_name_raw: row.name,
