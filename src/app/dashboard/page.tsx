@@ -137,16 +137,16 @@ export default async function DashboardPage() {
         </form>
       </div>
 
-      {/* Products & stock */}
+      {/* Products & stock — 2-up: daily operational tiles, larger tap targets */}
       <p className="section-title">Products</p>
-      <div className="grid grid-cols-3 gap-3 mb-6">
+      <div className="grid grid-cols-2 gap-3 mb-6">
         <QuickAction href="/products"         icon="🥦" label="Products" badge={productsBadge} tone={productsUrgent ? 'red' : 'amber'} />
         <QuickAction href="/waste"            icon="🗑️" label="Waste Log" />
       </div>
 
       {/* Ordering — buy, receive, deliver */}
       <p className="section-title">Ordering</p>
-      <div className="grid grid-cols-3 gap-3 mb-6">
+      <div className="grid grid-cols-2 gap-3 mb-6">
         <QuickAction href="/shop-order"       icon="🧺" label="Shop Order" />
         <QuickAction href="/market-run"        icon="🛒" label="Market Run" />
         <QuickAction href="/invoices"         icon="📋" label="Invoices" badge={invoicesBadge} tone="amber" />
