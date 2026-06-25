@@ -32,6 +32,122 @@ export function generateEposCsv(products: Product[]): string {
   return [header, ...rows].join('\n')
 }
 
+/** Normalise a product/button name for cross-system matching:
+ *  lowercase, strip everything but a–z0–9. "Tomato Loose/Vine" -> "tomatoloosevine". */
+export function normaliseName(s: string): string {
+  return (s || '').toLowerCase().replace(/[^a-z0-9]/g, '')
+}
+
+export interface EposProductPrice {
+  name: string
+  retail_pence: number
+}
+
+/** Parse an EPOS Now product/items export — the one with a `SalePriceIncTax`
+ *  column (e.g. header `Name;CategoryId;SalePriceIncTax`). This is the price
+ *  list that makes EPOS Now the source of truth for retail price. Columns are
+ *  located by header name (order varies between exports); separator is auto-
+ *  detected (semicolon / comma / tab). Inc-VAT price = what the customer pays. */
+export function parseEposProductExport(text: string): {
+  rows: EposProductPrice[]
+  errors: string[]
+} {
+  const errors: string[] = []
+  const rows: EposProductPrice[] = []
+
+  if (text.startsWith('PK')) {
+    errors.push('That looks like an Excel (.xlsx) file — export the product list as CSV and upload that instead')
+    return { rows, errors }
+  }
+
+  const lines = text.replace(/\r/g, '').trim().split('\n').filter(l => l.trim())
+  if (lines.length < 2) {
+    errors.push('File appears empty')
+    return { rows, errors }
+  }
+
+  const probe = lines[0]
+  const sep =
+    probe.includes('\t')                    ? '\t'
+    : (probe.match(/;/g)?.length ?? 0) >= 1 ? ';'
+    : ','
+  const split = (line: string): string[] => {
+    if (sep === '\t') return line.split('\t').map(c => c.trim())
+    const out: string[] = []
+    let cur = '', inQ = false
+    for (let i = 0; i < line.length; i++) {
+      const ch = line[i]
+      if (ch === '"') {
+        if (inQ && line[i + 1] === '"') { cur += '"'; i++ } else inQ = !inQ
+      } else if (ch === sep && !inQ) { out.push(cur.trim()); cur = '' }
+      else cur += ch
+    }
+    out.push(cur.trim())
+    return out
+  }
+
+  const header = split(lines[0]).map(c => c.replace(/[^a-z]/gi, '').toLowerCase())
+  const nameCol = header.indexOf('name')
+  // Prefer inc-VAT (shelf price); fall back to ex-VAT for zero-rated produce.
+  let priceCol = header.indexOf('salepriceinctax')
+  if (priceCol < 0) priceCol = header.indexOf('salepriceextax')
+  if (priceCol < 0) priceCol = header.findIndex(h => h.includes('saleprice') || h === 'price')
+
+  if (nameCol < 0 || priceCol < 0) {
+    errors.push('Could not find Name and SalePriceIncTax columns — upload the EPOS Now product/items export (CSV).')
+    return { rows, errors }
+  }
+
+  for (let i = 1; i < lines.length; i++) {
+    const cols = split(lines[i])
+    if (cols.length <= Math.max(nameCol, priceCol)) continue
+    const name = cols[nameCol]
+    if (!name || name.toLowerCase().startsWith('total')) continue
+    const price = parseFloat((cols[priceCol] ?? '').replace(/[£,]/g, ''))
+    if (isNaN(price)) continue
+    rows.push({ name, retail_pence: Math.round(price * 100) })
+  }
+
+  if (rows.length === 0 && errors.length === 0) {
+    errors.push('No priced product rows found — check this is the EPOS product export with a SalePriceIncTax column.')
+  }
+  return { rows, errors }
+}
+
+export type PriceSyncStatus = 'applied' | 'review' | 'nochange' | 'unmatched'
+
+export interface PriceSyncDecision {
+  epos_name: string
+  new_retail: number
+  product_id: string | null
+  matched_name: string | null
+  old_retail: number | null
+  status: PriceSyncStatus
+  reason?: string
+}
+
+/** Decide what to do with one EPOS price against the matched catalogue product.
+ *  Conservative safety rail: copy normal corrections, but HOLD large swings for
+ *  human review — they're almost always a unit-basis mismatch (per-kg vs each /
+ *  punnet / box), where copying the number would create a fresh error rather
+ *  than fix one. Mirrors the manual policy used on 25 Jun. */
+export function classifyPriceChange(
+  match: { product_id: string; matched_name: string; old_retail: number } | null,
+  newRetail: number,
+): { status: PriceSyncStatus; reason?: string } {
+  if (!match) return { status: 'unmatched', reason: 'No catalogue product matched this button name' }
+  if (newRetail <= 0) return { status: 'review', reason: 'EPOS price is zero/blank' }
+  const old = match.old_retail
+  if (Math.abs(newRetail - old) < 5) return { status: 'nochange' }
+  if (old > 0) {
+    const ratio = newRetail / old
+    if (ratio <= 0.4 || ratio >= 2.5) {
+      return { status: 'review', reason: `Large swing (£${(old / 100).toFixed(2)}→£${(newRetail / 100).toFixed(2)}) — likely a unit mismatch (per-kg vs each/punnet/box). Confirm before applying.` }
+    }
+  }
+  return { status: 'applied' }
+}
+
 /**
  * Parse an EPOS Now "Sales by Product" monthly report.
  * Format: tab-separated, columns: ProductID Name Description Barcode OrderCode Brand Size Qty MeasuredQty Value

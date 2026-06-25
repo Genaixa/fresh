@@ -75,6 +75,18 @@ export default async function SyncPage({
         </a>
       </div>
 
+      {/* Import prices FROM EPOS (EPOS = source of truth for retail price) */}
+      <div className="card mb-4">
+        <p className="font-semibold mb-1">Import prices from EPOS</p>
+        <p className="text-xs text-[var(--text-muted)] mb-3">
+          Pull retail prices from the EPOS Now product export so the catalogue mirrors
+          the till. Large swings are held for review.
+        </p>
+        <Link href="/sync/prices" className="btn-primary w-full text-center block">
+          Sync retail prices
+        </Link>
+      </div>
+
       {/* Import sales from EPOS */}
       <div className="card mb-4">
         <p className="font-semibold mb-1">Import sales from EPOS</p>
