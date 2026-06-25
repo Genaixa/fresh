@@ -22,6 +22,7 @@ type ZReport = {
   expected_cash_pence: number
   counted_cash_pence: number | null
   cash_variance_pence: number | null
+  vat_pence: number
 }
 
 function dt(iso: string | null): string {
@@ -138,6 +139,7 @@ export default async function TillEodPage() {
                 <span>Card {formatPrice(z.card_pence)}</span>
                 <span>{z.txn_count} sales</span>
                 {z.void_count > 0 && <span>{z.void_count} voids</span>}
+                {z.vat_pence > 0 && <span>VAT {formatPrice(z.vat_pence)}</span>}
               </div>
               {z.counted_cash_pence != null && (
                 <div className="flex gap-4 mt-1 text-xs">

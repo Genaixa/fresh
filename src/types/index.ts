@@ -42,6 +42,7 @@ export interface Product {
   margin_floor: number           // e.g. 0.20
   epos_now_id: string | null
   plu_code: number | null        // scale PLU for weigh-by-label scanning
+  vat_rate_bps: number           // VAT rate in basis points (2000 = 20%); 0 = zero-rated
   default_supplier_id: string | null
   is_active: boolean
   created_at: string

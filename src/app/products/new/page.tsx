@@ -23,6 +23,7 @@ export default async function NewProductPage() {
     margin_floor:        20,
     epos_now_id:         '',
     plu_code:            '',
+    vat_rate:            '0',
     default_supplier_id: '',
   }
 

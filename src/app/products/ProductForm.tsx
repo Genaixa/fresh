@@ -18,6 +18,7 @@ type Props = {
     margin_floor: number
     epos_now_id: string
     plu_code: string
+    vat_rate: string
     default_supplier_id: string
   }
   suppliers: { id: string; name: string }[]
@@ -158,6 +159,11 @@ export function ProductForm({ id, defaultValues: d, suppliers, isNew, deactivate
       <Field label="Scale PLU">
         <input name="plu_code" type="number" min="1" step="1" defaultValue={d.plu_code}
           className="input-field" placeholder="Weigh-by-label PLU — blank if not scale-sold" />
+      </Field>
+
+      <Field label="VAT rate (%)">
+        <input name="vat_rate" type="number" min="0" max="100" step="0.5" defaultValue={d.vat_rate}
+          className="input-field" placeholder="0 = zero-rated (most fresh produce)" />
       </Field>
 
       <button formAction={upsertProduct} className="btn-primary w-full mt-2">
