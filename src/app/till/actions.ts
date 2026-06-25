@@ -79,6 +79,20 @@ export async function recordTransaction(input: RecordTransactionInput): Promise<
   return { ok: true, id: tx.id }
 }
 
+export type CloseDayResult =
+  | { ok: true; zNumber: number }
+  | { ok: false; error: string }
+
+/** Z-read: seal the open trading period under a new Z report (see migration 0107). */
+export async function closeDay(): Promise<CloseDayResult> {
+  const supabase = await createClient()
+  const { data, error } = await supabase.rpc('close_z_report')
+  if (error) return { ok: false, error: error.message }
+  const z = Array.isArray(data) ? data[0] : data
+  revalidatePath('/till/eod')
+  return { ok: true, zNumber: z?.z_number }
+}
+
 export async function voidTransaction(id: string): Promise<{ ok: boolean; error?: string }> {
   const supabase = await createClient()
   const { error } = await supabase

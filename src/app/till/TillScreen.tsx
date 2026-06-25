@@ -414,6 +414,9 @@ export function TillScreen({ products }: { products: TillProduct[] }) {
           <Link href="/till/sales" className="text-xs text-[var(--text-muted)] px-3 py-2 rounded-xl border border-white/10 active:bg-white/5">
             Today
           </Link>
+          <Link href="/till/eod" className="text-xs text-[var(--text-muted)] px-3 py-2 rounded-xl border border-white/10 active:bg-white/5">
+            Day
+          </Link>
           <Link href="/dashboard" className="text-xs text-[var(--text-muted)] px-3 py-2 rounded-xl border border-white/10 active:bg-white/5">
             Exit
           </Link>
