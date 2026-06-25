@@ -13,6 +13,8 @@ interface TransactionItem {
 }
 
 interface RecordTransactionInput {
+  /** Client-generated idempotency key — same sale retried = no-op (see 0106). */
+  client_uuid: string
   total_pence: number
   payment_method: 'cash' | 'card'
   cash_tendered_pence: number | null
@@ -21,7 +23,7 @@ interface RecordTransactionInput {
 }
 
 export type RecordResult =
-  | { ok: true; id: string }
+  | { ok: true; id: string; duplicate?: boolean }
   | { ok: false; error: string }
 
 export async function recordTransaction(input: RecordTransactionInput): Promise<RecordResult> {
@@ -30,6 +32,7 @@ export async function recordTransaction(input: RecordTransactionInput): Promise<
   const { data: tx, error } = await supabase
     .from('till_transactions')
     .insert({
+      client_uuid: input.client_uuid,
       total_pence: input.total_pence,
       payment_method: input.payment_method,
       cash_tendered_pence: input.cash_tendered_pence,
@@ -40,6 +43,16 @@ export async function recordTransaction(input: RecordTransactionInput): Promise<
     .single()
 
   if (error || !tx) {
+    // 23505 = unique violation on client_uuid → this sale is already recorded.
+    // Treat as success (idempotent): a re-synced offline sale must not duplicate.
+    if (error?.code === '23505') {
+      const { data: existing } = await supabase
+        .from('till_transactions')
+        .select('id')
+        .eq('client_uuid', input.client_uuid)
+        .single()
+      if (existing) return { ok: true, id: existing.id, duplicate: true }
+    }
     return { ok: false, error: error?.message ?? 'Could not save the sale' }
   }
 

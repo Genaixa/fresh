@@ -5,6 +5,9 @@ import Link from 'next/link'
 import { recordTransaction } from './actions'
 import { formatPrice } from '@/lib/pricing-engine'
 import { parseScaleBarcode } from '@/lib/scale-barcode'
+import {
+  enqueueSale, allPending, removePending, countPending, newClientUuid,
+} from '@/lib/till-offline'
 
 type TillProduct = {
   id: string
@@ -101,6 +104,8 @@ export function TillScreen({ products }: { products: TillProduct[] }) {
   const [saveError, setSaveError] = useState<string | null>(null)
   const [scanMsg, setScanMsg] = useState<{ kind: 'ok' | 'err'; text: string } | null>(null)
   const [saleChange, setSaleChange] = useState<number | null>(null)
+  const [pendingCount, setPendingCount] = useState(0)
+  const [online, setOnline] = useState(true)
   const [time, setTime] = useState('')
   const weightRef = useRef<HTMLInputElement>(null)
 
@@ -114,6 +119,55 @@ export function TillScreen({ products }: { products: TillProduct[] }) {
   useEffect(() => {
     if (weightModal) setTimeout(() => weightRef.current?.focus(), 80)
   }, [weightModal])
+
+  // ── Offline-first sync ──────────────────────────────────────────────────
+  // Drain the local queue to the server. Safe to call anytime: each sale carries
+  // a client_uuid so the server records it exactly once; a sale is removed from
+  // the queue only after the server confirms it. Stops on the first failure so a
+  // dropped connection just leaves everything queued for the next attempt.
+  const flushingRef = useRef(false)
+  const flushQueue = useCallback(async () => {
+    if (flushingRef.current) return
+    flushingRef.current = true
+    try {
+      const pend = await allPending()
+      for (const s of pend) {
+        try {
+          const res = await recordTransaction({
+            client_uuid: s.client_uuid,
+            total_pence: s.total_pence,
+            payment_method: s.payment_method,
+            cash_tendered_pence: s.cash_tendered_pence,
+            change_pence: s.change_pence,
+            items: s.items,
+          })
+          if (res.ok) await removePending(s.client_uuid)
+          else break   // server reachable but rejected — keep queued, retry later
+        } catch {
+          break        // offline / network error — keep queued
+        }
+      }
+      setPendingCount(await countPending())
+    } finally {
+      flushingRef.current = false
+    }
+  }, [])
+
+  useEffect(() => {
+    setOnline(navigator.onLine)
+    countPending().then(setPendingCount).catch(() => {})
+    void flushQueue()
+    const goOnline = () => { setOnline(true); void flushQueue() }
+    const goOffline = () => setOnline(false)
+    window.addEventListener('online', goOnline)
+    window.addEventListener('offline', goOffline)
+    const iv = setInterval(() => { void flushQueue() }, 15000)
+    return () => {
+      window.removeEventListener('online', goOnline)
+      window.removeEventListener('offline', goOffline)
+      clearInterval(iv)
+    }
+  }, [flushQueue])
 
   const total = useMemo(() => basket.reduce((s, i) => s + i.line_total, 0), [basket])
 
@@ -293,30 +347,38 @@ export function TillScreen({ products }: { products: TillProduct[] }) {
     if (saving) return
     setSaving(true)
     setSaveError(null)
-    const res = await recordTransaction({
-      total_pence: total,
-      payment_method: method,
-      cash_tendered_pence: method === 'cash' ? cashPence : null,
-      change_pence: method === 'cash' ? change : null,
-      items: basket.map(i => ({
-        product_id: i.product_id,
-        product_name: i.name,
-        quantity: i.quantity,
-        unit: i.unit,
-        unit_price_pence: i.unit_price,
-        line_total_pence: i.line_total,
-      })),
-    })
-    setSaving(false)
-    if (!res.ok) {
-      // Keep the basket and pay modal so the cashier can retry — never lose a sale.
-      setSaveError(res.error)
+    const savedChange = method === 'cash' ? change : null
+    try {
+      // Durable local write FIRST — the sale is safe before any network. The
+      // background flusher syncs it to the server (exactly once, via client_uuid).
+      await enqueueSale({
+        client_uuid: newClientUuid(),
+        queued_at: Date.now(),
+        total_pence: total,
+        payment_method: method,
+        cash_tendered_pence: method === 'cash' ? cashPence : null,
+        change_pence: method === 'cash' ? change : null,
+        items: basket.map(i => ({
+          product_id: i.product_id,
+          product_name: i.name,
+          quantity: i.quantity,
+          unit: i.unit,
+          unit_price_pence: i.unit_price,
+          line_total_pence: i.line_total,
+        })),
+      })
+    } catch {
+      // Local store itself failed — the one case we must not let pass silently.
+      setSaving(false)
+      setSaveError('Could not save the sale on this device — try again')
       return
     }
-    const savedChange = method === 'cash' ? change : null
+    setSaving(false)
     setBasket([])
     setPayStep(null)
     setCashInput('')
+    setPendingCount(await countPending())
+    void flushQueue()
     if (savedChange !== null) {
       setSaleChange(savedChange)
       setTimeout(() => setSaleChange(null), 4000)
@@ -329,7 +391,22 @@ export function TillScreen({ products }: { products: TillProduct[] }) {
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-2.5 border-b border-white/10 shrink-0">
         <span className="font-bold text-brand-accent">Fresh &amp; Fruity</span>
-        <span className="text-sm text-[var(--text-muted)]">{time}</span>
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-[var(--text-muted)]">{time}</span>
+          {!online ? (
+            <span className="text-[11px] px-2 py-1 rounded-full bg-status-amber/20 text-status-amber font-medium">
+              ⚠ Offline{pendingCount > 0 ? ` · ${pendingCount}` : ''}
+            </span>
+          ) : pendingCount > 0 ? (
+            <span className="text-[11px] px-2 py-1 rounded-full bg-brand-accent/20 text-brand-accent font-medium">
+              ⟳ {pendingCount} to sync
+            </span>
+          ) : (
+            <span className="text-[11px] px-2 py-1 rounded-full bg-status-green/15 text-status-green font-medium">
+              ✓ Synced
+            </span>
+          )}
+        </div>
         <div className="flex items-center gap-2">
           <Link href="/till/sales" className="text-xs text-[var(--text-muted)] px-3 py-2 rounded-xl border border-white/10 active:bg-white/5">
             Today
