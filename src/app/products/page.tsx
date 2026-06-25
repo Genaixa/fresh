@@ -157,6 +157,10 @@ export default async function ProductsPage({
           const isLossLeader = p.margin_floor < 0
           const atLoss       = !isLossLeader && p.retail_price > 0 && p.purchase_cost > p.retail_price
           const unpriced     = p.retail_price === 0 && p.purchase_cost > 0
+          const thinMargin   = !isLossLeader && !atLoss && p.retail_price > 0 && p.purchase_cost > 0
+                                 && margin < p.margin_floor
+          const marginPct    = Math.round(margin * 100)
+          const floorPct     = Math.round(p.margin_floor * 100)
 
           return (
             <Link
@@ -171,8 +175,9 @@ export default async function ProductsPage({
                   <p className="font-medium">{p.name}</p>
                   <p className="text-xs text-[var(--text-muted)] capitalize">
                     {isLossLeader ? <span className="text-[var(--text-muted)]">loss leader</span>
-                    : atLoss      ? <span className="text-status-red font-semibold">at a loss</span>
-                    : unpriced    ? <span className="text-status-amber">unpriced</span>
+                    : atLoss      ? <span className="text-status-red font-semibold">at a loss · cost above price</span>
+                    : unpriced    ? <span className="text-status-amber font-semibold">no price set</span>
+                    : thinMargin  ? <span className="text-status-amber font-semibold">margin {marginPct}% · below {floorPct}% floor</span>
                     : <>{p.category} · {p.unit}</>}
                   </p>
                 </div>
