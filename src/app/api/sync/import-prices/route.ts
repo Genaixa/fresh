@@ -41,26 +41,57 @@ export async function POST(request: NextRequest) {
     // (canonical), then EPOS button names from sales_data as fallback aliases.
     const { data: products } = await supabase
       .from('products')
-      .select('id, name, retail_price')
+      .select('id, name, retail_price, epos_now_id')
       .eq('is_active', true)
 
     type Match = { product_id: string; matched_name: string; old_retail: number }
-    const byName = new Map<string, Match>()
-    for (const p of (products ?? [])) {
-      byName.set(normaliseName(p.name), {
-        product_id: p.id, matched_name: p.name, old_retail: p.retail_price ?? 0,
-      })
-    }
+    const toMatch = (p: { id: string; name: string; retail_price: number | null }): Match =>
+      ({ product_id: p.id, matched_name: p.name, old_retail: p.retail_price ?? 0 })
     const prodById = new Map((products ?? []).map(p => [p.id, p]))
+
+    // ── ID-first matching (rename-proof) ────────────────────────────────
+    // The price export keys on button name, but names drift if David renames
+    // a button in EPOS. The stable key is the EPOS product id. We already
+    // hold it per product (products.epos_now_id) + promo/dup buttons
+    // (product_epos_aliases). To turn the export's name into an id we bridge
+    // through sales_data, which carries EPOS's own button name -> id.
+    const prodByEposId = new Map<string, Match>()
+    for (const p of (products ?? [])) {
+      if (p.epos_now_id) prodByEposId.set(p.epos_now_id, toMatch(p))
+    }
+    const { data: aliases } = await supabase
+      .from('product_epos_aliases')
+      .select('epos_product_id, product_id')
+    for (const a of (aliases ?? [])) {
+      if (prodByEposId.has(a.epos_product_id)) continue
+      const p = prodById.get(a.product_id as string)
+      if (p) prodByEposId.set(a.epos_product_id, toMatch(p))
+    }
+
+    // EPOS button name -> EPOS id, from sales history (EPOS's own naming).
     const { data: salesNames } = await supabase
       .from('sales_data')
-      .select('product_id, product_name_raw')
+      .select('product_id, product_name_raw, epos_product_id')
       .not('product_id', 'is', null)
+    const nameToEposId = new Map<string, string>()
+    const byName = new Map<string, Match>()
+    for (const p of (products ?? [])) byName.set(normaliseName(p.name), toMatch(p))
     for (const s of (salesNames ?? [])) {
       const key = normaliseName(s.product_name_raw)
-      if (!key || byName.has(key)) continue
-      const p = prodById.get(s.product_id as string)
-      if (p) byName.set(key, { product_id: p.id, matched_name: p.name, old_retail: p.retail_price ?? 0 })
+      if (!key) continue
+      if (s.epos_product_id && !nameToEposId.has(key)) nameToEposId.set(key, s.epos_product_id)
+      if (!byName.has(key)) {
+        const p = prodById.get(s.product_id as string)
+        if (p) byName.set(key, toMatch(p))
+      }
+    }
+
+    // Resolve one export row: by EPOS id first, then fall back to name.
+    const resolve = (eposName: string): Match | null => {
+      const key = normaliseName(eposName)
+      const eid = nameToEposId.get(key)
+      if (eid && prodByEposId.get(eid)) return prodByEposId.get(eid)!
+      return byName.get(key) ?? null
     }
 
     // Classify every EPOS row. Dedup on product: if several buttons map to the
@@ -68,7 +99,7 @@ export async function POST(request: NextRequest) {
     const decisions: PriceSyncDecision[] = []
     const seenProduct = new Set<string>()
     for (const r of rows) {
-      const match = byName.get(normaliseName(r.name)) ?? null
+      const match = resolve(r.name)
       const { status, reason } = classifyPriceChange(match, r.retail_pence)
       if (match && seenProduct.has(match.product_id) && status !== 'unmatched') continue
       if (match && (status === 'applied' || status === 'review')) seenProduct.add(match.product_id)
