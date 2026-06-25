@@ -53,8 +53,11 @@ export default async function DashboardPage() {
     .select('*', { count: 'exact', head: true })
     .eq('status', 'confirmed')
 
-  const healthIssues    = (await getProductHealthIssues(supabase))
-    .filter(i => !pendingProductIds.has(i.productId))   // already covered by a pending price approval
+  // Count EVERY product issue so the Products tile badge matches the ⚠ Issues tab
+  // on /products exactly. (We deliberately do NOT subtract products that already
+  // have a pending price suggestion — those still appear in the Issues tab, so the
+  // badge would otherwise read lower than the list and confuse.)
+  const healthIssues    = await getProductHealthIssues(supabase)
   const atLossCount     = healthIssues.filter(i => i.type === 'at_loss').length
   const unpricedCount   = healthIssues.filter(i => i.type === 'unpriced').length
   const belowFloorCount = healthIssues.filter(i => i.type === 'below_floor').length
@@ -109,7 +112,11 @@ export default async function DashboardPage() {
   // Each alert surfaces as an attention badge on its relevant tile — no top cards.
   const pricingBadge   = pendingCount                                  // prices to approve
   const invoicesBadge  = (pendingDeliveryCount ?? 0) + unmappedCount   // notes to confirm + needs mapping
-  const productsBadge  = blockedCosts.length + atLossCount + belowFloorCount + unpricedCount
+  // Badge = the three issue types shown on the /products ⚠ Issues tab (at-loss +
+  // below-floor + unpriced), each product counted once. blockedCosts (bad cost
+  // writes) only drive the red tone, not the count — a blocked cost that lands
+  // above retail already shows as at-loss, so adding it would double-count.
+  const productsBadge  = atLossCount + belowFloorCount + unpricedCount
   const productsUrgent = blockedCosts.length > 0 || atLossCount > 0    // at-loss / wrong-cost ⇒ red
   const dispatchBadge  = confirmedOrderCount ?? 0                      // deliveries ready
 
