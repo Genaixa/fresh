@@ -83,14 +83,32 @@ export type CloseDayResult =
   | { ok: true; zNumber: number }
   | { ok: false; error: string }
 
-/** Z-read: seal the open trading period under a new Z report (see migration 0107). */
-export async function closeDay(): Promise<CloseDayResult> {
+/** Z-read: seal the open trading period under a new Z report (see migration 0107/0108). */
+export async function closeDay(countedCashPence?: number | null): Promise<CloseDayResult> {
   const supabase = await createClient()
-  const { data, error } = await supabase.rpc('close_z_report')
+  const { data, error } = await supabase.rpc('close_z_report', {
+    p_counted_cash: countedCashPence ?? null,
+  })
   if (error) return { ok: false, error: error.message }
   const z = Array.isArray(data) ? data[0] : data
   revalidatePath('/till/eod')
   return { ok: true, zNumber: z?.z_number }
+}
+
+/** Record a cash drawer movement (opening float / pay-in / pay-out) for the open period. */
+export async function addCashMovement(
+  kind: 'float_open' | 'pay_in' | 'pay_out',
+  amountPence: number,
+  note: string | null,
+): Promise<{ ok: boolean; error?: string }> {
+  if (!Number.isFinite(amountPence) || amountPence <= 0) return { ok: false, error: 'Enter an amount' }
+  const supabase = await createClient()
+  const { error } = await supabase.from('till_cash_movements').insert({
+    kind, amount_pence: Math.round(amountPence), note: note?.trim() || null,
+  })
+  if (error) return { ok: false, error: error.message }
+  revalidatePath('/till/eod')
+  return { ok: true }
 }
 
 export async function voidTransaction(id: string): Promise<{ ok: boolean; error?: string }> {
