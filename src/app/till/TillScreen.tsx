@@ -394,15 +394,18 @@ export function TillScreen({ products }: { products: TillProduct[] }) {
         <div className="flex items-center gap-2">
           <span className="text-sm text-[var(--text-muted)]">{time}</span>
           {!online ? (
-            <span className="text-[11px] px-2 py-1 rounded-full bg-status-amber/20 text-status-amber font-medium">
+            <span data-testid="sync-status" data-state="offline" data-pending={pendingCount}
+              className="text-[11px] px-2 py-1 rounded-full bg-status-amber/20 text-status-amber font-medium">
               ⚠ Offline{pendingCount > 0 ? ` · ${pendingCount}` : ''}
             </span>
           ) : pendingCount > 0 ? (
-            <span className="text-[11px] px-2 py-1 rounded-full bg-brand-accent/20 text-brand-accent font-medium">
+            <span data-testid="sync-status" data-state="pending" data-pending={pendingCount}
+              className="text-[11px] px-2 py-1 rounded-full bg-brand-accent/20 text-brand-accent font-medium">
               ⟳ {pendingCount} to sync
             </span>
           ) : (
-            <span className="text-[11px] px-2 py-1 rounded-full bg-status-green/15 text-status-green font-medium">
+            <span data-testid="sync-status" data-state="synced" data-pending={0}
+              className="text-[11px] px-2 py-1 rounded-full bg-status-green/15 text-status-green font-medium">
               ✓ Synced
             </span>
           )}
@@ -473,6 +476,7 @@ export function TillScreen({ products }: { products: TillProduct[] }) {
                 return (
                   <button
                     key={p.id}
+                    data-testid="till-product"
                     onPointerDown={() => tapProduct(p)}
                     className="card p-2.5 text-left active:scale-95 active:bg-white/10 transition-transform min-h-[68px] flex flex-col justify-between"
                   >
@@ -545,6 +549,7 @@ export function TillScreen({ products }: { products: TillProduct[] }) {
                 Cash
               </button>
               <button
+                data-testid="pay-card"
                 onPointerDown={() => setPayStep('card')}
                 disabled={basket.length === 0}
                 className="flex-1 py-3.5 rounded-xl bg-brand-accent/20 text-brand-accent font-bold text-sm active:bg-brand-accent/30 disabled:opacity-30 transition-colors"
@@ -688,6 +693,7 @@ export function TillScreen({ products }: { products: TillProduct[] }) {
                 Cancel
               </button>
               <button
+                data-testid="card-confirm"
                 onClick={() => completeSale('card')}
                 disabled={saving}
                 className="flex-1 py-3 rounded-xl bg-brand-accent/20 text-brand-accent font-bold text-sm disabled:opacity-30"

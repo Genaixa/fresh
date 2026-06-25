@@ -39,3 +39,7 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 invoices.db
+/test-results/
+/playwright-report/
+/blob-report/
+/.playwright/
