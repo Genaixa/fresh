@@ -34,6 +34,27 @@ function numericRef(s: string | null): number {
   return digits ? parseInt(digits, 10) : NaN
 }
 
+/** Fetch ALL rows for a query, 1000 at a time. PostgREST caps a single response
+ *  at ~1000 rows regardless of .limit(), so an unpaginated select silently
+ *  truncates. That truncation made HEADER_MISMATCH fire on ~every invoice: the
+ *  first 1000 line items were scattered across all invoices, so each got a
+ *  partial (under)sum. The page() callback MUST apply a stable .order() so pages
+ *  don't overlap or skip rows. */
+async function fetchAll<T>(
+  page: (from: number, to: number) => PromiseLike<{ data: T[] | null; error: { message: string } | null }>,
+): Promise<T[]> {
+  const SIZE = 1000
+  const out: T[] = []
+  for (let from = 0; ; from += SIZE) {
+    const { data, error } = await page(from, from + SIZE - 1)
+    if (error) throw new Error(`hygiene: paged fetch failed: ${error.message}`)
+    const rows = data ?? []
+    out.push(...rows)
+    if (rows.length < SIZE) break
+  }
+  return out
+}
+
 export async function checkInvoiceHygiene(supabase: SupabaseClient): Promise<HygieneFinding[]> {
   const findings: HygieneFinding[] = []
   const gbp = (p: number) => `£${(p / 100).toFixed(2)}`
@@ -43,26 +64,29 @@ export async function checkInvoiceHygiene(supabase: SupabaseClient): Promise<Hyg
   const cutoff180  = new Date(today.getTime() - 180 * DAY).toISOString().slice(0, 10)
 
   // ── Pull the data once ──────────────────────────────────────────────────────
-  const { data: invoices, error: invErr } = await supabase
-    .from('purchase_invoices')
-    .select('supplier_name, invoice_date, invoice_number')
-    .not('invoice_number', 'is', null)
-    .limit(20000)
-  if (invErr) throw new Error(`hygiene: invoice query failed: ${invErr.message}`)
+  const invoices = await fetchAll<{ supplier_name: string; invoice_date: string; invoice_number: string | null }>(
+    (from, to) => supabase
+      .from('purchase_invoices')
+      .select('supplier_name, invoice_date, invoice_number')
+      .not('invoice_number', 'is', null)
+      .order('id', { ascending: true })
+      .range(from, to))
 
-  const { data: items, error: itemErr } = await supabase
-    .from('purchase_invoice_items')
-    .select('product_name_raw, quantity, unit_cost, total_cost, purchase_invoices!inner(invoice_date, supplier_name, invoice_number)')
-    .gte('purchase_invoices.invoice_date', cutoff180)
-    .limit(50000)
-  if (itemErr) throw new Error(`hygiene: item query failed: ${itemErr.message}`)
+  const items = (await fetchAll<unknown>(
+    (from, to) => supabase
+      .from('purchase_invoice_items')
+      .select('product_name_raw, quantity, unit_cost, total_cost, purchase_invoices!inner(invoice_date, supplier_name, invoice_number)')
+      .gte('purchase_invoices.invoice_date', cutoff180)
+      .order('id', { ascending: true })
+      .range(from, to))) as unknown as ItemRow[]
 
-  const { data: mappings, error: mapErr } = await supabase
-    .from('supplier_product_mappings')
-    .select('raw_description, last_price_p')
-    .gt('last_price_p', 0)
-    .limit(20000)
-  if (mapErr) throw new Error(`hygiene: mapping query failed: ${mapErr.message}`)
+  const mappings = await fetchAll<{ raw_description: string; last_price_p: number }>(
+    (from, to) => supabase
+      .from('supplier_product_mappings')
+      .select('raw_description, last_price_p')
+      .gt('last_price_p', 0)
+      .order('raw_description', { ascending: true })
+      .range(from, to))
 
   type ItemRow = {
     product_name_raw: string
@@ -148,18 +172,20 @@ export async function checkInvoiceHygiene(supabase: SupabaseClient): Promise<Hyg
   // items £475.90 = the £12 water VAT). A negative gap means items exceed the
   // header — a dropped/duplicated/mis-parsed line. Ingestion now derives the header
   // from the line items, so this should only fire on legacy rows or manual edits.
-  const { data: hdrs, error: hdrErr } = await supabase
-    .from('purchase_invoices')
-    .select('id, supplier_name, invoice_date, invoice_number, total_amount')
-    .not('total_amount', 'is', null)
-    .limit(20000)
-  if (hdrErr) throw new Error(`hygiene: header query failed: ${hdrErr.message}`)
+  const hdrs = await fetchAll<{ id: string; supplier_name: string; invoice_date: string; invoice_number: string | null; total_amount: number }>(
+    (from, to) => supabase
+      .from('purchase_invoices')
+      .select('id, supplier_name, invoice_date, invoice_number, total_amount')
+      .not('total_amount', 'is', null)
+      .order('id', { ascending: true })
+      .range(from, to))
 
-  const { data: hdrItems, error: hdrItemErr } = await supabase
-    .from('purchase_invoice_items')
-    .select('invoice_id, total_cost')
-    .limit(100000)
-  if (hdrItemErr) throw new Error(`hygiene: header-items query failed: ${hdrItemErr.message}`)
+  const hdrItems = await fetchAll<{ invoice_id: string; total_cost: number }>(
+    (from, to) => supabase
+      .from('purchase_invoice_items')
+      .select('invoice_id, total_cost')
+      .order('id', { ascending: true })
+      .range(from, to))
 
   const sumByInvoice = new Map<string, number>()
   for (const it of hdrItems ?? []) {
