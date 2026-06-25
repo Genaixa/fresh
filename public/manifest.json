@@ -1,0 +1,11 @@
+{
+  "name": "Fresh & Fruity Till",
+  "short_name": "F&F Till",
+  "description": "Fresh & Fruity point-of-sale till",
+  "start_url": "/till",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "landscape",
+  "background_color": "#1a1a1a",
+  "theme_color": "#2D5F2D"
+}

@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { TillScreen } from './TillScreen'
+import { RegisterSW } from './RegisterSW'
 
 export default async function TillPage() {
   const supabase = await createClient()
@@ -12,5 +13,10 @@ export default async function TillPage() {
     .order('category')
     .order('name')
 
-  return <TillScreen products={products ?? []} />
+  return (
+    <>
+      <RegisterSW />
+      <TillScreen products={products ?? []} />
+    </>
+  )
 }
