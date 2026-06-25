@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/service'
 import { checkPricingInvariants } from '@/lib/pricing-invariants'
 import { checkInvoiceHygiene } from '@/lib/invoice-hygiene'
+import { resolveOpenQuestions } from '@/lib/david-questions'
 import { sendTelegram } from '@/lib/telegram'
 
 export async function GET() {
@@ -48,7 +49,22 @@ export async function POST(request: NextRequest) {
       ).catch(() => {})
     }
 
-    return NextResponse.json({ ok: true, violations, hygiene })
+    // ── David question ledger — auto-resolve what data can answer, so he's
+    //    only ever asked genuine unknowns. Alerts only when something was
+    //    auto-closed (a question we no longer need to bother him with).
+    const ledger = await resolveOpenQuestions(supabase)
+    if (ledger.autoResolved.length > 0) {
+      const lines = ledger.autoResolved
+        .slice(0, 20)
+        .map(r => `• <b>${r.question}</b>\n  → ${r.proposed}\n  <i>${r.evidence}</i>`)
+        .join('\n')
+      await sendTelegram(
+        `🧠 <b>Question ledger — ${ledger.autoResolved.length} auto-resolved</b>\n` +
+        `Data now answers these, so David doesn't need to. ${ledger.stillOpen.length} still need him.\n\n${lines}`,
+      ).catch(() => {})
+    }
+
+    return NextResponse.json({ ok: true, violations, hygiene, ledger })
   } catch (err) {
     const errMsg = err instanceof Error ? err.message : String(err)
     console.error('[IntegrityCheck] crashed:', err)
