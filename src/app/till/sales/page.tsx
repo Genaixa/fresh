@@ -119,6 +119,9 @@ export default async function TillSalesPage() {
                 </div>
                 <div className="flex items-center gap-3">
                   <span className={`text-base font-bold ${voided ? 'line-through' : ''}`}>{formatPrice(s.total_pence)}</span>
+                  <Link href={`/till/sales/${s.id}`} className="text-[11px] px-2 py-1 rounded-lg border border-white/15 text-[var(--text-muted)] active:bg-white/10">
+                    Receipt
+                  </Link>
                   {!voided && <VoidButton id={s.id} />}
                 </div>
               </div>
