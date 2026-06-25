@@ -85,7 +85,11 @@ export default async function MarginsPage({
   return (
     <div className="page pb-24">
       <div className="flex items-center justify-between mb-4">
-        <h1 className="text-xl font-bold">Margins</h1>
+        <div className="flex items-center gap-1">
+          <Link href="/dashboard" aria-label="Back to home"
+                className="text-brand-accent min-h-[48px] min-w-[48px] flex items-center justify-center text-xl">←</Link>
+          <h1 className="text-xl font-bold">Margins</h1>
+        </div>
         <div className="flex gap-3">
           <Link href="/margins/bulk" className="text-brand-accent text-sm min-h-[44px] flex items-center">Bulk →</Link>
           <Link href="/margins/sim"  className="text-brand-accent text-sm min-h-[44px] flex items-center">Sim →</Link>

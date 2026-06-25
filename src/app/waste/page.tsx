@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import Link from 'next/link'
 import { formatPrice } from '@/lib/pricing-engine'
 import type { Product, WasteEntry } from '@/types'
 import { WastePicker } from './WastePicker'
@@ -43,7 +44,9 @@ export default async function WastePage({
 
   return (
     <div className="page pb-24">
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center gap-1 mb-6">
+        <Link href="/dashboard" aria-label="Back to home"
+              className="text-brand-accent min-h-[48px] min-w-[48px] flex items-center justify-center text-xl">←</Link>
         <h1 className="text-xl font-bold">Log Waste</h1>
       </div>
 

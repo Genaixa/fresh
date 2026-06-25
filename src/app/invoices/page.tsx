@@ -34,7 +34,11 @@ export default async function InvoicesPage() {
   return (
     <div className="page pb-24">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-xl font-bold">Invoices</h1>
+        <div className="flex items-center gap-1">
+          <Link href="/dashboard" aria-label="Back to home"
+                className="text-brand-accent min-h-[48px] min-w-[48px] flex items-center justify-center text-xl">←</Link>
+          <h1 className="text-xl font-bold">Invoices</h1>
+        </div>
         <Link href="/invoices/new" className="btn-primary px-4 py-2 text-sm min-h-[40px]">
           + Upload
         </Link>

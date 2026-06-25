@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import Link from 'next/link'
 import { upsertSupplier, toggleSupplierActive } from './actions'
 import type { Supplier } from '@/types'
 
@@ -16,7 +17,11 @@ export default async function SuppliersPage() {
 
   return (
     <div className="page pb-24">
-      <h1 className="text-xl font-bold mb-6">Suppliers</h1>
+      <div className="flex items-center gap-1 mb-6">
+        <Link href="/dashboard" aria-label="Back to home"
+              className="text-brand-accent min-h-[48px] min-w-[48px] flex items-center justify-center text-xl">←</Link>
+        <h1 className="text-xl font-bold">Suppliers</h1>
+      </div>
 
       {/* Add new */}
       <details className="card mb-6">

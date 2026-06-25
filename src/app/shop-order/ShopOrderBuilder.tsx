@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
+import Link from 'next/link'
 
 interface Product {
   id: string
@@ -137,7 +138,11 @@ export default function ShopOrderBuilder({
 
   return (
     <div className="page pb-40">
-      <h1 className="text-xl font-bold mb-1">Shop order</h1>
+      <div className="flex items-center gap-1 mb-1">
+        <Link href="/dashboard" aria-label="Back to home"
+              className="text-brand-accent min-h-[48px] min-w-[48px] flex items-center justify-center text-xl">←</Link>
+        <h1 className="text-xl font-bold">Shop order</h1>
+      </div>
       <p className="text-[var(--text-muted)] text-sm mb-4">What the shop floor needs — feeds the market run.</p>
 
       <div className="card mb-4">

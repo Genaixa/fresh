@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import Link from 'next/link'
 import { closeMarketSession, completeSectionBatch, deleteMarketProduct, startNewTrip, upsertMarketItem } from './actions'
 import { CONFIG } from './config'
 import type { MarketProduct, MarketSession, MarketSessionItem, SupplierIds } from './page'
@@ -593,11 +594,15 @@ export default function MarketBuyClient({ session, products, existingItems, supp
     <div className="px-4 pt-4 bg-white text-gray-900">
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
-        <div>
+        <div className="flex items-center gap-1">
+          <Link href="/dashboard" aria-label="Back to home"
+                className="text-gray-900 min-h-[48px] min-w-[48px] flex items-center justify-center text-xl -ml-2">←</Link>
+          <div>
           <h1 className="text-xl font-bold text-gray-900">{runMode ? 'Market Run' : 'Market Buy'}</h1>
           <p className="text-xs text-gray-500">
             {today}{session.trip_number > 1 ? ` · Purchase ${session.trip_number}` : ''} · {session.status === 'open' ? 'Session open' : 'Session closed'}
           </p>
+          </div>
         </div>
         <div className="flex items-center gap-2">
           {summary && <p className="text-sm font-bold text-gray-900">{summary.totalBoxes} boxes</p>}
