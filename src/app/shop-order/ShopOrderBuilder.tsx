@@ -257,12 +257,11 @@ export default function ShopOrderBuilder({
                 const opts = boxOpts[id] ?? []
                 const showDropdown = isEach && opts.length > 1
                 const bkLabel = Number.isInteger(bk) ? `${bk}` : bk.toFixed(1)
-                // Changing box size keeps the box COUNT and re-derives the quantity.
+                // Changing box size keeps the demand (each) and re-derives the box
+                // COUNT — "I need ~64 cucumbers; at 18/box that's fewer boxes".
                 const changeSize = (newSize: number) => {
                   if (!(newSize > 0)) return
-                  const keepBoxes = bk > 0 ? Math.round(q / bk) : 0
                   setPerBox(p => ({ ...p, [id]: newSize }))
-                  setOne(id, keepBoxes * newSize)
                 }
                 return (
                   <>
