@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
-import { closeMarketSession, completeSectionBatch, deleteMarketProduct, startNewTrip, upsertMarketItem } from './actions'
+import { closeMarketSession, completeSectionBatch, deleteMarketProduct, reopenSectionBatch, startNewTrip, upsertMarketItem } from './actions'
 import { CONFIG } from './config'
 import type { MarketProduct, MarketSession, MarketSessionItem, SupplierIds } from './page'
 
@@ -38,6 +38,46 @@ function unitDeal(unitPrice: number | null, recentAvg: number | null, dateStr: s
   const r = unitPrice / recentAvg
   if (r > 3 || r < 0.33) return null
   return getDealStatus(unitPrice, recentAvg)
+}
+
+// Build the RRP/margin calc straight from a PER-UNIT cost (kg/each/punnet) that
+// already matches the retail unit — no config box guesses. Same status thresholds
+// as calcPricing so the display is unchanged where the basis was already right.
+function perUnitPricing(costPerUnit: number | null, product: MarketProduct): PricingCalc {
+  if (!costPerUnit || costPerUnit <= 0)
+    return { costPerUnit: null, costPerKg: null, rrpFull: null, rrpMin: null, margin: null, status: null, effectiveUnitLabel: null }
+  const rrpFull = Math.ceil(costPerUnit * product.priceMultiplier)
+  const rrpMin  = Math.ceil(costPerUnit / (1 - product.marginFloor))
+  if (!product.retailPricePence)
+    return { costPerUnit, costPerKg: null, rrpFull, rrpMin, margin: null, status: 'no-retail', effectiveUnitLabel: null }
+  const margin = (product.retailPricePence - costPerUnit) / product.retailPricePence
+  const status = margin >= product.marginFloor + 0.05 ? 'ok' : margin >= product.marginFloor ? 'tight' : 'raise'
+  return { costPerUnit, costPerKg: null, rrpFull, rrpMin, margin, status, effectiveUnitLabel: null }
+}
+
+// Per-unit buying advice for one supplier (replaces the per-box getGolemAdvice):
+// over max, vs the live recent average, or a cheaper non-stale alternative.
+function unitAdvice(
+  perUnit: number | null, maxUnit: number, recentAvg: number | null,
+  otherUnit: number | null, otherLabel: string, otherStale: boolean, unitLabel: string,
+): { text: string; tone: 'good' | 'warn' | 'info' } | null {
+  if (!perUnit) return null
+  const f = (p: number) => `£${(p / 100).toFixed(2)}`
+  const otherUsable = otherUnit && !otherStale ? otherUnit : null
+  if (maxUnit && perUnit > maxUnit * 1.05) {
+    const over = perUnit - maxUnit
+    return otherUsable && otherUsable < perUnit
+      ? { text: `${f(over)}/${unitLabel} over max — ${otherLabel} ${f(otherUsable)}/${unitLabel}, try them`, tone: 'warn' }
+      : { text: `${f(over)}/${unitLabel} over max — negotiate or skip`, tone: 'warn' }
+  }
+  if (recentAvg) {
+    const pct = (perUnit - recentAvg) / recentAvg
+    if (pct < -0.10) return { text: `${Math.round(-pct * 100)}% below recent avg — buy more than usual`, tone: 'good' }
+    if (pct > 0.10)  return { text: `${Math.round(pct * 100)}% above recent avg`, tone: 'warn' }
+  }
+  if (otherUsable && perUnit > otherUsable * 1.10)
+    return { text: `${otherLabel} cheaper at ${f(otherUsable)}/${unitLabel}`, tone: 'info' }
+  return null
 }
 
 // Colour a price advisory by its wording: dear (above avg/max) = red, cheap
@@ -365,6 +405,19 @@ export default function MarketBuyClient({ session, products, existingItems, supp
     setSectionSaving(null)
   }
 
+  // Undo the most recent "Order placed" for a section: drop the batch counter
+  // and re-activate the form. The batch's rows are still in state, so the saved
+  // quantities/prices reappear for editing.
+  const handleSectionReopen = async (section: 'roots' | 'veg' | 'fruit') => {
+    const newCount = batchesDone[section] - 1
+    if (newCount < 0) return
+    setSectionSaving(section)
+    await reopenSectionBatch(session.id, section, newCount)
+    setBatchesDone(prev => ({ ...prev, [section]: newCount }))
+    setBatchActive(prev => ({ ...prev, [section]: true }))
+    setSectionSaving(null)
+  }
+
   const startUrgentBatch = (section: 'roots' | 'veg' | 'fruit', sectionProducts: MarketProduct[]) => {
     const newBatch = batchesDone[section]
     setRows(prev => {
@@ -530,7 +583,17 @@ export default function MarketBuyClient({ session, products, existingItems, supp
               <span className="text-green-500">✓</span>{' '}
               {batchIdx === 0 ? label : `${label} — Urgent`}
             </h3>
-            <span className="text-[10px] text-green-600 font-semibold">Order placed</span>
+            <div className="flex items-center gap-2">
+              {batchIdx === doneBatches - 1 && !isActive && session.status === 'open' && (
+                <button
+                  onClick={() => handleSectionReopen(sectionKey)}
+                  disabled={saving}
+                  className="text-[10px] text-blue-600 font-semibold disabled:opacity-40">
+                  {saving ? 'Reopening…' : 'Reopen'}
+                </button>
+              )}
+              <span className="text-[10px] text-green-600 font-semibold">Order placed</span>
+            </div>
           </div>
           <div className="border border-green-200 rounded-xl px-3 py-2.5 bg-green-50">
             {ordered.length > 0
@@ -1111,10 +1174,11 @@ function ProductCard({ product, doleRow, hollandRow, onUpdate, onShiftBalance, i
   const hollandRec = dp > 0 && hp > 0 ? hp < dp  : hp > 0
   const leadStatus = doleRec ? doleRow.status : hollandRec ? hollandRow.status : null
 
-  // Compact ref string: "(avg £X · max £X)"
+  // Compact ref string: "(avg £X · max £X)" — live PER-UNIT now, matching the rows.
+  const uLabel = config.unitLabel
   const refParts: string[] = []
-  if (product.junAvgBoxPricePence) refParts.push(`avg ${fmt(product.junAvgBoxPricePence)}`)
-  refParts.push(`max ${fmt(product.maxBoxPricePence)}`)
+  if (product.recentUnitAvgPence) refParts.push(`avg ${fmt(product.recentUnitAvgPence)}/${uLabel}`)
+  refParts.push(`max ${fmt(product.maxUnitPence)}/${uLabel}`)
   const refText = refParts.join(' · ')
 
   return (
@@ -1140,8 +1204,9 @@ function ProductCard({ product, doleRow, hollandRow, onUpdate, onShiftBalance, i
           label="Dole"
           lastPrice={product.doleLastPricePence}
           lastDate={product.doleLastDate}
-          otherLastPrice={product.hollandLastPricePence}
-          otherLastDate={product.hollandLastDate}
+          lastUnitPrice={product.doleUnitPricePence}
+          otherUnitPrice={product.hollandUnitPricePence}
+          otherUnitStale={isStalePrice(product.hollandUnitDate)}
           otherLabel="Holland"
           row={doleRow}
           product={product}
@@ -1164,8 +1229,9 @@ function ProductCard({ product, doleRow, hollandRow, onUpdate, onShiftBalance, i
           label="JR Holland"
           lastPrice={product.hollandLastPricePence}
           lastDate={product.hollandLastDate}
-          otherLastPrice={product.doleLastPricePence}
-          otherLastDate={product.doleLastDate}
+          lastUnitPrice={product.hollandUnitPricePence}
+          otherUnitPrice={product.doleUnitPricePence}
+          otherUnitStale={isStalePrice(product.doleUnitDate)}
           otherLabel="Dole"
           row={hollandRow}
           product={product}
@@ -1279,12 +1345,13 @@ function getGolemAdvice(
   return null
 }
 
-function SupplierColumn({ label, lastPrice, lastDate, otherLastPrice, otherLastDate, otherLabel, row, product, isRecommended, defaultCount, onUpdate }: {
+function SupplierColumn({ label, lastPrice, lastDate, lastUnitPrice, otherUnitPrice, otherUnitStale, otherLabel, row, product, isRecommended, defaultCount, onUpdate }: {
   label:          string
   lastPrice:      number | null
   lastDate:       string | null
-  otherLastPrice: number | null
-  otherLastDate:  string | null
+  lastUnitPrice:  number | null   // this supplier's live per-unit price (box-size correct)
+  otherUnitPrice: number | null
+  otherUnitStale: boolean
   otherLabel:     string
   row:            RowState
   product:        MarketProduct
@@ -1293,20 +1360,19 @@ function SupplierColumn({ label, lastPrice, lastDate, otherLastPrice, otherLastD
   onUpdate:       (patch: Partial<Omit<RowState, 'supplier'>>) => void
 }) {
   const cfg          = CONFIG[product.name]
-  const showCount    = cfg && (cfg.unitType === 'count' || !!cfg.retailUnitsPerBox)
+  const showCount    = cfg && cfg.unitType === 'count'   // pieces only — weight is priced per kg
   const countChanged = row.countPerBox !== defaultCount
 
   const entered   = Math.round(parseFloat(row.pricePounds) * 100) || 0
-  // Recalculate max box price from the actual count per box
-  // For COUNT items: max = maxPayPerUnitPence × actual count (supports box-format overrides e.g. watermelon 4s vs 9s)
-  // For WEIGHT items: max = maxPayPerUnitPence × kg-per-box (typicalBoxCount) — countPerBox is pieces, not kg
-  const effectiveMax = cfg
-    ? cfg.unitType === 'count'
-      ? Math.round(cfg.maxPayPerUnitPence * row.countPerBox)
-      : product.maxBoxPricePence          // weight items: always kg-based max
-    : product.maxBoxPricePence
-  const calc    = calcPricing(row.pricePounds, product, row.countPerBox)
-  const advice  = getGolemAdvice(entered, effectiveMax, lastPrice, otherLastPrice, otherLastDate, otherLabel, product.junAvgBoxPricePence)
+  const uLabel    = cfg?.unitLabel ?? 'unit'
+  // Per-unit cost: scale the live per-unit price by the typed box price / last box price,
+  // so a typed change moves the per-unit figure correctly without a box-size guess.
+  const perUnit = (lastUnitPrice && lastPrice && lastPrice > 0 && entered > 0)
+    ? Math.round(lastUnitPrice * entered / lastPrice)
+    : (entered === 0 ? null : lastUnitPrice)
+  const calc    = perUnitPricing(perUnit, product)
+  const advice  = unitAdvice(perUnit, product.maxUnitPence, product.recentUnitAvgPence,
+                             otherUnitPrice, otherLabel, otherUnitStale, uLabel)
 
   return (
     <div className={`flex-1 min-w-0 rounded-lg p-2 border transition-colors ${

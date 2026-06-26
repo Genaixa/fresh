@@ -69,6 +69,16 @@ export async function completeSectionBatch(sessionId: string, section: 'roots' |
     .eq('id', sessionId)
 }
 
+// Reopen the most recent completed batch of a section for editing by
+// decrementing its batch counter (the inverse of completeSectionBatch).
+export async function reopenSectionBatch(sessionId: string, section: 'roots' | 'veg' | 'fruit', newCount: number) {
+  const supabase = await createClient()
+  await supabase
+    .from('market_sessions')
+    .update({ [`${section}_batches`]: Math.max(0, newCount) })
+    .eq('id', sessionId)
+}
+
 export async function closeMarketSession(sessionId: string) {
   const supabase = await createClient()
   await supabase
