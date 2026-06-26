@@ -103,5 +103,43 @@ export default async function ShopOrderPage() {
     if (bestW > 0) boxKg[pid] = bestW
   }
 
-  return <ShopOrderBuilder customerId={customer.id} products={products} catalogue={catalogue} boxKg={boxKg} />
+  // Per-box COUNT for 'each' items bought by the box (case_size > 1, e.g. cucumber
+  // 16, celeriac 6). case_size is the default pack; the order row offers a dropdown
+  // of the real sizes seen on deliveries (cucumber 12/14/16/18) because count boxes
+  // vary by delivery — but the item is ONE product at one price regardless of size.
+  const { data: eachProds } = await supabase
+    .from('products')
+    .select('id, case_size')
+    .in('category', ['fruit', 'veg'])
+    .eq('is_active', true)
+    .eq('unit', 'each')
+    .gt('case_size', 1)
+  const { data: cntMaps } = await supabase
+    .from('supplier_product_mappings')
+    .select('product_id, units_per_case')
+    .eq('unit_type', 'count')
+    .gt('units_per_case', 1)
+  const sizesBy = new Map<string, Set<number>>()
+  for (const m of cntMaps ?? []) {
+    if (!m.product_id) continue
+    let s = sizesBy.get(m.product_id); if (!s) { s = new Set(); sizesBy.set(m.product_id, s) }
+    s.add(Number(m.units_per_case))
+  }
+  const boxEach: Record<string, number> = {}
+  const boxOpts: Record<string, number[]> = {}
+  for (const p of eachProds ?? []) {
+    const cs = p.case_size as number
+    const sizes = new Set<number>(sizesBy.get(p.id) ?? [])
+    sizes.add(cs)
+    // Keep sizes in a sane band around the canonical pack — drops mis-mapped
+    // outliers (e.g. a stray "38" on Cucumber that's really a mini).
+    const opts = [...sizes].filter(s => s >= cs * 0.5 && s <= cs * 1.6).sort((a, b) => a - b)
+    boxEach[p.id] = cs
+    boxOpts[p.id] = opts
+  }
+
+  return (
+    <ShopOrderBuilder customerId={customer.id} products={products} catalogue={catalogue}
+      boxKg={boxKg} boxEach={boxEach} boxOpts={boxOpts} />
+  )
 }

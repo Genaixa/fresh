@@ -27,12 +27,18 @@ function weekdayLabel(iso: string) {
 }
 
 export default function ShopOrderBuilder({
-  customerId, products, catalogue, boxKg,
-}: { customerId: string; products: Product[]; catalogue: CatItem[]; boxKg: Record<string, number> }) {
+  customerId, products, catalogue, boxKg, boxEach, boxOpts,
+}: {
+  customerId: string; products: Product[]; catalogue: CatItem[]
+  boxKg: Record<string, number>      // kg per box (weight items)
+  boxEach: Record<string, number>    // default count per box (each items, e.g. cucumber 16)
+  boxOpts: Record<string, number[]>  // selectable box sizes for the dropdown (each items)
+}) {
   const todayISO = new Date().toISOString().split('T')[0]
   const [runDate, setRunDate] = useState(nextTradingDay())
   const [tab, setTab] = useState<'veg' | 'fruit'>('veg')
   const [qty, setQty] = useState<Record<string, number>>({})
+  const [perBox, setPerBox] = useState<Record<string, number>>({}) // chosen box size for 'each' items
   const [extras, setExtras] = useState<string[]>([])   // off-list items added via search
   const [search, setSearch] = useState('')
   const [saving, setSaving] = useState(false)
@@ -55,11 +61,19 @@ export default function ShopOrderBuilder({
     () => products.filter(p => (p.avgByDow[dow] ?? 0) > 0).map(p => p.id),
     [products, dow],
   )
+  // Seed each typical line, snapping box-bought items to the NEAREST whole box so
+  // the order starts on a buyable quantity (carrots 22kg → 20kg = 2 boxes, not 2.2).
   const template = useMemo(() => {
     const t: Record<string, number> = {}
-    for (const id of typicalIds) t[id] = favById.get(id)!.avgByDow[dow]
+    for (const id of typicalIds) {
+      let v = favById.get(id)!.avgByDow[dow]
+      const u = meta.get(id)?.unit
+      const bs = u === 'kg' ? (boxKg[id] ?? 0) : u === 'each' ? (boxEach[id] ?? 0) : 0
+      if (bs > 0 && v > 0) v = Math.max(1, Math.round(v / bs)) * bs
+      t[id] = v
+    }
     return t
-  }, [typicalIds, favById, dow])
+  }, [typicalIds, favById, dow, meta, boxKg, boxEach])
 
   // New weekday → reset to that weekday's typical order, drop previous extras.
   useEffect(() => { setQty({ ...template }); setExtras([]); setPlaced(false) }, [template])
@@ -204,7 +218,10 @@ export default function ShopOrderBuilder({
                 {m.name}{isExtra && <span className="text-brand-accent text-[10px] ml-1">• added</span>}
               </p>
               {(() => {
-                const hasBox = m.unit === 'kg' && boxKg[id] > 0
+                const isKg   = m.unit === 'kg'
+                const isEach = m.unit === 'each'
+                const defBox = isKg ? (boxKg[id] ?? 0) : isEach ? (boxEach[id] ?? 0) : 0
+                const hasBox = defBox > 0
                 // Plain function (NOT a component) so the inputs keep focus across
                 // renders — one stepper look reused so both rows are identical.
                 const stepper = (value: string, dec: () => void, inc: () => void,
@@ -230,20 +247,46 @@ export default function ShopOrderBuilder({
                   )
                 }
 
-                // kg ↔ boxes, two-way. David thinks in BOXES first → boxes on top.
-                const bk = boxKg[id]
-                const boxes = q / bk
+                // Box size: fixed kg for weight items; for 'each' items the chosen
+                // count (default case_size), changeable via the dropdown below.
+                const bk = isKg ? defBox : (perBox[id] ?? defBox)
+                const boxes = bk > 0 ? q / bk : 0
                 const boxLabel = q === 0 ? '0' : Number.isInteger(boxes) ? `${boxes}` : boxes.toFixed(1)
+                const setBoxes = (n: number) => setOne(id, Math.round(Math.max(0, n) * bk))
+                const stepBoxes = (delta: number) => setBoxes(Math.round(boxes) + delta)
+                const opts = boxOpts[id] ?? []
+                const showDropdown = isEach && opts.length > 1
                 const bkLabel = Number.isInteger(bk) ? `${bk}` : bk.toFixed(1)
-                const setBoxes = (n: number) => setOne(id, Math.max(0, n) * bk)
+                // Changing box size keeps the box COUNT and re-derives the quantity.
+                const changeSize = (newSize: number) => {
+                  if (!(newSize > 0)) return
+                  const keepBoxes = bk > 0 ? Math.round(q / bk) : 0
+                  setPerBox(p => ({ ...p, [id]: newSize }))
+                  setOne(id, keepBoxes * newSize)
+                }
                 return (
                   <>
-                    <p className="text-[var(--text-muted)] text-[11px] mb-1">boxes <span className="opacity-70">· {bkLabel}kg each</span></p>
-                    {stepper(boxLabel, () => setBoxes(Math.round(boxes) - 1), () => setBoxes(Math.round(boxes) + 1), n => setBoxes(n), true)}
-                    <p className="text-[var(--text-muted)] text-[11px] mt-2 mb-1">kg</p>
-                    {/* He buys whole boxes, so the kg ± steps by a full box (15→20→25),
-                        snapping kg to box multiples. Typing an exact kg is still allowed. */}
-                    {stepper(`${q}`, () => setBoxes(Math.round(boxes) - 1), () => setBoxes(Math.round(boxes) + 1), n => setOne(id, n))}
+                    <p className="text-[var(--text-muted)] text-[11px] mb-1 flex items-center gap-1 flex-wrap">
+                      <span>boxes ·</span>
+                      {isKg ? (
+                        <span className="opacity-70">{bkLabel}kg each</span>
+                      ) : showDropdown ? (
+                        <>
+                          <select value={bk} onChange={e => changeSize(Number(e.target.value))}
+                            className="bg-[var(--bg-card)] border border-[var(--border)] rounded px-1 py-0.5 text-[11px]">
+                            {opts.map(o => <option key={o} value={o}>{o}</option>)}
+                          </select>
+                          <span className="opacity-70">per box</span>
+                        </>
+                      ) : (
+                        <span className="opacity-70">{bkLabel} each</span>
+                      )}
+                    </p>
+                    {stepper(boxLabel, () => stepBoxes(-1), () => stepBoxes(1), n => setBoxes(n), true)}
+                    <p className="text-[var(--text-muted)] text-[11px] mt-2 mb-1">{isKg ? 'kg' : 'each'}</p>
+                    {/* He buys whole boxes, so the base ± steps by a full box; typing an
+                        exact amount is still allowed for the odd part-box. */}
+                    {stepper(`${q}`, () => stepBoxes(-1), () => stepBoxes(1), n => setOne(id, n))}
                   </>
                 )
               })()}
