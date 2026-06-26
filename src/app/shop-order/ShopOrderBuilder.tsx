@@ -203,38 +203,46 @@ export default function ShopOrderBuilder({
               <p className="font-medium text-sm mb-1 leading-tight">
                 {m.name}{isExtra && <span className="text-brand-accent text-[10px] ml-1">• added</span>}
               </p>
-              <p className="text-[var(--text-muted)] text-[11px] mb-2">{m.unit}</p>
-              <div className="flex items-center gap-1">
-                <button onClick={() => setOne(id, q - 1)} disabled={q === 0}
-                  className="w-8 h-8 rounded-md bg-black/5 disabled:opacity-40 text-lg leading-none">−</button>
-                <input type="number" inputMode="numeric" value={q}
-                  onFocus={e => e.target.select()}
-                  onChange={e => setOne(id, Number(e.target.value) || 0)}
-                  className="w-full text-center bg-transparent border border-[var(--border)] rounded-md h-8 text-sm" />
-                <button onClick={() => setOne(id, q + 1)}
-                  className="w-8 h-8 rounded-md bg-black/5 text-lg leading-none">+</button>
-              </div>
+              {(() => {
+                const hasBox = m.unit === 'kg' && boxKg[id] > 0
+                // Plain function (NOT a component) so the inputs keep focus across
+                // renders — one stepper look reused so both rows are identical.
+                const stepper = (value: string, dec: () => void, inc: () => void,
+                                 onType: (n: number) => void, dashed = false) => (
+                  <div className="flex items-center gap-1">
+                    <button onClick={dec} disabled={q === 0}
+                      className="w-8 h-8 rounded-md bg-black/5 disabled:opacity-40 text-lg leading-none">−</button>
+                    <input type="number" inputMode="decimal" value={value}
+                      onFocus={e => e.target.select()}
+                      onChange={e => onType(Number(e.target.value) || 0)}
+                      className={`w-full text-center bg-transparent rounded-md h-8 text-sm border ${dashed ? 'border-dashed' : ''} border-[var(--border)]`} />
+                    <button onClick={inc}
+                      className="w-8 h-8 rounded-md bg-black/5 text-lg leading-none">+</button>
+                  </div>
+                )
 
-              {/* kg ↔ boxes: shown only for kg items with a known box size.
-                  Boxes is derived from kg; stepping/typing boxes sets kg = boxes × boxSize. */}
-              {m.unit === 'kg' && boxKg[id] > 0 && (() => {
+                if (!hasBox) {
+                  return (
+                    <>
+                      <p className="text-[var(--text-muted)] text-[11px] mb-2">{m.unit}</p>
+                      {stepper(`${q}`, () => setOne(id, q - 1), () => setOne(id, q + 1), n => setOne(id, n))}
+                    </>
+                  )
+                }
+
+                // kg ↔ boxes, two-way. David thinks in BOXES first → boxes on top.
                 const bk = boxKg[id]
                 const boxes = q / bk
-                const label = q === 0 ? '0' : Number.isInteger(boxes) ? `${boxes}` : boxes.toFixed(1)
-                const setBoxes = (n: number) => setOne(id, Math.max(0, n) * bk)
+                const boxLabel = q === 0 ? '0' : Number.isInteger(boxes) ? `${boxes}` : boxes.toFixed(1)
                 const bkLabel = Number.isInteger(bk) ? `${bk}` : bk.toFixed(1)
+                const setBoxes = (n: number) => setOne(id, Math.max(0, n) * bk)
                 return (
-                  <div className="flex items-center gap-1 mt-1.5">
-                    <button onClick={() => setBoxes(Math.round(boxes) - 1)} disabled={q === 0}
-                      className="w-7 h-7 rounded-md bg-black/5 disabled:opacity-40 text-base leading-none">−</button>
-                    <input type="number" inputMode="decimal" value={label}
-                      onFocus={e => e.target.select()}
-                      onChange={e => setBoxes(Number(e.target.value) || 0)}
-                      className="w-full text-center bg-transparent border border-dashed border-[var(--border)] rounded-md h-7 text-[11px] text-[var(--text-muted)]" />
-                    <button onClick={() => setBoxes(Math.round(boxes) + 1)}
-                      className="w-7 h-7 rounded-md bg-black/5 text-base leading-none">+</button>
-                    <span className="text-[10px] text-[var(--text-muted)] whitespace-nowrap pl-0.5">box·{bkLabel}kg</span>
-                  </div>
+                  <>
+                    <p className="text-[var(--text-muted)] text-[11px] mb-1">boxes <span className="opacity-70">· {bkLabel}kg each</span></p>
+                    {stepper(boxLabel, () => setBoxes(Math.round(boxes) - 1), () => setBoxes(Math.round(boxes) + 1), n => setBoxes(n), true)}
+                    <p className="text-[var(--text-muted)] text-[11px] mt-2 mb-1">kg</p>
+                    {stepper(`${q}`, () => setOne(id, q - 1), () => setOne(id, q + 1), n => setOne(id, n))}
+                  </>
                 )
               })()}
             </div>
