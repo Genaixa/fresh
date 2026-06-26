@@ -12,19 +12,15 @@ export type MarketProduct = {
   marketSection: string   // 'roots' | 'veg' | 'fruit' | 'other' — drives section grouping
   hasDole:    boolean
   hasHolland: boolean
+  // Box price (what's on the invoice) — last buy + the one before, per supplier.
+  // This is the whole deal engine now: did the price go up or down since last time?
+  // No per-unit division → the parser's unit guesses can't create rubbish.
   doleLastPricePence:    number | null
   doleLastDate:          string | null
+  dolePrevPricePence:    number | null
   hollandLastPricePence: number | null
   hollandLastDate:       string | null
-  junAvgBoxPricePence:   number | null
-  maxBoxPricePence:      number
-  // LIVE per-unit deal engine (preferred over the per-box fields above)
-  recentUnitAvgPence:    number | null   // live 4-wk per-unit average from invoices
-  doleUnitPricePence:    number | null   // Dole's last per-unit price (box-size correct)
-  doleUnitDate:          string | null
-  hollandUnitPricePence: number | null
-  hollandUnitDate:       string | null
-  maxUnitPence:          number          // config max pay PER UNIT (not per box)
+  hollandPrevPricePence: number | null
   // pricing
   retailPricePence:  number
   priceMultiplier:   number
@@ -173,24 +169,17 @@ export default async function MarketPage() {
     seasonalMap.set(row.product_id, e)
   }
 
-  // ── LIVE per-unit benchmark + per-supplier per-unit price (from invoices) ──────
-  const { data: liveAvgs } = await supabase
-    .from('product_weighted_costs')
-    .select('product_id, weighted_unit_cost_pence')
-  const liveAvgMap = new Map<string, number>()
-  for (const r of liveAvgs ?? []) if (r.weighted_unit_cost_pence) liveAvgMap.set(r.product_id, r.weighted_unit_cost_pence)
-
-  const { data: unitPrices } = await supabase
-    .from('product_supplier_last_unit_price')
-    .select('product_id, supplier_name, unit_price_p, last_date')
-  const doleUnitMap    = new Map<string, { u: number; d: string }>()
-  const hollandUnitMap = new Map<string, { u: number; d: string }>()
-  for (const row of unitPrices ?? []) {
-    const sn = row.supplier_name.toLowerCase()
-    if ((sn === 'dole wholesale gateshead' || sn === 'total produce') && !doleUnitMap.has(row.product_id))
-      doleUnitMap.set(row.product_id, { u: row.unit_price_p, d: row.last_date })
-    if (sn === 'jr holland' && !hollandUnitMap.has(row.product_id))
-      hollandUnitMap.set(row.product_id, { u: row.unit_price_p, d: row.last_date })
+  // ── Previous box price per supplier (the buy before last) ─────────────────────
+  // The whole deal engine: box price now vs the buy before. No per-unit division.
+  const { data: priceMoves } = await supabase
+    .from('product_supplier_price_moves')
+    .select('product_id, supplier_key, prev_p')
+  const dolePrevMap    = new Map<string, number>()
+  const hollandPrevMap = new Map<string, number>()
+  for (const row of priceMoves ?? []) {
+    if (row.prev_p == null) continue
+    if (row.supplier_key === 'dole')    dolePrevMap.set(row.product_id, row.prev_p)
+    if (row.supplier_key === 'holland') hollandPrevMap.set(row.product_id, row.prev_p)
   }
 
   // ── Wholesale orders due today or tomorrow ────────────────────────────────
@@ -256,20 +245,14 @@ export default async function MarketPage() {
         name:                   p.name,
         category:               p.category as 'fruit' | 'veg',
         marketSection:          (p.market_section as string) ?? p.category,
-        recentUnitAvgPence:     liveAvgMap.get(p.id) ?? null,
-        doleUnitPricePence:     doleUnitMap.get(p.id)?.u ?? null,
-        doleUnitDate:           doleUnitMap.get(p.id)?.d ?? null,
-        hollandUnitPricePence:  hollandUnitMap.get(p.id)?.u ?? null,
-        hollandUnitDate:        hollandUnitMap.get(p.id)?.d ?? null,
-        maxUnitPence:           cfg.maxPayPerUnitPence,
         hasDole:                doleSet.has(p.id),
         hasHolland:             hollandSet.has(p.id),
         doleLastPricePence:     dole?.p ?? null,
         doleLastDate:           fmtDate(dole?.d ?? null),
+        dolePrevPricePence:     dolePrevMap.get(p.id) ?? null,
         hollandLastPricePence:  holl?.p ?? null,
         hollandLastDate:        fmtDate(holl?.d ?? null),
-        junAvgBoxPricePence:    avgPU ? Math.round(avgPU * cfg.typicalBoxCount) : null,
-        maxBoxPricePence:       Math.round(cfg.maxPayPerUnitPence * cfg.typicalBoxCount),
+        hollandPrevPricePence:  hollandPrevMap.get(p.id) ?? null,
         retailPricePence:       p.retail_price ?? 0,
         priceMultiplier:        Number(p.price_multiplier ?? 2),
         marginFloor:            Number(p.margin_floor ?? 0.20),

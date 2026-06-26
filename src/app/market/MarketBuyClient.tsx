@@ -8,76 +8,26 @@ import type { MarketProduct, MarketSession, MarketSessionItem, SupplierIds } fro
 
 // ── Deal dot ──────────────────────────────────────────────────────────────────
 
-function getDealStatus(
-  pricePence: number,
-  junAvgBoxPricePence: number | null
-): 'green' | 'amber' | 'red' | null {
-  if (!junAvgBoxPricePence) return null
-  const ratio = pricePence / junAvgBoxPricePence
-  if (ratio < 0.90) return 'green'
-  if (ratio > 1.10) return 'red'
-  return 'amber'
+// The whole deal engine now: the box price (what's on the invoice) this buy vs the
+// buy before it. No per-unit division anywhere, so the parser's weight/count guesses
+// can't create rubbish — it's just "did this box get dearer or cheaper since last time".
+
+// Dot/border colour from the price direction: cheaper than last buy = green (good
+// time to buy), dearer = red, about the same = amber, no history = null.
+function moveStatus(current: number | null, prev: number | null): 'green' | 'amber' | 'red' | null {
+  if (!current || !prev) return null
+  const pct = (current - prev) / prev
+  return pct <= -0.10 ? 'green' : pct >= 0.10 ? 'red' : 'amber'
 }
 
-// A supplier's last price older than this is too stale to judge as a deal — it's
-// shown for reference but doesn't drive colour or "cheaper than" claims (e.g. a
-// 2023 Holland apple price). Mirrors the golem's staleness rule.
-const STALE_DAYS = 14
-function isStalePrice(dateStr: string | null): boolean {
-  if (!dateStr) return false
-  const days = (Date.now() - new Date(dateStr + 'T00:00:00').getTime()) / 86_400_000
-  return days > STALE_DAYS
-}
-// Live PER-UNIT deal status: a supplier's actual per-unit price vs the live 4-wk
-// per-unit average. Null (no judgement) when data missing or the price is stale.
-function unitDeal(unitPrice: number | null, recentAvg: number | null, dateStr: string | null) {
-  if (!unitPrice || !recentAvg || isStalePrice(dateStr)) return null
-  // Plausibility guard: a per-unit price >3x or <1/3 of the live average is almost
-  // always a bad pack spec on that invoice line (a whole box read as one unit, e.g.
-  // a "Size6" mango box parsed as 1 instead of 6) — suppress rather than false-flag.
-  const r = unitPrice / recentAvg
-  if (r > 3 || r < 0.33) return null
-  return getDealStatus(unitPrice, recentAvg)
-}
-
-// Build the RRP/margin calc straight from a PER-UNIT cost (kg/each/punnet) that
-// already matches the retail unit — no config box guesses. Same status thresholds
-// as calcPricing so the display is unchanged where the basis was already right.
-function perUnitPricing(costPerUnit: number | null, product: MarketProduct): PricingCalc {
-  if (!costPerUnit || costPerUnit <= 0)
-    return { costPerUnit: null, costPerKg: null, rrpFull: null, rrpMin: null, margin: null, status: null, effectiveUnitLabel: null }
-  const rrpFull = Math.ceil(costPerUnit * product.priceMultiplier)
-  const rrpMin  = Math.ceil(costPerUnit / (1 - product.marginFloor))
-  if (!product.retailPricePence)
-    return { costPerUnit, costPerKg: null, rrpFull, rrpMin, margin: null, status: 'no-retail', effectiveUnitLabel: null }
-  const margin = (product.retailPricePence - costPerUnit) / product.retailPricePence
-  const status = margin >= product.marginFloor + 0.05 ? 'ok' : margin >= product.marginFloor ? 'tight' : 'raise'
-  return { costPerUnit, costPerKg: null, rrpFull, rrpMin, margin, status, effectiveUnitLabel: null }
-}
-
-// Per-unit buying advice for one supplier (replaces the per-box getGolemAdvice):
-// over max, vs the live recent average, or a cheaper non-stale alternative.
-function unitAdvice(
-  perUnit: number | null, maxUnit: number, recentAvg: number | null,
-  otherUnit: number | null, otherLabel: string, otherStale: boolean, unitLabel: string,
-): { text: string; tone: 'good' | 'warn' | 'info' } | null {
-  if (!perUnit) return null
-  const f = (p: number) => `£${(p / 100).toFixed(2)}`
-  const otherUsable = otherUnit && !otherStale ? otherUnit : null
-  if (maxUnit && perUnit > maxUnit * 1.05) {
-    const over = perUnit - maxUnit
-    return otherUsable && otherUsable < perUnit
-      ? { text: `${f(over)}/${unitLabel} over max — ${otherLabel} ${f(otherUsable)}/${unitLabel}, try them`, tone: 'warn' }
-      : { text: `${f(over)}/${unitLabel} over max — negotiate or skip`, tone: 'warn' }
-  }
-  if (recentAvg) {
-    const pct = (perUnit - recentAvg) / recentAvg
-    if (pct < -0.10) return { text: `${Math.round(-pct * 100)}% below recent avg — buy more than usual`, tone: 'good' }
-    if (pct > 0.10)  return { text: `${Math.round(pct * 100)}% above recent avg`, tone: 'warn' }
-  }
-  if (otherUsable && perUnit > otherUsable * 1.10)
-    return { text: `${otherLabel} cheaper at ${f(otherUsable)}/${unitLabel}`, tone: 'info' }
-  return null
+// The advisory line under each supplier: "▼ was £5.00 · −29%".
+function priceMove(current: number | null, prev: number | null): { text: string; tone: 'up' | 'down' | 'flat' } | null {
+  if (!current || !prev) return null
+  const pct   = (current - prev) / prev
+  const tone  = pct <= -0.10 ? 'down' : pct >= 0.10 ? 'up' : 'flat'
+  const arrow = pct <= -0.005 ? '▼' : pct >= 0.005 ? '▲' : '＝'
+  const sign  = pct > 0 ? '+' : ''
+  return { text: `${arrow} was ${fmt(prev)} · ${sign}${Math.round(pct * 100)}%`, tone }
 }
 
 // Colour a price advisory by its wording: dear (above avg/max) = red, cheap
@@ -93,57 +43,7 @@ function tipToneClass(tip: string): string {
 
 // ── RRP calculation ───────────────────────────────────────────────────────────
 
-type PricingCalc = {
-  costPerUnit:       number | null
-  costPerKg:         number | null
-  rrpFull:           number | null
-  rrpMin:            number | null
-  margin:            number | null
-  status:            'ok' | 'tight' | 'raise' | 'no-retail' | null
-  effectiveUnitLabel: string | null  // 'each' for weight items sold per piece; null = use config unitLabel
-}
 
-function calcPricing(pricePounds: string, product: MarketProduct, countOverride?: number): PricingCalc | null {
-  const boxPence = Math.round(parseFloat(pricePounds) * 100)
-  if (!boxPence || isNaN(boxPence) || boxPence <= 0) return null
-  const cfg = CONFIG[product.name]
-  if (!cfg) return null
-
-  let unitsPerBox: number | null = null
-  let effectiveUnitLabel: string | null = null
-
-  if (product.caseSize > 1) {
-    unitsPerBox = product.caseSize
-  } else if (cfg.unitType === 'count') {
-    unitsPerBox = countOverride ?? cfg.typicalBoxCount
-  } else if (cfg.retailUnitsPerBox) {
-    unitsPerBox = countOverride ?? cfg.retailUnitsPerBox
-    effectiveUnitLabel = 'each'
-  }
-
-  const costPerKg = cfg.unitType === 'weight'
-    ? Math.round(boxPence / cfg.typicalBoxCount)
-    : null
-
-  if (unitsPerBox === null) {
-    return { costPerUnit: null, costPerKg, rrpFull: null, rrpMin: null, margin: null, status: null, effectiveUnitLabel: null }
-  }
-
-  const costPerUnit = boxPence / unitsPerBox
-  const rrpFull     = Math.ceil(costPerUnit * product.priceMultiplier)
-  const rrpMin      = Math.ceil(costPerUnit / (1 - product.marginFloor))
-
-  if (!product.retailPricePence) {
-    return { costPerUnit, costPerKg, rrpFull, rrpMin, margin: null, status: 'no-retail', effectiveUnitLabel }
-  }
-
-  const margin = (product.retailPricePence - costPerUnit) / product.retailPricePence
-  const status = margin >= product.marginFloor + 0.05 ? 'ok'
-               : margin >= product.marginFloor        ? 'tight'
-               : 'raise'
-
-  return { costPerUnit, costPerKg, rrpFull, rrpMin, margin, status, effectiveUnitLabel }
-}
 
 // ── Row state ─────────────────────────────────────────────────────────────────
 
@@ -229,7 +129,7 @@ export default function MarketBuyClient({ session, products, existingItems, supp
           pricePounds: p.doleLastPricePence ? (p.doleLastPricePence / 100).toFixed(2) : '',
           countPerBox: defCount,
           supplier: 'dole',
-          status: unitDeal(p.doleUnitPricePence, p.recentUnitAvgPence, p.doleUnitDate),
+          status: moveStatus(p.doleLastPricePence, p.dolePrevPricePence),
           saving: false,
         })
 
@@ -243,7 +143,7 @@ export default function MarketBuyClient({ session, products, existingItems, supp
           pricePounds: p.hollandLastPricePence ? (p.hollandLastPricePence / 100).toFixed(2) : '',
           countPerBox: defCount,
           supplier: 'holland',
-          status: unitDeal(p.hollandUnitPricePence, p.recentUnitAvgPence, p.hollandUnitDate),
+          status: moveStatus(p.hollandLastPricePence, p.hollandPrevPricePence),
           saving: false,
         })
       }
@@ -373,8 +273,9 @@ export default function MarketBuyClient({ session, products, existingItems, supp
       if (!current) return prev
       const updated = { ...current, ...patch }
       if ('pricePounds' in patch) {
-        const pp = Math.round(parseFloat(updated.pricePounds) * 100)
-        updated.status = pp > 0 ? getDealStatus(pp, product.junAvgBoxPricePence) : null
+        const pp   = Math.round(parseFloat(updated.pricePounds) * 100)
+        const prev = current.supplier === 'holland' ? product.hollandPrevPricePence : product.dolePrevPricePence
+        updated.status = pp > 0 ? moveStatus(pp, prev) : null
       }
       next.set(key, updated)
       schedSave(productId, entryIndex, updated)
@@ -432,14 +333,14 @@ export default function MarketBuyClient({ session, products, existingItems, supp
           qty: 0, countPerBox: defC,
           pricePounds: p.doleLastPricePence ? (p.doleLastPricePence / 100).toFixed(2) : '',
           supplier: 'dole',
-          status: unitDeal(p.doleUnitPricePence, p.recentUnitAvgPence, p.doleUnitDate),
+          status: moveStatus(p.doleLastPricePence, p.dolePrevPricePence),
           saving: false,
         })
         n.set(`${p.id}:${hIdx}`, {
           qty: 0, countPerBox: defC,
           pricePounds: p.hollandLastPricePence ? (p.hollandLastPricePence / 100).toFixed(2) : '',
           supplier: 'holland',
-          status: unitDeal(p.hollandUnitPricePence, p.recentUnitAvgPence, p.hollandUnitDate),
+          status: moveStatus(p.hollandLastPricePence, p.hollandPrevPricePence),
           saving: false,
         })
       }
@@ -492,9 +393,6 @@ export default function MarketBuyClient({ session, products, existingItems, supp
   const summary = useMemo(() => {
     let spend = 0, revenue = 0, totalBoxes = 0, hasEstimate = false
     const bargainSet   = new Set<string>()
-    const alertMap     = new Map<string, { rrpMin: number; currentRetail: number; margin: number }>()
-    const aboveMaxSet  = new Set<string>()
-    const aboveMaxList: { name: string; paid: number; max: number }[] = []
 
     for (const [key, row] of rows) {
       if (row.qty === 0) continue
@@ -525,34 +423,14 @@ export default function MarketBuyClient({ session, products, existingItems, supp
       }
 
       if (row.status === 'green') bargainSet.add(product.name)
-
-      // Pricing alert: margin below floor for this purchase price
-      const calc = calcPricing(row.pricePounds, product)
-      if (calc?.status === 'raise' && calc.rrpMin && !alertMap.has(product.name)) {
-        alertMap.set(product.name, { rrpMin: calc.rrpMin, currentRetail: product.retailPricePence, margin: calc.margin ?? 0 })
-      }
-
-      // Above max: compare against the box's ACTUAL count (same as the entry view).
-      // A 12-punnet box has a higher max than the 6-punnet config default, so the
-      // static maxBoxPricePence would false-flag a perfectly fine per-unit price.
-      const effMax = cfg.unitType === 'count'
-        ? Math.round(cfg.maxPayPerUnitPence * row.countPerBox)
-        : product.maxBoxPricePence
-      if (effMax && pp > effMax && !aboveMaxSet.has(product.name)) {
-        aboveMaxSet.add(product.name)
-        aboveMaxList.push({ name: product.name, paid: pp, max: effMax })
-      }
     }
 
     if (spend === 0) return null
 
     const profit = revenue - spend
     const margin = revenue > 0 ? profit / revenue : 0
-    const pricingAlerts = [...alertMap.entries()]
-      .map(([name, v]) => ({ name, ...v }))
-      .sort((a, b) => a.name.localeCompare(b.name))
 
-    return { spend, revenue, profit, margin, totalBoxes, bargains: [...bargainSet].sort(), hasEstimate, pricingAlerts, aboveMax: aboveMaxList }
+    return { spend, revenue, profit, margin, totalBoxes, bargains: [...bargainSet].sort(), hasEstimate }
   }, [rows, products])
 
   const renderSubSection = (
@@ -856,32 +734,6 @@ export default function MarketBuyClient({ session, products, existingItems, supp
                 </div>
               </div>
 
-              {/* Pricing alerts — retail prices that need raising */}
-              {summary.pricingAlerts.length > 0 && (
-                <div className="border-t border-gray-800 pt-1.5 mt-1 space-y-0.5">
-                  {summary.pricingAlerts.filter(a => a.margin < 0).length > 0 && (
-                    <>
-                      <p className="text-[9px] text-red-400 font-semibold">🔴 Losing money — fix prices today:</p>
-                      {summary.pricingAlerts.filter(a => a.margin < 0).map(a => (
-                        <p key={a.name} className="text-[9px] text-red-300">
-                          {a.name} — min {fmt(a.rrpMin)} (selling {fmt(a.currentRetail)}, margin {Math.round(a.margin * 100)}%)
-                        </p>
-                      ))}
-                    </>
-                  )}
-                  {summary.pricingAlerts.filter(a => a.margin >= 0).length > 0 && (
-                    <>
-                      <p className="text-[9px] text-amber-400 font-semibold mt-1">⚠ Raise when back:</p>
-                      {summary.pricingAlerts.filter(a => a.margin >= 0).map(a => (
-                        <p key={a.name} className="text-[9px] text-amber-300">
-                          {a.name} — min {fmt(a.rrpMin)} (currently {fmt(a.currentRetail)})
-                        </p>
-                      ))}
-                    </>
-                  )}
-                </div>
-              )}
-
               {/* Estimate caveat */}
               {summary.hasEstimate && (
                 <p className="text-[9px] text-gray-600 mt-1">* weight items estimated at standard markup</p>
@@ -911,7 +763,7 @@ type SummaryLine = { name: string; qty: number; pricePence: number }
 function SessionSummary({ date, lines, financials, onClose }: {
   date:       string
   lines:      { dole: SummaryLine[]; holland: SummaryLine[] }
-  financials: { spend: number; revenue: number; profit: number; margin: number; bargains: string[]; pricingAlerts: { name: string; rrpMin: number; currentRetail: number; margin: number }[]; aboveMax: { name: string; paid: number; max: number }[]; hasEstimate: boolean } | null
+  financials: { spend: number; revenue: number; profit: number; margin: number; bargains: string[]; hasEstimate: boolean } | null
   onClose:    () => void
 }) {
   const doleTotal    = lines.dole.reduce((s, l) => s + l.qty * l.pricePence, 0)
@@ -1034,29 +886,6 @@ function SessionSummary({ date, lines, financials, onClose }: {
                 <p className="text-[9px] text-[var(--text-muted)] -mt-2 mb-3 text-center">* profit estimated — some items priced at standard markup</p>
               )}
 
-              {/* Pricing alerts — urgent: go back and raise retail price */}
-              {financials.pricingAlerts.length > 0 && (
-                <div className="mb-4 border border-red-800 rounded-xl p-3 bg-red-900/30">
-                  <p className="text-xs font-bold text-red-300 mb-2">⚠ Raise these prices when you get back</p>
-                  {financials.pricingAlerts.map(a => (
-                    <p key={a.name} className="text-xs text-red-300 py-0.5">
-                      {a.name} — sell min {fmt(a.rrpMin)}{a.currentRetail > 0 ? ` (currently ${fmt(a.currentRetail)})` : ''}
-                    </p>
-                  ))}
-                </div>
-              )}
-
-              {/* Above max — worth going back to argue */}
-              {financials.aboveMax.length > 0 && (
-                <div className="mb-4 border border-amber-800 rounded-xl p-3 bg-amber-900/30">
-                  <p className="text-xs font-bold text-amber-300 mb-2">⬆ Paid above your max — worth querying</p>
-                  {financials.aboveMax.map(a => (
-                    <p key={a.name} className="text-xs text-amber-300 py-0.5">
-                      {a.name} — paid {fmt(a.paid)}, max is {fmt(a.max)}
-                    </p>
-                  ))}
-                </div>
-              )}
 
               {/* Bargains */}
               {financials.bargains.length > 0 && (
@@ -1097,43 +926,7 @@ const DOT: Record<'green' | 'amber' | 'red', string> = {
 const fmt = (p: number) => `£${(p / 100).toFixed(2)}`
 
 // Format a per-unit cost: use pence if under £1, pounds if £1+
-const fmtUnit = (p: number) => fmt(p)
 
-function PricingLine({ calc, retailPricePence, unitLabel }: {
-  calc:             PricingCalc | null
-  retailPricePence: number
-  unitLabel:        string
-}) {
-  if (!calc) return null
-
-  // Weight items: show cost per kg
-  if (calc.costPerUnit === null) {
-    if (!calc.costPerKg) return null
-    return <p className="text-[10px] text-gray-400 mt-1">{fmt(calc.costPerKg!)}/kg</p>
-  }
-
-  const costStr = `${fmtUnit(calc.costPerUnit)}/${unitLabel}`
-
-  if (calc.status === 'no-retail') {
-    return <p className="text-[10px] text-gray-400 mt-1">{costStr} → RRP {fmt(calc.rrpFull!)}</p>
-  }
-
-  const pct = Math.round(calc.margin! * 100)
-
-  if (calc.status === 'raise') {
-    return (
-      <p className="text-[10px] text-red-600 mt-1 font-medium">
-        {costStr} → sell min {fmt(calc.rrpMin!)} · {pct}% ↑ raise
-      </p>
-    )
-  }
-  const colour = calc.status === 'ok' ? 'text-green-600' : 'text-amber-600'
-  return (
-    <p className={`text-[10px] mt-1 ${colour}`}>
-      {costStr} → RRP {fmt(calc.rrpFull!)} · {pct}%{calc.status === 'tight' ? ' ⚠' : ' ✓'}
-    </p>
-  )
-}
 
 // ── Product card ──────────────────────────────────────────────────────────────
 
@@ -1174,12 +967,6 @@ function ProductCard({ product, doleRow, hollandRow, onUpdate, onShiftBalance, i
   const hollandRec = dp > 0 && hp > 0 ? hp < dp  : hp > 0
   const leadStatus = doleRec ? doleRow.status : hollandRec ? hollandRow.status : null
 
-  // Compact ref string: "(avg £X · max £X)" — live PER-UNIT now, matching the rows.
-  const uLabel = config.unitLabel
-  const refParts: string[] = []
-  if (product.recentUnitAvgPence) refParts.push(`avg ${fmt(product.recentUnitAvgPence)}/${uLabel}`)
-  refParts.push(`max ${fmt(product.maxUnitPence)}/${uLabel}`)
-  const refText = refParts.join(' · ')
 
   return (
     <div ref={cardRef} className={`border rounded-xl p-3 bg-white ${anyBought ? 'border-gray-900' : 'border-gray-200'}`}>
@@ -1187,7 +974,6 @@ function ProductCard({ product, doleRow, hollandRow, onUpdate, onShiftBalance, i
       <div className="flex items-baseline gap-1.5 mb-0.5 flex-wrap">
         <span className={`w-2.5 h-2.5 rounded-full shrink-0 self-center transition-colors ${leadStatus ? DOT[leadStatus] : 'bg-gray-200'}`} />
         <span className="font-semibold text-gray-900 text-sm">{product.name}</span>
-        <span className="text-[10px] text-gray-400">({refText})</span>
         {anySaving && <span className="text-[9px] text-gray-400 ml-auto">saving…</span>}
         {onRemove && (
           <button onClick={onRemove} aria-label={`Remove ${product.name}`}
@@ -1204,10 +990,7 @@ function ProductCard({ product, doleRow, hollandRow, onUpdate, onShiftBalance, i
           label="Dole"
           lastPrice={product.doleLastPricePence}
           lastDate={product.doleLastDate}
-          lastUnitPrice={product.doleUnitPricePence}
-          otherUnitPrice={product.hollandUnitPricePence}
-          otherUnitStale={isStalePrice(product.hollandUnitDate)}
-          otherLabel="Holland"
+          prevPrice={product.dolePrevPricePence}
           row={doleRow}
           product={product}
           isRecommended={doleRec}
@@ -1229,10 +1012,7 @@ function ProductCard({ product, doleRow, hollandRow, onUpdate, onShiftBalance, i
           label="JR Holland"
           lastPrice={product.hollandLastPricePence}
           lastDate={product.hollandLastDate}
-          lastUnitPrice={product.hollandUnitPricePence}
-          otherUnitPrice={product.doleUnitPricePence}
-          otherUnitStale={isStalePrice(product.doleUnitDate)}
-          otherLabel="Dole"
+          prevPrice={product.hollandPrevPricePence}
           row={hollandRow}
           product={product}
           isRecommended={hollandRec}
@@ -1286,93 +1066,27 @@ function daysAgo(dateStr: string | null): number | null {
   return Math.floor((now.getTime() - date.getTime()) / 86_400_000)
 }
 
-function getGolemAdvice(
-  entered:        number,
-  effectiveMax:   number | null,
-  lastPrice:      number | null,
-  otherLastPrice: number | null,
-  otherLastDate:  string | null,
-  otherLabel:     string,
-  junAvg:         number | null,
-): GolemAdvice | null {
-  if (!entered || entered <= 0) return null
 
-  const f   = (p: number) => `£${(p / 100).toFixed(2)}`
-  const age = daysAgo(otherLastDate)
-  const staleRef = age !== null && age > 14 ? ` (${otherLastDate})` : ''
-
-  // 1. Above max
-  if (effectiveMax && entered > effectiveMax) {
-    const over = entered - effectiveMax
-    if (otherLastPrice && otherLastPrice < entered) {
-      const within = otherLastPrice <= effectiveMax
-      return {
-        text: within
-          ? `${f(over)} above max — ${otherLabel} was ${f(otherLastPrice)}${staleRef} last time, try them`
-          : `${f(over)} above max — ${otherLabel} was ${f(otherLastPrice)}${staleRef} last time`,
-        tone: 'warn',
-      }
-    }
-    return { text: `${f(over)} above max — negotiate or skip`, tone: 'warn' }
-  }
-
-  // 2. Price changed significantly vs last visit from this supplier
-  if (lastPrice && lastPrice > 0) {
-    const change = entered - lastPrice
-    const pct = Math.abs(change) / lastPrice
-    if (pct >= 0.10) {
-      if (change > 0) return { text: `Up ${f(change)} from last time (was ${f(lastPrice)})`, tone: 'warn' }
-      return { text: `Down ${f(Math.abs(change))} from last time — good`, tone: 'good' }
-    }
-  }
-
-  // 3. This supplier meaningfully more expensive than the other
-  if (otherLastPrice && otherLastPrice > 0) {
-    const diff = entered - otherLastPrice
-    const pct = diff / otherLastPrice
-    if (pct > 0.15) {
-      return { text: `${Math.round(pct * 100)}% more than ${otherLabel}'s last price of ${f(otherLastPrice)}${staleRef}`, tone: 'info' }
-    }
-  }
-
-  // 4. vs seasonal average
-  if (junAvg && junAvg > 0) {
-    const pct = (entered - junAvg) / junAvg
-    if (pct < -0.15) return { text: `${Math.round(Math.abs(pct) * 100)}% below June avg — buy more than usual`, tone: 'good' }
-    if (pct > 0.20)  return { text: `${Math.round(pct * 100)}% above June avg — buy less than usual`, tone: 'warn' }
-  }
-
-  return null
-}
-
-function SupplierColumn({ label, lastPrice, lastDate, lastUnitPrice, otherUnitPrice, otherUnitStale, otherLabel, row, product, isRecommended, defaultCount, onUpdate }: {
-  label:          string
-  lastPrice:      number | null
-  lastDate:       string | null
-  lastUnitPrice:  number | null   // this supplier's live per-unit price (box-size correct)
-  otherUnitPrice: number | null
-  otherUnitStale: boolean
-  otherLabel:     string
-  row:            RowState
-  product:        MarketProduct
-  isRecommended:  boolean
-  defaultCount:   number
-  onUpdate:       (patch: Partial<Omit<RowState, 'supplier'>>) => void
+function SupplierColumn({ label, lastPrice, lastDate, prevPrice, row, product, isRecommended, defaultCount, onUpdate }: {
+  label:         string
+  lastPrice:     number | null
+  lastDate:      string | null
+  prevPrice:     number | null   // this supplier's previous box price (the buy before last)
+  row:           RowState
+  product:       MarketProduct
+  isRecommended: boolean
+  defaultCount:  number
+  onUpdate:      (patch: Partial<Omit<RowState, 'supplier'>>) => void
 }) {
   const cfg          = CONFIG[product.name]
-  const showCount    = cfg && cfg.unitType === 'count'   // pieces only — weight is priced per kg
+  const showCount    = cfg && cfg.unitType === 'count'   // pieces only (for ordering qty, not pricing)
   const countChanged = row.countPerBox !== defaultCount
 
-  const entered   = Math.round(parseFloat(row.pricePounds) * 100) || 0
-  const uLabel    = cfg?.unitLabel ?? 'unit'
-  // Per-unit cost: scale the live per-unit price by the typed box price / last box price,
-  // so a typed change moves the per-unit figure correctly without a box-size guess.
-  const perUnit = (lastUnitPrice && lastPrice && lastPrice > 0 && entered > 0)
-    ? Math.round(lastUnitPrice * entered / lastPrice)
-    : (entered === 0 ? null : lastUnitPrice)
-  const calc    = perUnitPricing(perUnit, product)
-  const advice  = unitAdvice(perUnit, product.maxUnitPence, product.recentUnitAvgPence,
-                             otherUnitPrice, otherLabel, otherUnitStale, uLabel)
+  const entered = Math.round(parseFloat(row.pricePounds) * 100) || 0
+  // Up or down vs the buy before? Compare the typed price (or last bought, if not
+  // typed yet) against this supplier's previous box price. No per-unit anything.
+  const current = entered > 0 ? entered : lastPrice
+  const move    = priceMove(current, prevPrice)
 
   return (
     <div className={`flex-1 min-w-0 rounded-lg p-2 border transition-colors ${
@@ -1402,9 +1116,9 @@ function SupplierColumn({ label, lastPrice, lastDate, lastUnitPrice, otherUnitPr
           placeholder="0.00"
           className={`w-16 px-1.5 py-1.5 rounded-lg text-xs font-mono border-2 text-gray-900 bg-white outline-none focus:ring-2 focus:ring-gray-900
             [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none
-            ${(advice?.tone === 'warn') || row.status === 'red' ? 'border-red-400'
-            : row.status === 'amber'            ? 'border-amber-400'
-            : row.status === 'green'            ? 'border-green-500'
+            ${row.status === 'red'   ? 'border-red-400'
+            : row.status === 'amber' ? 'border-amber-400'
+            : row.status === 'green' ? 'border-green-500'
             : 'border-gray-200'}`}
         />
         <span className="text-[9px] text-gray-400">/box</span>
@@ -1435,23 +1149,18 @@ function SupplierColumn({ label, lastPrice, lastDate, lastUnitPrice, otherUnitPr
           : <span className="italic">no prior price</span>}
       </p>
 
-      <PricingLine
-        calc={calc}
-        retailPricePence={product.retailPricePence}
-        unitLabel={calc?.effectiveUnitLabel ?? CONFIG[product.name]?.unitLabel ?? 'unit'}
-      />
-
-      {/* Bargain badge on the item itself */}
-      {row.status === 'green' && row.qty > 0 && (
-        <p className="text-[9px] text-green-600 font-semibold mt-1">🎯 bargain</p>
+      {/* Up or down vs the buy before */}
+      {move && (
+        <p className={`text-[10px] mt-0.5 font-semibold leading-tight ${
+          move.tone === 'down' ? 'text-green-700'
+          : move.tone === 'up' ? 'text-red-600'
+          : 'text-gray-400'
+        }`}>{move.text}</p>
       )}
 
-      {advice && (
-        <p className={`text-[10px] mt-1 font-medium leading-tight ${
-          advice.tone === 'warn' ? 'text-red-600'
-          : advice.tone === 'good' ? 'text-green-700'
-          : 'text-gray-500'
-        }`}>{advice.text}</p>
+      {/* Cheaper-than-last badge */}
+      {row.status === 'green' && row.qty > 0 && (
+        <p className="text-[9px] text-green-600 font-semibold mt-1">🎯 cheaper than last</p>
       )}
     </div>
   )
