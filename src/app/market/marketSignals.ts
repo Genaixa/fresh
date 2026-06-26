@@ -2,10 +2,16 @@ import type { MarketProduct } from './page'
 import { CONFIG } from './config'
 
 // ── Deterministic buying signals — box price vs the buy before ──────────────
-// The whole model: for each product, did the price David pays go UP or DOWN
-// since his previous purchase? Pure invoice box price (unit_cost) — no per-unit
-// division — so the invoice parser's weight/count guesses CANNOT create rubbish.
-// A signal only fires on a move of ≥10%.
+// The model: for each product, did the box price David pays go UP or DOWN since
+// his previous purchase? Pure invoice box price (unit_cost), no per-unit division,
+// so the parser's weight/count guesses CANNOT create rubbish. This works because
+// it's the SAME supplier's SAME box over time — no pack-size mismatch.
+//
+// NOTE: we deliberately do NOT auto-say "Dole vs Holland cheaper". The two
+// suppliers sell different box sizes (Dole pea £10/3kg box vs Holland £1.15/bag),
+// so a box-price comparison is meaningless and a per-unit one needs the parser's
+// pack guesses — i.e. the rubbish. The rows show both suppliers' prices side by
+// side; David compares them himself, knowing the pack sizes.
 
 export type SignalKind = 'down' | 'up'
 
@@ -23,14 +29,13 @@ export type Signal = {
 const f = (p: number) => `£${(p / 100).toFixed(2)}`
 const THRESHOLD = 0.10
 
-// Pure: products → the list of notable price moves. No clock, no division.
+// Pure: products → notable price moves. No clock, no division.
 export function computeSignals(products: MarketProduct[]): Signal[] {
   const out: Signal[] = []
 
   for (const p of products) {
     if (!CONFIG[p.name]) continue
 
-    // Each supplier's own last buy vs the buy before it.
     const candidates: { supplier: 'Dole' | 'Holland'; last: number; prev: number }[] = []
     if (p.doleLastPricePence && p.dolePrevPricePence)
       candidates.push({ supplier: 'Dole', last: p.doleLastPricePence, prev: p.dolePrevPricePence })
@@ -38,8 +43,7 @@ export function computeSignals(products: MarketProduct[]): Signal[] {
       candidates.push({ supplier: 'Holland', last: p.hollandLastPricePence, prev: p.hollandPrevPricePence })
     if (candidates.length === 0) continue
 
-    // Represent the product by the supplier with the cheaper current price — that's
-    // who David would buy from, so that's the move that matters.
+    // Represent the product by the supplier with the cheaper current box price.
     const pick = candidates.reduce((a, b) => (b.last < a.last ? b : a))
     const pct  = (pick.last - pick.prev) / pick.prev
     if (Math.abs(pct) < THRESHOLD) continue
@@ -54,12 +58,11 @@ export function computeSignals(products: MarketProduct[]): Signal[] {
     })
   }
 
-  // Biggest moves first.
   return out.sort((a, b) => b.magnitude - a.magnitude)
 }
 
-// Deterministic prose straight from the signals — the always-correct fallback,
-// and the source of truth the LLM's wording is validated against.
+// Deterministic prose straight from the signals — always-correct fallback and the
+// source of truth the LLM's wording is validated against.
 export function briefingFromSignals(signals: Signal[]): { briefing: string | null; tips: Record<string, string> } {
   const tips: Record<string, string> = {}
   for (const s of signals) if (!tips[s.product]) tips[s.product] = s.text
