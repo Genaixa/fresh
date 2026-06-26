@@ -313,16 +313,14 @@ export default function MarketBuyClient({ session, products, existingItems, supp
   const veg   = products.filter(p => p.category === 'veg')
   const fruit = products.filter(p => p.category === 'fruit')
 
-  const ROOTS_AND_ONIONS = new Set([
-    'Carrot Loose', 'Celeriac', 'Garlic Loose', 'Leek', 'Onion Regular',
-    'Parsnip', 'Potato', 'Potato Loose', 'Radish', 'Shallot',
-    'Spring Onion', 'Swede', 'Sweet Potato',
-  ])
+  // Roots & onions are now a DATA property (products.market_section), not a hardcoded
+  // name list — so any new root veg David adds lands in the right section automatically.
+  const isRoot = (p: MarketProduct) => p.marketSection === 'roots'
 
-  const vegRoots     = veg.filter(p => ROOTS_AND_ONIONS.has(p.name) && isVisible(p))
-  const vegOther     = veg.filter(p => !ROOTS_AND_ONIONS.has(p.name) && isVisible(p))
-  const rareVegRoots = veg.filter(p => ROOTS_AND_ONIONS.has(p.name) && !isVisible(p) && (runMode || CONFIG[p.name]?.rareBuy))
-  const rareVegOther = veg.filter(p => !ROOTS_AND_ONIONS.has(p.name) && !isVisible(p) && (runMode || CONFIG[p.name]?.rareBuy))
+  const vegRoots     = veg.filter(p => isRoot(p) && isVisible(p))
+  const vegOther     = veg.filter(p => !isRoot(p) && isVisible(p))
+  const rareVegRoots = veg.filter(p => isRoot(p) && !isVisible(p) && (runMode || CONFIG[p.name]?.rareBuy))
+  const rareVegOther = veg.filter(p => !isRoot(p) && !isVisible(p) && (runMode || CONFIG[p.name]?.rareBuy))
   const visFruit       = fruit.filter(isVisible)
   const rareFruit      = fruit.filter(p => !isVisible(p) && (runMode || CONFIG[p.name]?.rareBuy))
 

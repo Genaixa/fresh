@@ -9,6 +9,7 @@ export type MarketProduct = {
   id: string
   name: string
   category: 'fruit' | 'veg'
+  marketSection: string   // 'roots' | 'veg' | 'fruit' | 'other' — drives section grouping
   hasDole:    boolean
   hasHolland: boolean
   doleLastPricePence:    number | null
@@ -92,7 +93,7 @@ export default async function MarketPage() {
   // ── Products ──────────────────────────────────────────────────────────────
   const { data: products } = await supabase
     .from('products')
-    .select('id, name, category, retail_price, price_multiplier, margin_floor, case_size')
+    .select('id, name, category, retail_price, price_multiplier, margin_floor, case_size, market_section')
     .in('category', ['fruit', 'veg'])
     .eq('is_active', true)
     .order('name')
@@ -227,6 +228,7 @@ export default async function MarketPage() {
         id:                     p.id,
         name:                   p.name,
         category:               p.category as 'fruit' | 'veg',
+        marketSection:          (p.market_section as string) ?? p.category,
         hasDole:                doleSet.has(p.id),
         hasHolland:             hollandSet.has(p.id),
         doleLastPricePence:     dole?.p ?? null,

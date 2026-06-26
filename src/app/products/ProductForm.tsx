@@ -8,6 +8,7 @@ type Props = {
   defaultValues: {
     name: string
     category: string
+    market_section: string
     unit: string
     retail_price: string
     wholesale_price: string
@@ -81,6 +82,14 @@ export function ProductForm({ id, defaultValues: d, suppliers, isNew, deactivate
           <select name="category" defaultValue={d.category} className="input-field">
             <option value="fruit">Fruit</option>
             <option value="veg">Veg</option>
+            <option value="other">Other</option>
+          </select>
+        </Field>
+        <Field label="Market section">
+          <select name="market_section" defaultValue={d.market_section || d.category} className="input-field">
+            <option value="roots">Roots &amp; Onions</option>
+            <option value="veg">Veg</option>
+            <option value="fruit">Fruit</option>
             <option value="other">Other</option>
           </select>
         </Field>

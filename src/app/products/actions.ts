@@ -15,6 +15,7 @@ export async function upsertProduct(formData: FormData) {
   const payload = {
     name:             formData.get('name') as string,
     category:         formData.get('category') as string,
+    market_section:   (formData.get('market_section') as string) || (formData.get('category') as string),
     unit:             formData.get('unit') as string,
     retail_price:     poundsToP(formData.get('retail_price')),
     wholesale_price:  poundsToP(formData.get('wholesale_price')),

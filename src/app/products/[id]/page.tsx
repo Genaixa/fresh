@@ -24,6 +24,7 @@ export default async function ProductDetailPage({
   const defaultValues = {
     name:                product.name,
     category:            product.category,
+    market_section:      (product as Record<string, unknown>).market_section as string ?? product.category,
     unit:                product.unit,
     retail_price:        (product.retail_price   / 100).toFixed(2),
     wholesale_price:     (product.wholesale_price / 100).toFixed(2),

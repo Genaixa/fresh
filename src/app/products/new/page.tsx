@@ -13,6 +13,7 @@ export default async function NewProductPage() {
   const newDefaults = {
     name:                '',
     category:            'fruit',
+    market_section:      'fruit',
     unit:                'each',
     retail_price:        '0.00',
     wholesale_price:     '0.00',
