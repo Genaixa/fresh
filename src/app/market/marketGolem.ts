@@ -52,22 +52,30 @@ export async function generateMarketInsights(products: MarketProduct[]): Promise
   const month = new Date().toLocaleString('en-GB', { month: 'long' })
   const today = new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })
 
+  // All figures PER UNIT (kg/each/punnet) from live invoice data — never per box —
+  // so a 12kg apple box isn't judged against a 4kg-box budget. Supplier prices older
+  // than 14 days are flagged STALE and must be ignored (e.g. a 2023 last price).
+  const STALE_DAYS = 14
+  const isStale = (d: string | null) =>
+    d ? (Date.now() - new Date(d + 'T00:00:00').getTime()) / 86_400_000 > STALE_DAYS : false
   const lines = products.map(p => {
     const cfg = CONFIG[p.name]
     if (!cfg) return null
-    const dole = p.doleLastPricePence
-      ? `Dole £${(p.doleLastPricePence / 100).toFixed(2)}/box${p.doleLastDate ? ` (${p.doleLastDate})` : ''}`
-      : 'Dole: no price'
-    const holl = p.hollandLastPricePence
-      ? `Holland £${(p.hollandLastPricePence / 100).toFixed(2)}/box${p.hollandLastDate ? ` (${p.hollandLastDate})` : ''}`
-      : 'Holland: no price'
-    const avg  = p.junAvgBoxPricePence ? `${month} avg £${(p.junAvgBoxPricePence / 100).toFixed(2)}/box` : 'no seasonal avg'
+    const u = cfg.unitLabel
+    const sup = (label: string, price: number | null, date: string | null) =>
+      !price ? `${label}: no price`
+      : isStale(date) ? `${label} £${(price / 100).toFixed(2)}/${u} (STALE ${date} — ignore)`
+      : `${label} £${(price / 100).toFixed(2)}/${u}${date ? ` (${date})` : ''}`
+    const dole = sup('Dole', p.doleUnitPricePence, p.doleUnitDate)
+    const holl = sup('Holland', p.hollandUnitPricePence, p.hollandUnitDate)
+    const avg  = p.recentUnitAvgPence ? `recent avg £${(p.recentUnitAvgPence / 100).toFixed(2)}/${u}` : 'no recent avg'
+    const max  = `max £${(p.maxUnitPence / 100).toFixed(2)}/${u}`
     const tags = [cfg.rareBuy ? '[seasonal]' : '', cfg.preferredSupplier ? `preferred:${cfg.preferredSupplier}` : ''].filter(Boolean).join(' ')
-    return `${p.name}: sell £${(p.retailPricePence / 100).toFixed(2)}/${cfg.unitLabel}, case ${cfg.typicalBoxCount} ${cfg.unitLabel}, max £${(p.maxBoxPricePence / 100).toFixed(2)}/box, ${avg}, ${dole}, ${holl}${tags ? ' ' + tags : ''}`
+    return `${p.name}: sell £${(p.retailPricePence / 100).toFixed(2)}/${u}, ${max}, ${avg}, ${dole}, ${holl}${tags ? ' ' + tags : ''}`
   }).filter(Boolean).join('\n')
 
   const systemPrompt = `You are the Market Golem — a sharp, no-nonsense buying assistant for Fresh & Fruity, a greengrocer in Newcastle. Owner is David. Two suppliers: Dole Wholesale Gateshead and JR Holland.`
-  const userPrompt   = `Today: ${today}\n\nFor each product, write a 1-sentence tip ONLY when notable: price vs avg, above max, one supplier much cheaper, seasonal opportunity. Skip normal items. Plain English, use £ amounts.\n\nAlso write a BRIEFING: 2 sentences on the most important actions today.\n\nProducts:\n${lines}\n\nReturn ONLY valid JSON:\n{"briefing":"string","tips":{"Exact Product Name":"one sentence"}}`
+  const userPrompt   = `Today: ${today}\n\nAll prices are PER UNIT (kg/each/punnet), from live recent invoices. A price marked STALE is old — IGNORE it: never compare against it, and never call a supplier "cheaper" based on a STALE price. For each product, write a 1-sentence tip ONLY when notable: fresh price clearly above/below the recent avg, above max, or one supplier genuinely much cheaper (both prices fresh). Skip normal items. Plain English, use £ amounts.\n\nAlso write a BRIEFING: 2 sentences on the most important actions today.\n\nProducts:\n${lines}\n\nReturn ONLY valid JSON:\n{"briefing":"string","tips":{"Exact Product Name":"one sentence"}}`
 
   const messages = [
     { role: 'system' as const, content: systemPrompt },

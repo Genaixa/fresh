@@ -19,6 +19,22 @@ function getDealStatus(
   return 'amber'
 }
 
+// A supplier's last price older than this is too stale to judge as a deal — it's
+// shown for reference but doesn't drive colour or "cheaper than" claims (e.g. a
+// 2023 Holland apple price). Mirrors the golem's staleness rule.
+const STALE_DAYS = 14
+function isStalePrice(dateStr: string | null): boolean {
+  if (!dateStr) return false
+  const days = (Date.now() - new Date(dateStr + 'T00:00:00').getTime()) / 86_400_000
+  return days > STALE_DAYS
+}
+// Live PER-UNIT deal status: a supplier's actual per-unit price vs the live 4-wk
+// per-unit average. Null (no judgement) when data missing or the price is stale.
+function unitDeal(unitPrice: number | null, recentAvg: number | null, dateStr: string | null) {
+  if (!unitPrice || !recentAvg || isStalePrice(dateStr)) return null
+  return getDealStatus(unitPrice, recentAvg)
+}
+
 // Colour a price advisory by its wording: dear (above avg/max) = red, cheap
 // (below / cheaper / bargain) = green, "at the max" / mixed = amber.
 function tipToneClass(tip: string): string {
@@ -168,7 +184,7 @@ export default function MarketBuyClient({ session, products, existingItems, supp
           pricePounds: p.doleLastPricePence ? (p.doleLastPricePence / 100).toFixed(2) : '',
           countPerBox: defCount,
           supplier: 'dole',
-          status: p.doleLastPricePence ? getDealStatus(p.doleLastPricePence, p.junAvgBoxPricePence) : null,
+          status: unitDeal(p.doleUnitPricePence, p.recentUnitAvgPence, p.doleUnitDate),
           saving: false,
         })
 
@@ -182,7 +198,7 @@ export default function MarketBuyClient({ session, products, existingItems, supp
           pricePounds: p.hollandLastPricePence ? (p.hollandLastPricePence / 100).toFixed(2) : '',
           countPerBox: defCount,
           supplier: 'holland',
-          status: p.hollandLastPricePence ? getDealStatus(p.hollandLastPricePence, p.junAvgBoxPricePence) : null,
+          status: unitDeal(p.hollandUnitPricePence, p.recentUnitAvgPence, p.hollandUnitDate),
           saving: false,
         })
       }
@@ -358,14 +374,14 @@ export default function MarketBuyClient({ session, products, existingItems, supp
           qty: 0, countPerBox: defC,
           pricePounds: p.doleLastPricePence ? (p.doleLastPricePence / 100).toFixed(2) : '',
           supplier: 'dole',
-          status: p.doleLastPricePence ? getDealStatus(p.doleLastPricePence, p.junAvgBoxPricePence) : null,
+          status: unitDeal(p.doleUnitPricePence, p.recentUnitAvgPence, p.doleUnitDate),
           saving: false,
         })
         n.set(`${p.id}:${hIdx}`, {
           qty: 0, countPerBox: defC,
           pricePounds: p.hollandLastPricePence ? (p.hollandLastPricePence / 100).toFixed(2) : '',
           supplier: 'holland',
-          status: p.hollandLastPricePence ? getDealStatus(p.hollandLastPricePence, p.junAvgBoxPricePence) : null,
+          status: unitDeal(p.hollandUnitPricePence, p.recentUnitAvgPence, p.hollandUnitDate),
           saving: false,
         })
       }

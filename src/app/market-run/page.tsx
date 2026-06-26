@@ -116,6 +116,29 @@ export default async function MarketRunPage() {
     seasonalMap.set(row.product_id, e)
   }
 
+  // ── LIVE per-unit benchmark + per-supplier per-unit price (from invoices) ──────
+  // Replaces the frozen seasonal avg / config box-max for the deal judgment: a live
+  // 4-wk per-unit average, and each supplier's actual last per-unit price (box-size
+  // correct), so a 12kg apple box is no longer judged against a 4kg-box budget.
+  const { data: liveAvgs } = await supabase
+    .from('product_weighted_costs')
+    .select('product_id, weighted_unit_cost_pence')
+  const liveAvgMap = new Map<string, number>()
+  for (const r of liveAvgs ?? []) if (r.weighted_unit_cost_pence) liveAvgMap.set(r.product_id, r.weighted_unit_cost_pence)
+
+  const { data: unitPrices } = await supabase
+    .from('product_supplier_last_unit_price')
+    .select('product_id, supplier_name, unit_price_p, last_date')
+  const doleUnitMap    = new Map<string, { u: number; d: string }>()
+  const hollandUnitMap = new Map<string, { u: number; d: string }>()
+  for (const row of unitPrices ?? []) {
+    const sn = row.supplier_name.toLowerCase()
+    if ((sn === 'dole wholesale gateshead' || sn === 'total produce') && !doleUnitMap.has(row.product_id))
+      doleUnitMap.set(row.product_id, { u: row.unit_price_p, d: row.last_date })
+    if (sn === 'jr holland' && !hollandUnitMap.has(row.product_id))
+      hollandUnitMap.set(row.product_id, { u: row.unit_price_p, d: row.last_date })
+  }
+
   // ── Wholesale orders due today or tomorrow ────────────────────────────────
   const tomorrow = new Date(Date.now() + 86_400_000).toISOString().split('T')[0]
   const { data: pendingOrders } = await supabase
@@ -178,6 +201,12 @@ export default async function MarketRunPage() {
         name:                   p.name,
         category:               p.category as 'fruit' | 'veg',
         marketSection:          (p.market_section as string) ?? p.category,
+        recentUnitAvgPence:     liveAvgMap.get(p.id) ?? null,
+        doleUnitPricePence:     doleUnitMap.get(p.id)?.u ?? null,
+        doleUnitDate:           doleUnitMap.get(p.id)?.d ?? null,
+        hollandUnitPricePence:  hollandUnitMap.get(p.id)?.u ?? null,
+        hollandUnitDate:        hollandUnitMap.get(p.id)?.d ?? null,
+        maxUnitPence:           cfg.maxPayPerUnitPence,
         hasDole:                doleSet.has(p.id),
         hasHolland:             hollandSet.has(p.id),
         doleLastPricePence:     dole?.p ?? null,
