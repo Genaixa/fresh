@@ -62,9 +62,14 @@ export async function generateMarketInsights(products: MarketProduct[]): Promise
     const cfg = CONFIG[p.name]
     if (!cfg) return null
     const u = cfg.unitLabel
+    const avgP = p.recentUnitAvgPence
+    // >3x or <1/3 of the live avg = almost certainly a bad pack spec on that line
+    // (whole box read as one unit) — flag as bad data so the AI ignores it.
+    const implausible = (price: number) => !!avgP && (price > avgP * 3 || price < avgP * 0.33)
     const sup = (label: string, price: number | null, date: string | null) =>
       !price ? `${label}: no price`
       : isStale(date) ? `${label} £${(price / 100).toFixed(2)}/${u} (STALE ${date} — ignore)`
+      : implausible(price) ? `${label} £${(price / 100).toFixed(2)}/${u} (likely bad pack data — ignore)`
       : `${label} £${(price / 100).toFixed(2)}/${u}${date ? ` (${date})` : ''}`
     const dole = sup('Dole', p.doleUnitPricePence, p.doleUnitDate)
     const holl = sup('Holland', p.hollandUnitPricePence, p.hollandUnitDate)

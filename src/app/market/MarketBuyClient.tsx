@@ -32,6 +32,11 @@ function isStalePrice(dateStr: string | null): boolean {
 // per-unit average. Null (no judgement) when data missing or the price is stale.
 function unitDeal(unitPrice: number | null, recentAvg: number | null, dateStr: string | null) {
   if (!unitPrice || !recentAvg || isStalePrice(dateStr)) return null
+  // Plausibility guard: a per-unit price >3x or <1/3 of the live average is almost
+  // always a bad pack spec on that invoice line (a whole box read as one unit, e.g.
+  // a "Size6" mango box parsed as 1 instead of 6) — suppress rather than false-flag.
+  const r = unitPrice / recentAvg
+  if (r > 3 || r < 0.33) return null
   return getDealStatus(unitPrice, recentAvg)
 }
 
