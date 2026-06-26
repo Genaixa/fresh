@@ -19,6 +19,17 @@ function getDealStatus(
   return 'amber'
 }
 
+// Colour a price advisory by its wording: dear (above avg/max) = red, cheap
+// (below / cheaper / bargain) = green, "at the max" / mixed = amber.
+function tipToneClass(tip: string): string {
+  const t = tip.toLowerCase()
+  const cheap = /cheaper|\bbelow\b|bargain/.test(t)
+  const dear  = /\babove\b|over the max|exceeds/.test(t)
+  if (cheap && !dear) return 'text-green-700'
+  if (dear && !cheap) return 'text-red-600'
+  return 'text-amber-600'
+}
+
 // ── RRP calculation ───────────────────────────────────────────────────────────
 
 type PricingCalc = {
@@ -552,7 +563,7 @@ export default function MarketBuyClient({ session, products, existingItems, supp
                             onClick={() => { setActiveRare(prev => new Set([...prev, p.id])); setShowAdd(null); setJustAdded(p.id) }}
                             className="w-full text-left px-3 py-2.5 text-sm text-gray-800 border-b border-gray-100 last:border-0 active:bg-gray-50 flex items-baseline gap-2">
                             <span>{p.name}</span>
-                            {p.tip && <span className="text-[10px] text-green-700 truncate">{p.tip}</span>}
+                            {p.tip && <span className={`text-[10px] truncate ${tipToneClass(p.tip)}`}>{p.tip}</span>}
                           </button>
                         ))}
                         <button onClick={() => setShowAdd(null)}
@@ -1099,7 +1110,7 @@ function ProductCard({ product, doleRow, hollandRow, onUpdate, onShiftBalance, i
         )}
       </div>
       {product.tip && (
-        <p className="text-[10px] text-green-700 mb-2 pl-4">{product.tip}</p>
+        <p className={`text-[10px] mb-2 pl-4 ${tipToneClass(product.tip)}`}>{product.tip}</p>
       )}
 
       {/* Two supplier columns with shift button in between */}
