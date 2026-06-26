@@ -241,7 +241,9 @@ export default function ShopOrderBuilder({
                     <p className="text-[var(--text-muted)] text-[11px] mb-1">boxes <span className="opacity-70">· {bkLabel}kg each</span></p>
                     {stepper(boxLabel, () => setBoxes(Math.round(boxes) - 1), () => setBoxes(Math.round(boxes) + 1), n => setBoxes(n), true)}
                     <p className="text-[var(--text-muted)] text-[11px] mt-2 mb-1">kg</p>
-                    {stepper(`${q}`, () => setOne(id, q - 1), () => setOne(id, q + 1), n => setOne(id, n))}
+                    {/* He buys whole boxes, so the kg ± steps by a full box (15→20→25),
+                        snapping kg to box multiples. Typing an exact kg is still allowed. */}
+                    {stepper(`${q}`, () => setBoxes(Math.round(boxes) - 1), () => setBoxes(Math.round(boxes) + 1), n => setOne(id, n))}
                   </>
                 )
               })()}
