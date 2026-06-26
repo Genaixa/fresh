@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { parseInvoicePdf, fuzzyMatchProduct, lookupMapping, saveMapping, type BoxSpec } from '@/lib/invoice-parser'
+import { resolveSupplierName } from '@/lib/supplier-resolve'
 
 export async function POST(request: NextRequest) {
   try {
@@ -38,7 +39,8 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const supplier_name = parsed.supplier_name
+    // Footer VAT reg → number pattern → header text (see supplier-resolve.ts).
+    const supplier_name = resolveSupplierName(parsed)
     const invoice_date  = parsed.invoice_date
 
     // ── 2. Duplicate detection (skip when client has confirmed) ─────────────

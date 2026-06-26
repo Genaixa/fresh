@@ -20,6 +20,7 @@ export interface ParsedInvoice {
   supplier_name: string
   invoice_date: string  // ISO date string YYYY-MM-DD
   invoice_number: string | null  // Ticket No / Delivery No — used to detect duplicates
+  supplier_vat_reg: string | null // VAT Reg from the page FOOTER — the most reliable supplier fingerprint
   items: ParsedInvoiceItem[]
   raw_total: number | null  // pence
 }
@@ -58,8 +59,14 @@ Extract all line items. Return ONLY valid JSON — no markdown fences, no explan
     }
   ],
   "raw_total_pence": number or null,
-  "invoice_number": "string or null"
+  "invoice_number": "string or null",
+  "supplier_vat_reg": "string or null"
 }
+
+SUPPLIER IDENTITY — read the whole page, especially the FOOTER:
+- The header delivery name can be misleading (e.g. "DEVORAH GRYNAVS / 4 WHITEHALL ROAD" is the shop's own stale account name, not the supplier). The SUPPLIER's true identity is in the footer / letterhead: the company name, website and VAT registration number.
+- supplier_vat_reg: the "VAT Reg" / "VAT Reg No" / "Vat Reg" number printed in the footer. Keep DIGITS ONLY (strip "GB" and spaces): "GB 896 5678 42" → "896567842", "746966868" → "746966868". null if the note says "NOT a VAT invoice" or no VAT number is shown.
+- supplier_name: prefer the trading name from the footer/letterhead (e.g. "JR Holland", "Dole Wholesale Gateshead", "Thomas Baty", "The Milk Company") over the header delivery name.
 
 CRITICAL — which total to use for raw_total_pence:
 - raw_total_pence MUST be the EX-VAT goods amount, i.e. the "Sub Total" line (the sum of the Value column / all line items).
@@ -185,6 +192,7 @@ async function parseInvoiceOnce(base64Content: string, mimeType: string): Promis
     }>
     raw_total_pence: number | null
     invoice_number: string | null
+    supplier_vat_reg: string | null
   }
 
   try {
@@ -220,6 +228,9 @@ async function parseInvoiceOnce(base64Content: string, mimeType: string): Promis
     }),
     raw_total: parsed.raw_total_pence ?? null,
     invoice_number: parsed.invoice_number ?? null,
+    supplier_vat_reg: (parsed.supplier_vat_reg ?? null)
+      ? String(parsed.supplier_vat_reg).replace(/[^0-9]/g, '') || null
+      : null,
   }
 }
 
