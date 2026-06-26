@@ -80,5 +80,28 @@ export default async function ShopOrderPage() {
     id: c.id, name: c.name, category: c.category as 'fruit' | 'veg', unit: c.unit,
   }))
 
-  return <ShopOrderBuilder customerId={customer.id} products={products} catalogue={catalogue} />
+  // Box weight per product (kg ↔ boxes helper on the order rows). A product can be
+  // bought in several box sizes across suppliers; take the MODAL weight-type box
+  // (e.g. peppers = 5kg). Only weight-type mappings — count/each boxes don't convert.
+  const { data: maps } = await supabase
+    .from('supplier_product_mappings')
+    .select('product_id, box_weight_kg')
+    .eq('unit_type', 'weight')
+    .gt('box_weight_kg', 0)
+  const wfreq = new Map<string, Map<number, number>>()
+  for (const m of maps ?? []) {
+    if (!m.product_id || !m.box_weight_kg) continue
+    const w = Math.round(Number(m.box_weight_kg) * 100) / 100
+    let inner = wfreq.get(m.product_id)
+    if (!inner) { inner = new Map(); wfreq.set(m.product_id, inner) }
+    inner.set(w, (inner.get(w) ?? 0) + 1)
+  }
+  const boxKg: Record<string, number> = {}
+  for (const [pid, inner] of wfreq) {
+    let bestW = 0, bestN = -1
+    for (const [w, n] of inner) if (n > bestN || (n === bestN && w > bestW)) { bestN = n; bestW = w }
+    if (bestW > 0) boxKg[pid] = bestW
+  }
+
+  return <ShopOrderBuilder customerId={customer.id} products={products} catalogue={catalogue} boxKg={boxKg} />
 }

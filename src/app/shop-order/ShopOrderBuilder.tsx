@@ -27,8 +27,8 @@ function weekdayLabel(iso: string) {
 }
 
 export default function ShopOrderBuilder({
-  customerId, products, catalogue,
-}: { customerId: string; products: Product[]; catalogue: CatItem[] }) {
+  customerId, products, catalogue, boxKg,
+}: { customerId: string; products: Product[]; catalogue: CatItem[]; boxKg: Record<string, number> }) {
   const todayISO = new Date().toISOString().split('T')[0]
   const [runDate, setRunDate] = useState(nextTradingDay())
   const [tab, setTab] = useState<'veg' | 'fruit'>('veg')
@@ -214,6 +214,29 @@ export default function ShopOrderBuilder({
                 <button onClick={() => setOne(id, q + 1)}
                   className="w-8 h-8 rounded-md bg-black/5 text-lg leading-none">+</button>
               </div>
+
+              {/* kg ↔ boxes: shown only for kg items with a known box size.
+                  Boxes is derived from kg; stepping/typing boxes sets kg = boxes × boxSize. */}
+              {m.unit === 'kg' && boxKg[id] > 0 && (() => {
+                const bk = boxKg[id]
+                const boxes = q / bk
+                const label = q === 0 ? '0' : Number.isInteger(boxes) ? `${boxes}` : boxes.toFixed(1)
+                const setBoxes = (n: number) => setOne(id, Math.max(0, n) * bk)
+                const bkLabel = Number.isInteger(bk) ? `${bk}` : bk.toFixed(1)
+                return (
+                  <div className="flex items-center gap-1 mt-1.5">
+                    <button onClick={() => setBoxes(Math.round(boxes) - 1)} disabled={q === 0}
+                      className="w-7 h-7 rounded-md bg-black/5 disabled:opacity-40 text-base leading-none">−</button>
+                    <input type="number" inputMode="decimal" value={label}
+                      onFocus={e => e.target.select()}
+                      onChange={e => setBoxes(Number(e.target.value) || 0)}
+                      className="w-full text-center bg-transparent border border-dashed border-[var(--border)] rounded-md h-7 text-[11px] text-[var(--text-muted)]" />
+                    <button onClick={() => setBoxes(Math.round(boxes) + 1)}
+                      className="w-7 h-7 rounded-md bg-black/5 text-base leading-none">+</button>
+                    <span className="text-[10px] text-[var(--text-muted)] whitespace-nowrap pl-0.5">box·{bkLabel}kg</span>
+                  </div>
+                )
+              })()}
             </div>
           )
         })}
