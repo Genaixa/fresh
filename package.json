@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
-    "golem": "node --test src/app/market/__tests__/getGolemAdvice.test.mjs",
+    "golem": "node --test src/app/market/__tests__/getGolemAdvice.test.mjs src/app/market/__tests__/marketSignals.test.mjs",
     "test:e2e": "playwright test"
   },
   "dependencies": {
