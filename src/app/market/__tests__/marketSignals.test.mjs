@@ -105,7 +105,9 @@ test('bought twice within the last 2 weeks → shows the fluctuation', () => {
 })
 
 // ── Cross-supplier best price (computeBestSupplier mirror) ───────────────────
-const BEST_MIN_GAP = 0.05, MAX_PLAUSIBLE_RATIO = 3
+const BEST_MIN_GAP_SAME = 0.05, BEST_MIN_GAP_DIFF = 0.15, MAX_PLAUSIBLE_RATIO = 3
+const fp = pence => (pence < 100 ? `${Math.round(pence)}p` : `£${(pence / 100).toFixed(2)}`)
+const fnum = n => (Number.isInteger(n) ? String(n) : String(Number(n.toFixed(2))))
 function bestSupplier(dole, holland, asOf = ASOF) {
   if (!dole || !holland || !dole.p || !holland.p) return null
   const da = ageDays(dole.date, asOf), ha = ageDays(holland.date, asOf)
@@ -117,10 +119,15 @@ function bestSupplier(dole, holland, asOf = ASOF) {
   const dp = dole.p / dDiv, hp = holland.p / hDiv
   const lo = Math.min(dp, hp), hi = Math.max(dp, hp)
   if (hi / lo > MAX_PLAUSIBLE_RATIO) return null
-  if ((hi - lo) / hi < BEST_MIN_GAP) return null
-  return { winner: dp <= hp ? 'Dole' : 'Holland' }
+  const minGap = dDiv === hDiv ? BEST_MIN_GAP_SAME : BEST_MIN_GAP_DIFF
+  if ((hi - lo) / hi < minGap) return null
+  const winner = dp <= hp ? 'Dole' : 'Holland'
+  const win = winner === 'Dole' ? dole : holland
+  let basis = `${fp(win.p)} / ${weight ? `${fnum(win.perKg)}kg` : fnum(win.perEach)}`
+  if (win.prevP != null && win.prevP !== win.p) basis += ` · was ${fp(win.prevP)} ${win.p < win.prevP ? '▼' : '▲'}`
+  return { winner, basis }
 }
-const box = o => ({ p: null, date: '2026-06-27', unitType: 'weight', perEach: null, perKg: null, ...o })
+const box = o => ({ p: null, prevP: null, date: '2026-06-27', unitType: 'weight', perEach: null, perKg: null, ...o })
 
 test('per-kg: cheaper supplier wins (carrot Dole 70 vs Holland 130)', () => {
   const b = bestSupplier(box({ p: 700, perKg: 10 }), box({ p: 1300, perKg: 10 }))
@@ -152,4 +159,46 @@ test('one supplier stale (>14d) → no best-price claim', () => {
 test('prices within 5% → about the same, no recommendation', () => {
   const b = bestSupplier(box({ p: 700, perKg: 10 }), box({ p: 720, perKg: 10 }))
   assert.equal(b, null)
+})
+
+// New: spec-guess safety — only call a winner when the gap survives the spec basis.
+test('differing specs + thin gap → stay quiet (leek 5kg vs 4.5kg = 140 vs 156, 10%)', () => {
+  const b = bestSupplier(box({ p: 700, perKg: 5 }), box({ p: 700, perKg: 4.5 }))
+  assert.equal(b, null)   // <15% gap on DIFFERING specs is most likely just spec noise
+})
+
+test('same spec + 8% gap → still called (spec cancels, so 5% threshold applies)', () => {
+  const b = bestSupplier(box({ p: 700, perKg: 10 }), box({ p: 760, perKg: 10 }))
+  assert.equal(b.winner, 'Dole')
+})
+
+test('differing specs + clear gap → winner carries the box basis', () => {
+  const b = bestSupplier(box({ p: 700, perKg: 10 }), box({ p: 650, perKg: 5 }))
+  assert.equal(b.winner, 'Dole')          // 70p/kg vs 130p/kg
+  assert.equal(b.basis, '£7.00 / 10kg')   // the box the per-unit price came from
+})
+
+test('count winner basis shows the case count', () => {
+  const b = bestSupplier(box({ p: 1568, unitType: 'count', perEach: 16, perKg: null }),
+                         box({ p: 1092, unitType: 'count', perEach: 14, perKg: null }))
+  assert.equal(b.winner, 'Holland')
+  assert.equal(b.basis, '£10.92 / 14')
+})
+
+test('winner cheaper than its last buy → basis carries "was £X ▼"', () => {
+  const b = bestSupplier(box({ p: 830, prevP: 950, perKg: 24 }), box({ p: 1200, perKg: 20 }))
+  assert.equal(b.winner, 'Dole')
+  assert.equal(b.basis, '£8.30 / 24kg · was £9.50 ▼')
+})
+
+test('winner dearer than its last buy → basis carries "was £X ▲"', () => {
+  const b = bestSupplier(box({ p: 900, prevP: 500, perKg: 5 }), box({ p: 1080, prevP: 1000, perKg: 5 }))
+  assert.equal(b.winner, 'Dole')
+  assert.equal(b.basis, '£9.00 / 5kg · was £5.00 ▲')
+})
+
+test('winner unchanged from last buy → no "was" clutter', () => {
+  const b = bestSupplier(box({ p: 650, prevP: 650, perKg: 15 }), box({ p: 750, prevP: 750, perKg: 10 }))
+  assert.equal(b.winner, 'Dole')
+  assert.equal(b.basis, '£6.50 / 15kg')
 })

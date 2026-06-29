@@ -136,7 +136,7 @@ export default async function MarketRunPage() {
       if (row.supplier_key === 'holland') hollandPrevMap.set(row.product_id, { p: row.prev_p, d: row.prev_date })
     }
     if (row.last_p != null) {
-      const box: SupplierBox = { p: row.last_p, date: row.last_date, unitType: row.last_unit_type,
+      const box: SupplierBox = { p: row.last_p, prevP: row.prev_p, date: row.last_date, unitType: row.last_unit_type,
         perEach: row.last_units_per_case, perKg: row.last_box_weight_kg }
       if (row.supplier_key === 'dole')    doleBoxMap.set(row.product_id, box)
       if (row.supplier_key === 'holland') hollandBoxMap.set(row.product_id, box)

@@ -120,19 +120,27 @@ export function signalProducts(signals: Signal[]): Set<string> {
 //   • a usable spec on both boxes (count>0 / kg>0)
 //   • the gap is real but not absurd: ≥ MIN_GAP and ≤ MAX_PLAUSIBLE_RATIO
 //     (a >3× gap is almost always a bad spec, e.g. Tomato 467p/kg vs 116p/kg)
-const BEST_MIN_GAP = 0.05          // <5% apart → "about the same", no recommendation
+// When both boxes share the SAME spec the per-unit compare collapses to a plain
+// box-price compare (spec cancels) → a small 5% gap is trustworthy. When the specs
+// DIFFER the result hinges entirely on the (parser-derived) divisor, so a thin gap
+// is most likely just spec noise — demand a wider gap before calling a winner.
+const BEST_MIN_GAP_SAME = 0.05     // identical box specs → safe to call at 5%
+const BEST_MIN_GAP_DIFF = 0.15     // differing box specs → only call clear (≥15%) gaps
 const MAX_PLAUSIBLE_RATIO = 3      // >3× apart → suspect spec, stay quiet
 
 export type SupplierBox = {
   p: number                        // latest box price, pence
+  prevP: number | null             // this supplier's previous box price (same box, time trend)
   date: string | null
   unitType: string | null          // 'count' | 'weight'
   perEach: number | null           // units_per_case (for count)
   perKg: number | null             // box_weight_kg (for weight)
 }
-export type BestBuy = { winner: 'Dole' | 'Holland'; text: string }
+export type BestBuy = { winner: 'Dole' | 'Holland'; text: string; unitPrice: string; basis: string }
 
 const fp = (pence: number) => (pence < 100 ? `${Math.round(pence)}p` : `£${(pence / 100).toFixed(2)}`)
+// trim trailing .0 so 24.00 → "24", 4.50 → "4.5"
+const fnum = (n: number) => (Number.isInteger(n) ? String(n) : String(Number(n.toFixed(2))))
 
 export function computeBestSupplier(dole: SupplierBox | null, holland: SupplierBox | null, asOfISO: string): BestBuy | null {
   if (!dole || !holland || !dole.p || !holland.p) return null
@@ -149,8 +157,17 @@ export function computeBestSupplier(dole: SupplierBox | null, holland: SupplierB
   const dolePer = dole.p / dDiv, hollPer = holland.p / hDiv
   const lo = Math.min(dolePer, hollPer), hi = Math.max(dolePer, hollPer)
   if (hi / lo > MAX_PLAUSIBLE_RATIO) return null   // suspect spec — don't mislead
-  if ((hi - lo) / hi < BEST_MIN_GAP) return null    // basically equal
+  const minGap = dDiv === hDiv ? BEST_MIN_GAP_SAME : BEST_MIN_GAP_DIFF
+  if ((hi - lo) / hi < minGap) return null    // gap too thin to trust given the spec basis
   const winner: 'Dole' | 'Holland' = dolePer <= hollPer ? 'Dole' : 'Holland'
+  const win = winner === 'Dole' ? dole : holland
   const unit = weight ? '/kg' : ' ea'
-  return { winner, text: `Best price: ${winner} — ${fp(lo)}${unit} vs ${fp(hi)}${unit}` }
+  const unitPrice = `${fp(lo)}${unit}`
+  // the box the winning per-unit price is derived from, so a wrong spec is catchable
+  let basis = `${fp(win.p)} / ${weight ? `${fnum(win.perKg!)}kg` : fnum(win.perEach!)}`
+  // the winner's own previous box price (same supplier, same box = safe time compare)
+  if (win.prevP != null && win.prevP !== win.p) {
+    basis += ` · was ${fp(win.prevP)} ${win.p < win.prevP ? '▼' : '▲'}`
+  }
+  return { winner, unitPrice, basis, text: `Best price: ${winner} — ${unitPrice} vs ${fp(hi)}${unit}` }
 }

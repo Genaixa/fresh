@@ -297,9 +297,11 @@ export default function MarketBuyClient({ session, products, existingItems, supp
   const visFruit       = fruit.filter(isVisible)
   const rareFruit      = fruit.filter(p => !isVisible(p) && (runMode || CONFIG[p.name]?.rareBuy))
 
-  // Cross-supplier "buy this from X" summary — only the sound per-unit comparisons.
-  const bestByDole    = products.filter(p => p.bestSupplier?.winner === 'Dole').map(p => p.name)
-  const bestByHolland = products.filter(p => p.bestSupplier?.winner === 'Holland').map(p => p.name)
+  // Cross-supplier "buy this from X" summary — only the sound per-unit comparisons,
+  // each with its winning per-unit price AND the box it's derived from, so a wrong
+  // pack spec (e.g. leek printed 5kg but really 4.5kg) is catchable at a glance.
+  const bestByDole    = products.filter(p => p.bestSupplier?.winner === 'Dole').map(p => `${p.name} ${p.bestSupplier!.unitPrice} (${p.bestSupplier!.basis})`)
+  const bestByHolland = products.filter(p => p.bestSupplier?.winner === 'Holland').map(p => `${p.name} ${p.bestSupplier!.unitPrice} (${p.bestSupplier!.basis})`)
 
   const handleSectionDone = async (section: 'roots' | 'veg' | 'fruit') => {
     setSectionSaving(section)
@@ -527,8 +529,9 @@ export default function MarketBuyClient({ session, products, existingItems, supp
                         {rareItems.map(p => (
                           <button key={p.id}
                             onClick={() => { setActiveRare(prev => new Set([...prev, p.id])); setShowAdd(null); setJustAdded(p.id) }}
-                            className="w-full text-left px-3 py-2.5 text-sm text-gray-800 border-b border-gray-100 last:border-0 active:bg-gray-50 flex items-baseline gap-2">
+                            className="w-full text-left px-3 py-2.5 text-sm text-gray-800 border-b border-gray-100 last:border-0 active:bg-gray-50 flex items-baseline gap-2 flex-wrap">
                             <span>{p.name}</span>
+                            {p.bestSupplier && <span className="text-[10px] font-medium text-emerald-700 truncate">🏆 {p.bestSupplier.winner} {p.bestSupplier.unitPrice}</span>}
                             {p.tip && <span className={`text-[10px] truncate ${tipToneClass(p.tip)}`}>{p.tip}</span>}
                           </button>
                         ))}
@@ -603,25 +606,29 @@ export default function MarketBuyClient({ session, products, existingItems, supp
         </div>
       </div>
 
-      {/* Market Golem briefing */}
-      {briefing && showBriefing && (
-        <div className="mb-4 rounded-xl border border-green-200 bg-green-50 px-3 py-2.5 flex gap-2 items-start">
-          <span className="text-[10px] font-bold text-green-700 mt-0.5 shrink-0">AI</span>
-          <p className="text-xs text-green-900 flex-1 leading-relaxed">{briefing}</p>
-          <button onClick={() => setShowBriefing(false)} className="text-green-600 text-xs shrink-0 mt-0.5">✕</button>
-        </div>
-      )}
-
-      {/* Cross-supplier best-price summary — where to buy what, cheapest per unit */}
-      {(bestByDole.length > 0 || bestByHolland.length > 0) && (
+      {/* Cross-supplier best-price summary — where to buy what, cheapest per unit.
+          (Replaces the old time-based "cheaper/dearer than last time" briefing box;
+          that signal still shows per-product row as a tip.) */}
+      {(bestByDole.length > 0 || bestByHolland.length > 0) && showBriefing && (
         <div className="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2.5">
-          <p className="text-[10px] font-bold text-emerald-700 mb-1">🏆 CHEAPEST PER UNIT TODAY</p>
-          {bestByDole.length > 0 && (
-            <p className="text-xs text-emerald-900 leading-relaxed"><span className="font-bold">Dole:</span> {bestByDole.join(', ')}</p>
-          )}
-          {bestByHolland.length > 0 && (
-            <p className="text-xs text-emerald-900 leading-relaxed"><span className="font-bold">Holland:</span> {bestByHolland.join(', ')}</p>
-          )}
+          <div className="flex justify-between items-start mb-2">
+            <p className="text-[10px] font-bold text-emerald-700">🏆 CHEAPEST PER UNIT TODAY</p>
+            <button onClick={() => setShowBriefing(false)} className="text-emerald-600 text-xs shrink-0 -mt-0.5">✕</button>
+          </div>
+          <div className="grid grid-cols-2 gap-x-4">
+            <div>
+              <p className="text-[11px] font-bold text-emerald-800 mb-1 border-b border-emerald-200 pb-0.5">Dole</p>
+              {bestByDole.length > 0
+                ? bestByDole.map(s => <p key={s} className="text-xs text-emerald-900 leading-snug mb-1">{s}</p>)
+                : <p className="text-xs text-emerald-700/40">—</p>}
+            </div>
+            <div>
+              <p className="text-[11px] font-bold text-emerald-800 mb-1 border-b border-emerald-200 pb-0.5">Holland</p>
+              {bestByHolland.length > 0
+                ? bestByHolland.map(s => <p key={s} className="text-xs text-emerald-900 leading-snug mb-1">{s}</p>)
+                : <p className="text-xs text-emerald-700/40">—</p>}
+            </div>
+          </div>
         </div>
       )}
 
