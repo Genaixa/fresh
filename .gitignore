@@ -43,3 +43,8 @@ invoices.db
 /playwright-report/
 /blob-report/
 /.playwright/
+gmail-sa.json
+
+# IMAP poller local dedup state
+scripts/.imap-ingest-state.json
+scripts/.imap-ingest-alert.json
