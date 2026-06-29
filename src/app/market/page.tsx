@@ -25,6 +25,7 @@ export type MarketProduct = {
   hollandLastDateISO:    string | null
   hollandPrevPricePence: number | null
   hollandPrevDate:       string | null
+  bestSupplier?:         { winner: 'Dole' | 'Holland'; text: string } | null  // cross-supplier per-unit best buy
   // pricing
   retailPricePence:  number
   priceMultiplier:   number

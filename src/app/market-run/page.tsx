@@ -4,6 +4,7 @@ import { createServiceClient } from '@/lib/supabase/service'
 import MarketBuyClient from '@/app/market/MarketBuyClient'
 import { CONFIG } from '@/app/market/config'
 import { generateMarketInsights } from '@/app/market/marketGolem'
+import { computeBestSupplier, type SupplierBox } from '@/app/market/marketSignals'
 import type { MarketProduct, MarketSession, MarketSessionItem, SupplierIds } from '@/app/market/page'
 
 export const dynamic = 'force-dynamic'
@@ -123,13 +124,23 @@ export default async function MarketRunPage() {
   // Previous box price per supplier (the buy before last) — the whole deal engine.
   const { data: priceMoves } = await supabase
     .from('product_supplier_price_moves')
-    .select('product_id, supplier_key, prev_p, prev_date')
+    .select('product_id, supplier_key, prev_p, prev_date, last_p, last_date, last_unit_type, last_units_per_case, last_box_weight_kg')
   const dolePrevMap    = new Map<string, { p: number; d: string | null }>()
   const hollandPrevMap = new Map<string, { p: number; d: string | null }>()
+  // Latest box + its spec, kept together (same row) for a sound per-unit comparison.
+  const doleBoxMap     = new Map<string, SupplierBox>()
+  const hollandBoxMap  = new Map<string, SupplierBox>()
   for (const row of priceMoves ?? []) {
-    if (row.prev_p == null) continue
-    if (row.supplier_key === 'dole')    dolePrevMap.set(row.product_id, { p: row.prev_p, d: row.prev_date })
-    if (row.supplier_key === 'holland') hollandPrevMap.set(row.product_id, { p: row.prev_p, d: row.prev_date })
+    if (row.prev_p != null) {
+      if (row.supplier_key === 'dole')    dolePrevMap.set(row.product_id, { p: row.prev_p, d: row.prev_date })
+      if (row.supplier_key === 'holland') hollandPrevMap.set(row.product_id, { p: row.prev_p, d: row.prev_date })
+    }
+    if (row.last_p != null) {
+      const box: SupplierBox = { p: row.last_p, date: row.last_date, unitType: row.last_unit_type,
+        perEach: row.last_units_per_case, perKg: row.last_box_weight_kg }
+      if (row.supplier_key === 'dole')    doleBoxMap.set(row.product_id, box)
+      if (row.supplier_key === 'holland') hollandBoxMap.set(row.product_id, box)
+    }
   }
 
   // ── Wholesale orders due today or tomorrow ────────────────────────────────
@@ -253,6 +264,7 @@ export default async function MarketRunPage() {
   const productsWithTips: MarketProduct[] = marketProducts.map(p => ({
     ...p,
     tip: golem.tips[p.name] ?? undefined,
+    bestSupplier: computeBestSupplier(doleBoxMap.get(p.id) ?? null, hollandBoxMap.get(p.id) ?? null, today),
   }))
 
   return (

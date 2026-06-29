@@ -110,3 +110,47 @@ export function briefingFromSignals(signals: Signal[]): { briefing: string | nul
 export function signalProducts(signals: Signal[]): Set<string> {
   return new Set(signals.map(s => s.product))
 }
+
+// ── Cross-supplier "best price" — SOUND per-unit comparison ──────────────────
+// The thing deliberately switched off before, done right. It compares Dole vs
+// Holland PER UNIT (£/each or £/kg) using the latest box price ÷ that box's
+// CONFIRMED pack spec — never the parser's guesses. Gated four ways, else quiet:
+//   • both suppliers bought within MAX_LAST_AGE_DAYS (both prices current)
+//   • same unit basis (both count, or both weight) — no apples-to-oranges
+//   • a usable spec on both boxes (count>0 / kg>0)
+//   • the gap is real but not absurd: ≥ MIN_GAP and ≤ MAX_PLAUSIBLE_RATIO
+//     (a >3× gap is almost always a bad spec, e.g. Tomato 467p/kg vs 116p/kg)
+const BEST_MIN_GAP = 0.05          // <5% apart → "about the same", no recommendation
+const MAX_PLAUSIBLE_RATIO = 3      // >3× apart → suspect spec, stay quiet
+
+export type SupplierBox = {
+  p: number                        // latest box price, pence
+  date: string | null
+  unitType: string | null          // 'count' | 'weight'
+  perEach: number | null           // units_per_case (for count)
+  perKg: number | null             // box_weight_kg (for weight)
+}
+export type BestBuy = { winner: 'Dole' | 'Holland'; text: string }
+
+const fp = (pence: number) => (pence < 100 ? `${Math.round(pence)}p` : `£${(pence / 100).toFixed(2)}`)
+
+export function computeBestSupplier(dole: SupplierBox | null, holland: SupplierBox | null, asOfISO: string): BestBuy | null {
+  if (!dole || !holland || !dole.p || !holland.p) return null
+  // both prices must be current
+  const da = ageDays(dole.date, asOfISO), ha = ageDays(holland.date, asOfISO)
+  if (da === null || ha === null || da > MAX_LAST_AGE_DAYS || ha > MAX_LAST_AGE_DAYS) return null
+  // same unit basis only
+  if (!dole.unitType || dole.unitType !== holland.unitType) return null
+  const weight = dole.unitType === 'weight'
+  const dDiv = weight ? dole.perKg : dole.perEach
+  const hDiv = weight ? holland.perKg : holland.perEach
+  if (!dDiv || !hDiv || dDiv <= 0 || hDiv <= 0) return null
+
+  const dolePer = dole.p / dDiv, hollPer = holland.p / hDiv
+  const lo = Math.min(dolePer, hollPer), hi = Math.max(dolePer, hollPer)
+  if (hi / lo > MAX_PLAUSIBLE_RATIO) return null   // suspect spec — don't mislead
+  if ((hi - lo) / hi < BEST_MIN_GAP) return null    // basically equal
+  const winner: 'Dole' | 'Holland' = dolePer <= hollPer ? 'Dole' : 'Holland'
+  const unit = weight ? '/kg' : ' ea'
+  return { winner, text: `Best price: ${winner} — ${fp(lo)}${unit} vs ${fp(hi)}${unit}` }
+}

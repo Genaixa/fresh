@@ -983,6 +983,9 @@ function ProductCard({ product, doleRow, hollandRow, onUpdate, onShiftBalance, i
       {product.tip && (
         <p className={`text-[10px] mb-2 pl-4 ${tipToneClass(product.tip)}`}>{product.tip}</p>
       )}
+      {product.bestSupplier && (
+        <p className="text-[10px] mb-2 pl-4 font-medium text-emerald-700">🏆 {product.bestSupplier.text}</p>
+      )}
 
       {/* Two supplier columns with shift button in between */}
       <div className="flex items-start gap-1">
