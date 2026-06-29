@@ -17,10 +17,14 @@ export type MarketProduct = {
   // No per-unit division → the parser's unit guesses can't create rubbish.
   doleLastPricePence:    number | null
   doleLastDate:          string | null
+  doleLastDateISO:       string | null   // raw, for the recency guard
   dolePrevPricePence:    number | null
+  dolePrevDate:          string | null   // raw, for the recency guard
   hollandLastPricePence: number | null
   hollandLastDate:       string | null
+  hollandLastDateISO:    string | null
   hollandPrevPricePence: number | null
+  hollandPrevDate:       string | null
   // pricing
   retailPricePence:  number
   priceMultiplier:   number
@@ -173,13 +177,13 @@ export default async function MarketPage() {
   // The whole deal engine: box price now vs the buy before. No per-unit division.
   const { data: priceMoves } = await supabase
     .from('product_supplier_price_moves')
-    .select('product_id, supplier_key, prev_p')
-  const dolePrevMap    = new Map<string, number>()
-  const hollandPrevMap = new Map<string, number>()
+    .select('product_id, supplier_key, prev_p, prev_date')
+  const dolePrevMap    = new Map<string, { p: number; d: string | null }>()
+  const hollandPrevMap = new Map<string, { p: number; d: string | null }>()
   for (const row of priceMoves ?? []) {
     if (row.prev_p == null) continue
-    if (row.supplier_key === 'dole')    dolePrevMap.set(row.product_id, row.prev_p)
-    if (row.supplier_key === 'holland') hollandPrevMap.set(row.product_id, row.prev_p)
+    if (row.supplier_key === 'dole')    dolePrevMap.set(row.product_id, { p: row.prev_p, d: row.prev_date })
+    if (row.supplier_key === 'holland') hollandPrevMap.set(row.product_id, { p: row.prev_p, d: row.prev_date })
   }
 
   // ── Wholesale orders due today or tomorrow ────────────────────────────────
@@ -249,10 +253,14 @@ export default async function MarketPage() {
         hasHolland:             hollandSet.has(p.id),
         doleLastPricePence:     dole?.p ?? null,
         doleLastDate:           fmtDate(dole?.d ?? null),
-        dolePrevPricePence:     dolePrevMap.get(p.id) ?? null,
+        doleLastDateISO:        dole?.d ?? null,
+        dolePrevPricePence:     dolePrevMap.get(p.id)?.p ?? null,
+        dolePrevDate:           dolePrevMap.get(p.id)?.d ?? null,
         hollandLastPricePence:  holl?.p ?? null,
         hollandLastDate:        fmtDate(holl?.d ?? null),
-        hollandPrevPricePence:  hollandPrevMap.get(p.id) ?? null,
+        hollandLastDateISO:     holl?.d ?? null,
+        hollandPrevPricePence:  hollandPrevMap.get(p.id)?.p ?? null,
+        hollandPrevDate:        hollandPrevMap.get(p.id)?.d ?? null,
         retailPricePence:       p.retail_price ?? 0,
         priceMultiplier:        Number(p.price_multiplier ?? 2),
         marginFloor:            Number(p.margin_floor ?? 0.20),

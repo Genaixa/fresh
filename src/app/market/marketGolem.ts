@@ -32,7 +32,7 @@ export async function generateMarketInsights(products: MarketProduct[]): Promise
   // ── Step 1: FACTS (deterministic, always correct) ──────────────────────────
   // The set of claims is fixed here in code. Everything downstream can only
   // rephrase these — never add or contradict them.
-  const signals   = computeSignals(products)
+  const signals   = computeSignals(products, new Date().toISOString().slice(0, 10))
   const allowed   = signalProducts(signals)
   const templated = briefingFromSignals(signals)   // the always-correct baseline
 

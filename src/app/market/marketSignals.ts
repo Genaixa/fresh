@@ -29,22 +29,48 @@ export type Signal = {
 const f = (p: number) => `£${(p / 100).toFixed(2)}`
 const THRESHOLD = 0.10
 
-// Pure: products → notable price moves. No clock, no division.
-export function computeSignals(products: MarketProduct[]): Signal[] {
+// ── Recency guard ───────────────────────────────────────────────────────────
+// A price move is only worth promoting if it's fresh enough to act on TODAY.
+// Two ages must both hold, else we stay quiet:
+//   • the latest buy must be recent  → there's a current price to act on
+//   • the "last time" reference must not be ancient → otherwise the % is real
+//     but meaningless ("Garlic -41%, stock up" measured against a 15-month-old buy)
+const MAX_LAST_AGE_DAYS = 14
+const MAX_PREV_AGE_DAYS = 60
+
+function ageDays(fromISO: string | null | undefined, asOfISO: string): number | null {
+  if (!fromISO) return null
+  const from = Date.parse(fromISO), asOf = Date.parse(asOfISO)
+  if (Number.isNaN(from) || Number.isNaN(asOf)) return null
+  return Math.floor((asOf - from) / 86_400_000)
+}
+
+// products → notable, RECENT price moves. asOfISO = the run date (the clock the
+// recency guard is measured against).
+export function computeSignals(products: MarketProduct[], asOfISO: string): Signal[] {
   const out: Signal[] = []
 
   for (const p of products) {
     if (!CONFIG[p.name]) continue
 
-    const candidates: { supplier: 'Dole' | 'Holland'; last: number; prev: number }[] = []
+    const candidates: { supplier: 'Dole' | 'Holland'; last: number; prev: number; lastDate: string | null; prevDate: string | null }[] = []
     if (p.doleLastPricePence && p.dolePrevPricePence)
-      candidates.push({ supplier: 'Dole', last: p.doleLastPricePence, prev: p.dolePrevPricePence })
+      candidates.push({ supplier: 'Dole', last: p.doleLastPricePence, prev: p.dolePrevPricePence, lastDate: p.doleLastDateISO, prevDate: p.dolePrevDate })
     if (p.hollandLastPricePence && p.hollandPrevPricePence)
-      candidates.push({ supplier: 'Holland', last: p.hollandLastPricePence, prev: p.hollandPrevPricePence })
+      candidates.push({ supplier: 'Holland', last: p.hollandLastPricePence, prev: p.hollandPrevPricePence, lastDate: p.hollandLastDateISO, prevDate: p.hollandPrevDate })
     if (candidates.length === 0) continue
 
+    // Recency guard — drop any candidate without a current price + a non-ancient
+    // "last time". No recent prices to refer to → stay quiet on this product.
+    const fresh = candidates.filter(c => {
+      const la = ageDays(c.lastDate, asOfISO)
+      const pa = ageDays(c.prevDate, asOfISO)
+      return la !== null && pa !== null && la <= MAX_LAST_AGE_DAYS && pa <= MAX_PREV_AGE_DAYS
+    })
+    if (fresh.length === 0) continue
+
     // Represent the product by the supplier with the cheaper current box price.
-    const pick = candidates.reduce((a, b) => (b.last < a.last ? b : a))
+    const pick = fresh.reduce((a, b) => (b.last < a.last ? b : a))
     const pct  = (pick.last - pick.prev) / pick.prev
     if (Math.abs(pct) < THRESHOLD) continue
 
