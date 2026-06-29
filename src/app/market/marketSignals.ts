@@ -30,13 +30,13 @@ const f = (p: number) => `£${(p / 100).toFixed(2)}`
 const THRESHOLD = 0.10
 
 // ── Recency guard ───────────────────────────────────────────────────────────
-// A price move is only worth promoting if it's fresh enough to act on TODAY.
-// Two ages must both hold, else we stay quiet:
-//   • the latest buy must be recent  → there's a current price to act on
-//   • the "last time" reference must not be ancient → otherwise the % is real
-//     but meaningless ("Garlic -41%, stock up" measured against a 15-month-old buy)
-const MAX_LAST_AGE_DAYS = 14
-const MAX_PREV_AGE_DAYS = 60
+// David buys DAILY, and wants day-to-day fluctuation on the things he buys
+// REGULARLY — not "cheaper than some buy 6 months ago". So a move only shows if
+// he's bought the item at least twice in the last ~2 weeks: BOTH the latest buy
+// AND the one it's compared against must be recent. Anything bought only once
+// recently, or compared to an old buy, stays quiet.
+const MAX_LAST_AGE_DAYS = 14   // latest buy — there's a current price to act on
+const MAX_PREV_AGE_DAYS = 14   // the buy it's compared to — keeps it a regular-purchase fluctuation, not an ancient one
 
 function ageDays(fromISO: string | null | undefined, asOfISO: string): number | null {
   if (!fromISO) return null

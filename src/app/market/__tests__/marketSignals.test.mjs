@@ -8,7 +8,7 @@ import assert from 'node:assert/strict'
 
 const THRESHOLD = 0.10
 const MAX_LAST_AGE_DAYS = 14
-const MAX_PREV_AGE_DAYS = 60
+const MAX_PREV_AGE_DAYS = 14
 const ASOF = '2026-06-29'
 
 function ageDays(fromISO, asOfISO) {
@@ -89,10 +89,17 @@ test('STALE latest price → stay quiet (beetroot not bought in 2 months)', () =
   assert.equal(s.length, 0)
 })
 
-test('recent buy with ~3-week-old reference still promotes (strawberry spike survives)', () => {
+test('reference older than 14 days → stay quiet (not a regular daily buy)', () => {
   const s = signalsFor([mk({ name: 'Strawberry',
     doleLastPricePence: 4000, dolePrevPricePence: 1600,
-    doleLastDateISO: '2026-06-17', dolePrevDate: '2026-06-10' })])
+    doleLastDateISO: '2026-06-17', dolePrevDate: '2026-06-10' })])  // prev 19 days old
+  assert.equal(s.length, 0)
+})
+
+test('bought twice within the last 2 weeks → shows the fluctuation', () => {
+  const s = signalsFor([mk({ name: 'Onion Regular',
+    doleLastPricePence: 1350, dolePrevPricePence: 1500,
+    doleLastDateISO: '2026-06-28', dolePrevDate: '2026-06-24' })])
   assert.equal(s.length, 1)
-  assert.equal(s[0].kind, 'up')
+  assert.equal(s[0].kind, 'down')
 })
