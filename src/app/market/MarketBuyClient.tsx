@@ -297,6 +297,10 @@ export default function MarketBuyClient({ session, products, existingItems, supp
   const visFruit       = fruit.filter(isVisible)
   const rareFruit      = fruit.filter(p => !isVisible(p) && (runMode || CONFIG[p.name]?.rareBuy))
 
+  // Cross-supplier "buy this from X" summary — only the sound per-unit comparisons.
+  const bestByDole    = products.filter(p => p.bestSupplier?.winner === 'Dole').map(p => p.name)
+  const bestByHolland = products.filter(p => p.bestSupplier?.winner === 'Holland').map(p => p.name)
+
   const handleSectionDone = async (section: 'roots' | 'veg' | 'fruit') => {
     setSectionSaving(section)
     const newCount = batchesDone[section] + 1
@@ -605,6 +609,19 @@ export default function MarketBuyClient({ session, products, existingItems, supp
           <span className="text-[10px] font-bold text-green-700 mt-0.5 shrink-0">AI</span>
           <p className="text-xs text-green-900 flex-1 leading-relaxed">{briefing}</p>
           <button onClick={() => setShowBriefing(false)} className="text-green-600 text-xs shrink-0 mt-0.5">✕</button>
+        </div>
+      )}
+
+      {/* Cross-supplier best-price summary — where to buy what, cheapest per unit */}
+      {(bestByDole.length > 0 || bestByHolland.length > 0) && (
+        <div className="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2.5">
+          <p className="text-[10px] font-bold text-emerald-700 mb-1">🏆 CHEAPEST PER UNIT TODAY</p>
+          {bestByDole.length > 0 && (
+            <p className="text-xs text-emerald-900 leading-relaxed"><span className="font-bold">Dole:</span> {bestByDole.join(', ')}</p>
+          )}
+          {bestByHolland.length > 0 && (
+            <p className="text-xs text-emerald-900 leading-relaxed"><span className="font-bold">Holland:</span> {bestByHolland.join(', ')}</p>
+          )}
         </div>
       )}
 
