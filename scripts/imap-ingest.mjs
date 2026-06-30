@@ -62,6 +62,21 @@ const WEBHOOK_SECRET = env.POSTMARK_WEBHOOK_SECRET
 const WEBHOOK_URL = (env.GMAIL_INGEST_WEBHOOK || 'http://localhost:3100/api/delivery-note') + `?token=${encodeURIComponent(WEBHOOK_SECRET || '')}`
 const STATE_PATH = new URL('./.imap-ingest-state.json', import.meta.url).pathname
 const STATE_CAP = 2000                                 // keep the most recent N processed IDs
+// Heartbeat: stamped on every sweep that reaches the mailbox without a fatal error.
+// A separate cron (imap-healthcheck.mjs) alerts if this goes stale — that catches the
+// failure class the in-script alert can't, i.e. the poller dying BEFORE node loads it
+// (wrong cron path, node missing, etc), which is exactly what broke it on 30 Jun.
+const HEARTBEAT_PATH = new URL('./.imap-ingest-heartbeat.json', import.meta.url).pathname
+// External uptime monitor (e.g. healthchecks.io). The local heartbeat + healthcheck can't
+// see the box itself dying (power off, cron daemon dead, disk full). This pings an OFF-box
+// URL on every successful sweep; if the pings stop, THEIR servers alert you. Optional —
+// set HEALTHCHECK_PING_URL in .env.local to enable. Fire-and-forget; never blocks ingest.
+const UPTIME_PING_URL = env.HEALTHCHECK_PING_URL || ''
+async function pingUptime(suffix = '') {
+  if (!UPTIME_PING_URL || DRY_RUN) return
+  try { await fetch(UPTIME_PING_URL + suffix, { method: 'GET', signal: AbortSignal.timeout(10_000) }) }
+  catch (err) { console.error('[uptime] ping failed:', err.message) }   // non-fatal; the local alert still covers it
+}
 
 // ---- failure alerting (reuses the pipeline's Telegram bot) --------------------------
 const TG_TOKEN = env.TELEGRAM_BOT_TOKEN
@@ -246,9 +261,21 @@ try {
 
 console.log(`\nDone. scanned=${summary.scanned} ingested=${summary.ingested} skipped=${summary.skipped} failed=${summary.failed} pdfs=${summary.pdfs}`)
 
+// Stamp the heartbeat whenever the poller reached the mailbox and finished a sweep.
+// Per-message webhook failures (alerted separately) do NOT mean the poller is dead, so
+// they still count as a live heartbeat; only a fatal runError suppresses it.
+if (!runError && !DRY_RUN) {
+  try { writeFileSync(HEARTBEAT_PATH, JSON.stringify({ ts: Date.now(), scanned: summary.scanned, ingested: summary.ingested })) }
+  catch (err) { console.error('[heartbeat] write failed:', err.message) }
+}
+
 if (runError) {
   await notifyFailure(`🔴 <b>Invoice ingest error</b>\nRun aborted: ${runError.message}`)
+  await pingUptime('/fail')                 // tell the off-box monitor immediately, don't wait for the silence to time out
 } else if (summary.failed > 0) {
   await notifyFailure(`⚠️ <b>Invoice ingest</b>: ${summary.failed} message(s) failed to reach the webhook this run (scanned ${summary.scanned}, ingested ${summary.ingested}). Check logs/gmail-ingest.log.`)
+  await pingUptime()                        // poller itself is healthy (it swept the mailbox); webhook hiccup is alerted separately
+} else {
+  await pingUptime()                        // clean sweep → signal the off-box monitor we're alive
 }
 process.exit(runError || summary.failed > 0 ? 1 : 0)

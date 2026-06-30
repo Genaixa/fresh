@@ -48,3 +48,5 @@ gmail-sa.json
 # IMAP poller local dedup state
 scripts/.imap-ingest-state.json
 scripts/.imap-ingest-alert.json
+scripts/.imap-ingest-heartbeat.json
+scripts/.imap-healthcheck-alert.json
