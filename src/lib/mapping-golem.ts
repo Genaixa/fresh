@@ -93,13 +93,27 @@ export async function runMappingSuggester(
 
   if (!rawItems?.length) return { autoApplied: 0, suggested: 0, decisions: [] }
 
-  // 2. Confirmed mappings (the trusted knowledge base) + product retail prices.
-  const [{ data: confirmed }, { data: products }] = await Promise.all([
+  // 2. Confirmed mappings (the trusted knowledge base) + product retail prices +
+  //    human-HELD mappings (pending/skipped). A pending or skipped row is a deliberate
+  //    "leave this for a human" — typically because the exact-string matcher would
+  //    over-generalise (e.g. "CARROTS - BABY PRE PACKS" is NOT loose carrots, but its
+  //    only core noun "carrot" makes a generic confirmed sibling score 100%). The auto
+  //    path used to upsert `confirmed` straight over these, silently reverting the
+  //    correction the next morning. We now treat held keys as untouchable.
+  const [{ data: confirmed }, { data: products }, { data: held }] = await Promise.all([
     supabase.from('supplier_product_mappings')
       .select('supplier_name, raw_description, product_id, unit_type, units_per_case, box_weight_kg')
       .eq('status', 'confirmed').not('product_id', 'is', null),
     supabase.from('products').select('id, name, retail_price').eq('is_active', true),
+    supabase.from('supplier_product_mappings')
+      .select('supplier_name, normalised_description')
+      .in('status', ['pending', 'skipped']),
   ])
+
+  // Keys a human (or a prior golem suggestion) is holding for review — never auto-map these.
+  const heldKeys = new Set(
+    (held ?? []).map((m: any) => `${normaliseSupplierName(m.supplier_name)}::${m.normalised_description}`),
+  )
 
   const retail = new Map((products ?? []).map(p => [p.id, p.retail_price as number]))
   const pname  = new Map((products ?? []).map(p => [p.id, p.name as string]))
@@ -128,13 +142,19 @@ export async function runMappingSuggester(
   const decisions: MappingDecision[] = []
 
   for (const g of groups.values()) {
+    const supKey = normaliseSupplierName(g.supplier)
+    // Respect a human-held mapping: if this exact (supplier, line) is pending/skipped,
+    // a person deliberately left it unconfirmed — do not auto-map or overwrite it.
+    if (heldKeys.has(`${supKey}::${normaliseDescription(g.raw)}`)) {
+      decisions.push({ supplier: g.supplier, raw: g.raw, itemIds: g.ids, action: 'skip', score: 0, reason: 'human-held mapping (pending/skipped) — left for review' })
+      continue
+    }
     const targetCore = new Set(coreNouns(g.raw))
     // junk lines (no product nouns, or zero qty/cost) → skip
     if (targetCore.size === 0 || g.qty === 0 || g.unit_cost === 0) {
       decisions.push({ supplier: g.supplier, raw: g.raw, itemIds: g.ids, action: 'skip', score: 0, reason: 'no product tokens / empty line' })
       continue
     }
-    const supKey = normaliseSupplierName(g.supplier)
 
     // Score every confirmed mapping; same supplier gets a small preference.
     const scored = mapCore.map(({ m, core }) => {
